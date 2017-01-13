@@ -4,9 +4,9 @@
   "description": "Vault client in ES6",
   "main": "server.js",
   "scripts": {
-    "start": "node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
-    "startstatic": "node_modules/.bin/http-server src/static",
-    "genjs": "NODE_ENV=production node_modules/.bin/webpack -p",
+    "dev": "node_modules/.bin/webpack && node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
+    "starthttp": "node_modules/.bin/http-server src/static",
+    "build": "NODE_ENV=production node_modules/.bin/webpack -p",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
