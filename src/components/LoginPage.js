@@ -18,7 +18,6 @@ export default class LoginPage extends React.Component {
   }
 
   handleSubmit(event) {
-    console.log('Current login', CurrentLogin);
     VaultClientDemo.loginAccount(this.state.username, this.state.password)
       .then(result => {
         CurrentLogin.username = result.username;
