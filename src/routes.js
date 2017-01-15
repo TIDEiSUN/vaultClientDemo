@@ -9,7 +9,8 @@ import RegistrationPage from './components/RegistrationPage';
 import RenamePage from './components/RenamePage';
 import NotFoundPage from './components/NotFoundPage';
 import ActivatePage from './components/ActivatePage';
- 
+import VerifyPhonePage from './components/VerifyPhonePage';
+
 const routes = (
   <Route path="/" component={Layout}>
     <IndexRoute component={LoginPage}/>
@@ -19,6 +20,7 @@ const routes = (
     <Route path="/reg" component={RegistrationPage}/>
     <Route path="/rename" component={RenamePage}/>   
     <Route path="/activate" component={ActivatePage}/>
+    <Route path="/phone" component={VerifyPhonePage}/>
   <Route path="*" component={NotFoundPage}/>
 </Route>
 );

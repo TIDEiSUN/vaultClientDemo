@@ -60,6 +60,8 @@ export default class IndexPage extends React.Component {
           <br/>
           <Link to="/changepw">Change Password</Link>
           <br/>
+          <Link to="/phone">Verify Phone</Link>
+          <br/>
           <Link to="/payment">Make Payment</Link>
         </div>
       </div>

@@ -107,12 +107,54 @@ function registerAccount(username, password, email, activateLink) {
     });
 }
 
+function sendPhoneVerificationCode(username, countryCode, phoneNumber) {
+    return new Promise((resolve, reject) => {
+        // const options = {
+        //     username     : username,
+        //     password     : password,
+        //     email        : email,
+        //     activateLink : activateLink,
+        //     domain       : domain
+        // }
+
+        // client.register(options, (err, res) => {
+        //     if (err) {
+        //         reject(err);
+        //     } else {
+        //         resolve(res);
+        //     }
+        // });
+    });
+}
+
+function verifyPhone(username, countryCode, phoneNumber, token) {
+    return new Promise((resolve, reject) => {
+        // const options = {
+        //     username     : username,
+        //     password     : password,
+        //     email        : email,
+        //     activateLink : activateLink,
+        //     domain       : domain
+        // }
+
+        // client.register(options, (err, res) => {
+        //     if (err) {
+        //         reject(err);
+        //     } else {
+        //         resolve(res);
+        //     }
+        // });
+    });
+}
+
 exports.loginAccount = loginAccount;
 exports.resendVerificationEmail = resendVerificationEmail;
 exports.verifyEmailToken = verifyEmailToken;
 exports.changePassword = changePassword;
 exports.renameAccount = renameAccount;
 exports.registerAccount = registerAccount;
+exports.sendPhoneVerificationCode = sendPhoneVerificationCode;
+exports.verifyPhone = verifyPhone;
 
 // export default class ValutClientDemo {
 //     constructor() {
