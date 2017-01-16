@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
+import AsyncButton from './AsyncButton'
 
 export default class RegistrationPage extends React.Component {
   constructor(props) {
@@ -21,21 +22,22 @@ export default class RegistrationPage extends React.Component {
     console.log('Register account');
     const activateLink = 'http://localhost:3000/activate';     // TODO
 
-    VaultClientDemo.registerAccount(this.state.username, this.state.password, this.state.email, activateLink)
+    return VaultClientDemo.registerAccount(this.state.username, this.state.password, this.state.email, activateLink)
       .then(result => {
         console.log('Register sucessfully', result);
         alert('Account created. Verification email has been sent to ' + this.state.email);
       }).catch(err => {
         alert('Failed to register: ' + err.message);
+        throw err;
       });
-    event.preventDefault();
+    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
         <h1>Register Account</h1>
-        <form onSubmit={this.handleSubmit}>
+        <form>
           <div>
             <label>
               Username: 
@@ -54,7 +56,14 @@ export default class RegistrationPage extends React.Component {
               <input type="text" value={this.state.email} onChange={this.handleChange.bind(this, 'email')} />
             </label>
           </div>
-          <input type="submit" value="Register" />
+          <AsyncButton
+           type="button"
+           onClick={this.handleSubmit}
+           pendingText="Registering..."
+           fulFilledText="Registered"
+           rejectedText="Failed! Try Again"
+           text="Register"
+          />
         </form>
         <Link to="/">Back to login page</Link>
       </div>

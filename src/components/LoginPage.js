@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
+import AsyncButton from './AsyncButton'
 
 export default class LoginPage extends React.Component {
   constructor(props) {
@@ -18,23 +19,24 @@ export default class LoginPage extends React.Component {
   }
 
   handleSubmit(event) {
-    VaultClientDemo.loginAccount(this.state.username, this.state.password)
+    return VaultClientDemo.loginAccount(this.state.username, this.state.password)
       .then(result => {
         CurrentLogin.username = result.username;
         CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
-        browserHistory.push('/main');
+        //browserHistory.push('/main');
       }).catch(err => {
         alert('Failed to login: ' + err.message);
+        throw err;
       });
-    event.preventDefault();
+    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
-        <form onSubmit={this.handleSubmit}>
+        <form>
           <div>
             <label>
               Username: 
@@ -47,7 +49,15 @@ export default class LoginPage extends React.Component {
               <input type="password" value={this.state.password} onChange={this.handleChange.bind(this, 'password')} />
             </label>
           </div>
-          <input type="submit" value="Login" />
+          <AsyncButton
+           type="button"
+           onClick={this.handleSubmit}
+           pendingText="Logging in..."
+           fulFilledText="Logged in"
+           rejectedText="Failed! Try Again"
+           text="Login"
+           fullFilledRedirect="/main"
+          />
         </form>
         <Link to="/reg">Register</Link>
         <br/>

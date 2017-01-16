@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
+import AsyncButton from './AsyncButton'
 
 export default class RenamePage extends React.Component {
   constructor(props) {
@@ -18,29 +19,37 @@ export default class RenamePage extends React.Component {
 
   handleSubmit(event) {
     console.log('Handle rename account');
-    VaultClientDemo.renameAccount(CurrentLogin.username, this.state.newUsername, CurrentLogin.password, CurrentLogin.loginInfo)
+    return VaultClientDemo.renameAccount(CurrentLogin.username, this.state.newUsername, CurrentLogin.password, CurrentLogin.loginInfo)
       .then(result => {
         CurrentLogin.username = this.state.newUsername;
         console.log(result);
         alert('Success!');
       }).catch(err => {
         alert('Failed to rename account: ' + err.message);
+        throw err;
       });
-    event.preventDefault();
+    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
         <h1>Change username</h1>
-        <form onSubmit={this.handleSubmit}>
+        <form>
           <div>
             <label>
               New username: 
               <input type="text" value={this.state.newUsername} onChange={this.handleChange.bind(this, 'newUsername')} />
             </label>
           </div>
-          <input type="submit" value="Change" />
+          <AsyncButton
+           type="button"
+           onClick={this.handleSubmit}
+           pendingText="Changing..."
+           fulFilledText="Changed"
+           rejectedText="Failed! Try Again"
+           text="Change"
+          />
         </form>
         <Link to="/main">Back to main page</Link>
       </div>

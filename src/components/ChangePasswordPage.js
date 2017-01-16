@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
+import AsyncButton from './AsyncButton'
 
 export default class ChangePasswordPage extends React.Component {
   constructor(props) {
@@ -18,29 +19,37 @@ export default class ChangePasswordPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Handle change password');
-    VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo)
+    return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo)
       .then(result => {
         CurrentLogin.password = this.state.newPassword;
         console.log(result);
         alert('Success!');
       }).catch(err => {
         alert('Failed to change password: ' + err.message);
+        throw err;
       });
-    event.preventDefault();
+    //event.preventDefault();
   }
   
   render() {
     return (
       <div className="home">
         <h1>Change Password</h1>
-        <form onSubmit={this.handleSubmit}>
+        <form>
           <div>
             <label>
               New password: 
               <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
             </label>
           </div>
-          <input type="submit" value="Change" />
+          <AsyncButton
+           type="button"
+           onClick={this.handleSubmit}
+           pendingText="Changing..."
+           fulFilledText="Changed"
+           rejectedText="Failed! Try Again"
+           text="Change"
+          />
         </form>
         
         <Link to="/main">Back to main page</Link>

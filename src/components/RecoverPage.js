@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
+import AsyncButton from './AsyncButton'
 
 export default class RecoverPage extends React.Component {
   constructor(props) {
@@ -21,7 +22,7 @@ export default class RecoverPage extends React.Component {
   handleSubmit(event) {
     console.log('Recover account');
 
-    VaultClientDemo.recoverBlob(this.state.username, this.state.secret)
+    return VaultClientDemo.recoverBlob(this.state.username, this.state.secret)
       .then(result => {
         console.log('Recover blob successfully', result);
         CurrentLogin.username = this.state.username;
@@ -31,21 +32,22 @@ export default class RecoverPage extends React.Component {
         CurrentLogin.password = this.state.newPassword;
         console.log(result);
 //        alert('Recover account successfully!');
-        browserHistory.push('/main');
+        //browserHistory.push('/main');
       }).catch(err => {
         delete CurrentLogin.username;
         delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
         alert('Failed to recover account: ' + err.message);
+        throw err;
       });
-    event.preventDefault();
+    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
         <h1>Recover Account</h1>
-        <form onSubmit={this.handleSubmit}>
+        <form>
           <div>
             <label>
               Username: 
@@ -64,7 +66,15 @@ export default class RecoverPage extends React.Component {
               <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
             </label>
           </div>
-          <input type="submit" value="Recover" />
+          <AsyncButton
+           type="button"
+           onClick={this.handleSubmit}
+           pendingText="Recovering..."
+           fulFilledText="Recovered"
+           rejectedText="Failed! Try Again"
+           text="Recover"
+           fullFilledRedirect="/main"
+          />
         </form>
         <Link to="/">Back to login page</Link>
       </div>
