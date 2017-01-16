@@ -10,6 +10,7 @@ import RenamePage from './components/RenamePage';
 import NotFoundPage from './components/NotFoundPage';
 import ActivatePage from './components/ActivatePage';
 import VerifyPhonePage from './components/VerifyPhonePage';
+import RecoverPage from './components/RecoverPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -21,6 +22,7 @@ const routes = (
     <Route path="/rename" component={RenamePage}/>   
     <Route path="/activate" component={ActivatePage}/>
     <Route path="/phone" component={VerifyPhonePage}/>
+    <Route path="/recover" component={RecoverPage}/>
   <Route path="*" component={NotFoundPage}/>
 </Route>
 );

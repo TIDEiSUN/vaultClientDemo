@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
 import * as VaultClientDemo from '../logics/VaultClientDemo'
 
@@ -18,6 +18,12 @@ function ResendVerificationButton(props) {
   );
 }
 
+function LogoutButton(props) {
+  return (
+    <button onClick={props.target.handleLogout}>Logout</button>
+  );
+}
+
 export default class IndexPage extends React.Component {
   constructor(props) {
     super(props);
@@ -25,6 +31,7 @@ export default class IndexPage extends React.Component {
       resendEmail: CurrentLogin.loginInfo.blob.data.email
     }
     this.handleResendEmail = this.handleResendEmail.bind(this);
+    this.handleLogout = this.handleLogout.bind(this);
   }
 
   handleChange(name, event) {
@@ -45,6 +52,13 @@ export default class IndexPage extends React.Component {
     event.preventDefault();
   }
 
+  handleLogout(event) {
+    delete CurrentLogin.username;
+    delete CurrentLogin.password;
+    delete CurrentLogin.loginInfo;
+    browserHistory.push('/');
+  }
+
   render() {
     return (
       <div className="home">
@@ -63,6 +77,9 @@ export default class IndexPage extends React.Component {
           <Link to="/phone">Verify Phone</Link>
           <br/>
           <Link to="/payment">Make Payment</Link>
+        </div>
+        <div>
+          <LogoutButton target={this} />
         </div>
       </div>
     );

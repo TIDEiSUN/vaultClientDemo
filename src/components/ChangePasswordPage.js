@@ -40,7 +40,7 @@ export default class ChangePasswordPage extends React.Component {
               <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
             </label>
           </div>
-          <input type="submit" value="Change form" />
+          <input type="submit" value="Change" />
         </form>
         
         <Link to="/main">Back to main page</Link>

@@ -11,6 +11,9 @@ function loginAccount(username, password) {
             if (err) {
                 reject(err);
             } else {
+                if (res.hasOwnProperty('unlock')) {
+                    delete res.unlock;      // not used
+                }
                 resolve(res);
             }
         });
@@ -147,6 +150,34 @@ function verifyPhone(username, countryCode, phoneNumber, token) {
     });
 }
 
+function recoverBlob(username, rippleSecret) {
+    return new Promise((resolve, reject) => {
+        AuthInfo.get(domain, username, (err, authInfo) => {
+            let options = {
+                url       : authInfo.blobvault,
+                username  : authInfo.username,
+                masterkey : rippleSecret
+            };
+            client.recoverBlob(options, (err, blob) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({
+                        blob      : blob,
+                        //unlock    : unlock,
+                        secret    : rippleSecret,
+                        username  : authInfo.username,
+                        verified  : authInfo.emailVerified, //DEPRECIATE
+                        emailVerified    : authInfo.emailVerified,
+                        profileVerified  : authInfo.profile_verified,
+                        identityVerified : authInfo.identity_verified
+                    });
+                }
+            });
+        });
+    });
+}
+
 exports.loginAccount = loginAccount;
 exports.resendVerificationEmail = resendVerificationEmail;
 exports.verifyEmailToken = verifyEmailToken;
@@ -155,6 +186,7 @@ exports.renameAccount = renameAccount;
 exports.registerAccount = registerAccount;
 exports.sendPhoneVerificationCode = sendPhoneVerificationCode;
 exports.verifyPhone = verifyPhone;
+exports.recoverBlob = recoverBlob;
 
 // export default class ValutClientDemo {
 //     constructor() {

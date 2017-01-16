@@ -50,6 +50,8 @@ export default class LoginPage extends React.Component {
           <input type="submit" value="Login" />
         </form>
         <Link to="/reg">Register</Link>
+        <br/>
+        <Link to="/recover">Recover</Link>
       </div>
     );
   }
