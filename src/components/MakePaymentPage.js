@@ -7,8 +7,10 @@ export default class MakePaymentPage extends React.Component {
     return (
       <div className="home">
         <h1>Ripple Account Info</h1>
-        <p>Public address: {CurrentLogin.loginInfo.blob.data.account_id}</p>
-        <p>Secret key: {CurrentLogin.loginInfo.secret}</p>
+        <div>
+          <p>Public address: {CurrentLogin.loginInfo.blob.data.account_id}</p>
+          <p>Secret key: {CurrentLogin.loginInfo.secret}</p>
+        </div>
         <Link to="/main">Back to main page</Link>
       </div>
     );

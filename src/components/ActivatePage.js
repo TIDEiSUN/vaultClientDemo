@@ -40,7 +40,7 @@ export default class ActivatePage extends React.Component {
       <div className="home">
         <h1>Activate Account</h1>
         <ActivateButton username={this.props.location.query.username} token={this.props.location.query.token} target={this}/>
-        <Link to="/main">Back to main page</Link>
+        <Link to="/">Back to login page</Link>
       </div>
     );
   }
