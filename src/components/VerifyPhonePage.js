@@ -22,6 +22,7 @@ export default class VerifyPhonePage extends React.Component {
   handleSubmitSend(event) {
     console.log('Handle send verification code by sms');
     VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.username, 
+                                              CurrentLogin.loginInfo, 
                                               this.state.countryCode, 
                                               this.state.phoneNumber)
       .then(result => {
@@ -37,6 +38,7 @@ export default class VerifyPhonePage extends React.Component {
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
     VaultClientDemo.verifyPhone(CurrentLogin.username, 
+                                CurrentLogin.loginInfo, 
                                 this.state.countryCode, 
                                 this.state.phoneNumber,
                                 this.state.token)

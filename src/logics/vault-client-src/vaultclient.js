@@ -614,6 +614,10 @@ VaultClient.prototype.updateAttestation = blobClient.updateAttestation;
 
 VaultClient.prototype.getAttestationSummary = blobClient.getAttestationSummary;
 
+VaultClient.prototype.requestPhoneToken = blobClient.requestPhoneToken;
+
+VaultClient.prototype.verifyPhoneToken = blobClient.verifyPhoneToken;
+
 //export by name
 exports.VaultClient = VaultClient;
 exports.AuthInfo    = AuthInfo;

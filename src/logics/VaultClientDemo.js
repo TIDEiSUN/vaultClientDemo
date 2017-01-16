@@ -110,43 +110,42 @@ function registerAccount(username, password, email, activateLink) {
     });
 }
 
-function sendPhoneVerificationCode(username, countryCode, phoneNumber) {
+function sendPhoneVerificationCode(username, loginInfo, countryCode, phoneNumber) {
     return new Promise((resolve, reject) => {
-        // const options = {
-        //     username     : username,
-        //     password     : password,
-        //     email        : email,
-        //     activateLink : activateLink,
-        //     domain       : domain
-        // }
+        const options = {
+            url          : loginInfo.blob.url,
+            username     : username,
+            phone_number : phoneNumber,
+            country_code : countryCode
+        }
 
-        // client.register(options, (err, res) => {
-        //     if (err) {
-        //         reject(err);
-        //     } else {
-        //         resolve(res);
-        //     }
-        // });
+        client.requestPhoneToken(options, (err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        });
     });
 }
 
-function verifyPhone(username, countryCode, phoneNumber, token) {
+function verifyPhone(username, loginInfo, countryCode, phoneNumber, token) {
     return new Promise((resolve, reject) => {
-        // const options = {
-        //     username     : username,
-        //     password     : password,
-        //     email        : email,
-        //     activateLink : activateLink,
-        //     domain       : domain
-        // }
+        const options = {
+            url          : loginInfo.blob.url,
+            username     : username,
+            phone_number : phoneNumber,
+            country_code : countryCode,
+            token        : token
+        }
 
-        // client.register(options, (err, res) => {
-        //     if (err) {
-        //         reject(err);
-        //     } else {
-        //         resolve(res);
-        //     }
-        // });
+        client.verifyPhoneToken(options, (err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        });
     });
 }
 

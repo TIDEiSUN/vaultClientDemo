@@ -1586,4 +1586,77 @@ BlobClient.parseAttestation = function (attestation) {
   return decoded;
 };
 
+/**
+ * requestPhoneToken
+ * request a token for phone verification
+ * @param {object} options
+ * @param {string} options.url
+ * @param {string} options.username
+ * @param {string} options.phone_number
+ * @param {string} options.country_code
+ */
+
+BlobClient.requestPhoneToken = function (options, fn) {
+  var config = {
+    method : 'POST',
+    url    : options.url + '/v1/user/' + options.username + '/phone',
+    data   : {
+      via          : 'sms',
+      phone_number : options.phone_number,
+      country_code : options.country_code
+    }
+  };
+  
+  request.post(config.url)
+    .send(config.data)
+    .end(function(err, resp) { 
+      if (err) {
+        fn(err);
+      } else if (resp.body && resp.body.result === 'success') {
+        fn(null, resp.body);
+      } else if (resp.body && resp.body.result === 'error') {
+        fn(new Error(resp.body.message)); 
+      } else {
+        fn(new Error('Unable to request phone token.'));
+      }
+    });
+};
+
+/**
+ * verifyPhoneToken
+ * verify a phone token
+ * @param {object} options
+ * @param {string} options.url
+ * @param {string} options.username
+ * @param {string} options.phone_number
+ * @param {string} options.country_code
+ * @param {string} options.token
+ */
+
+BlobClient.verifyPhoneToken = function (options, fn) {
+  var config = {
+    method : 'POST',
+    url    : options.url + '/v1/user/' + options.username + '/phone/validate',
+    data   : {
+      phone_number : options.phone_number,
+      country_code : options.country_code,
+      token        : options.token
+    }
+  };
+  
+  request.post(config.url)
+    .send(config.data)
+    .end(function(err, resp) { 
+      if (err) {
+        fn(err);
+      } else if (resp.body && resp.body.result === 'success') {
+        fn(null, resp.body);
+      } else if (resp.body && resp.body.result === 'error') {
+        fn(new Error(resp.body.message)); 
+      } else {
+        fn(new Error('Unable to request phone token.'));
+      }
+    });
+};
+
 exports.BlobClient = BlobClient;
