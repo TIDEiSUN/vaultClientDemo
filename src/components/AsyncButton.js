@@ -69,6 +69,8 @@ export default class  AsyncButton extends React.Component {
       loadingClass,
       fulFilledClass,
       rejectedClass,
+			fullFilledRedirect,
+			...restProps
     } = this.props;
     const isDisabled = this.props.disabled || isPending;
     let buttonText;
@@ -89,7 +91,7 @@ export default class  AsyncButton extends React.Component {
     // });
 
     return (
-      <button {...this.props} disabled={isDisabled} onClick={this.handleClick.bind(this)}>
+      <button {...restProps} disabled={isDisabled} onClick={this.handleClick.bind(this)}>
         {children || buttonText}
       </button>
     //   <button {...this.props} className={btnClasses} disabled={isDisabled} onClick={() => this.handleClick()}>
