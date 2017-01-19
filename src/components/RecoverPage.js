@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
-import * as VaultClientDemo from '../logics/VaultClientDemo'
+import VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
 import AsyncButton from './AsyncButton'
 

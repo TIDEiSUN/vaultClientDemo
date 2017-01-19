@@ -1,15 +1,15 @@
 import React from 'react';
-import { Link, browserHistory } from 'react-router';
-import * as VaultClientDemo from '../logics/VaultClientDemo'
-import { CurrentLogin } from './Data'
-import AsyncButton from './AsyncButton'
+import { Link } from 'react-router';
+import VaultClientDemo from '../logics/VaultClientDemo';
+import { CurrentLogin } from './Data';
+import AsyncButton from './AsyncButton';
 
 export default class LoginPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       username: '',
-      password: ''
+      password: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }

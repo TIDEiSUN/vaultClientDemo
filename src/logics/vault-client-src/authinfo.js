@@ -1,103 +1,54 @@
-var async      = require('async');
-var superagent = require('superagent');
-var RippleTxt  = require('./rippletxt').RippleTxt;
+import * as superagent from 'superagent';
+import { RippleTxt } from './rippletxt';
 
-var AuthInfo = { };
+class SuperAgentHelper {
+  static getRequest(url) {
+    return new Promise((resolve, reject) => {
+      superagent.get(url, (err, res) => {
+        if (err || res.error) {
+          reject(new Error('Authentication info server unreachable'));
+        } else {
+          resolve(res.body);
+        }
+      });
+    });
+  }
+}
 
-AuthInfo._getRippleTxt = function(domain, callback) {
-  RippleTxt.get(domain, callback);
-};
+export default class AuthInfo {
+  /**
+   * Get auth info for a given username or ripple address
+   *
+   * @param {string}    domain - Domain which hosts the user's info
+   * @param {string}    address - Username or ripple address who's info we are retreiving
+   */
 
-AuthInfo._getUser = function(url, callback) {
-  superagent.get(url, callback);
-};
-
-
-/**
- * Get auth info for a given address
- *
- * @param {string}    domain - Domain which hosts the user's info
- * @param {string}    address - Address of user who's info we are retreiving
- * @param {function}  fn - Callback function
- */
-
-AuthInfo.getAddress = function(domain, address, callback) {
-  var self = this;
-  
-  function getRippleTxt(callback) {
-    self._getRippleTxt(domain, function(err, txt) {
-      if (err) {
-        return callback(err);
-      }
-
+  static get(domain, address) {
+    const resolveAuthInfoURL = (txt) => {
       if (!txt.authinfo_url) {
-        return callback(new Error('Authentication is not supported on ' + domain));
+        return Promise.reject(new Error(`Authentication is not supported on ${domain}`));
       }
+      // TODO check if domain is needed in query string
+      let url = Array.isArray(txt.authinfo_url) ? txt.authinfo_url[0] : txt.authinfo_url;
+      url += `?domain=${domain}&username=${address}`;
+      return Promise.resolve(url);
+    };
 
-      var url = Array.isArray(txt.authinfo_url) ? txt.authinfo_url[0] : txt.authinfo_url;
+    return RippleTxt.get(domain)
+      .then(resolveAuthInfoURL)
+      .then(SuperAgentHelper.getRequest);
+  }
 
-      url += '?domain=' + domain + '&username=' + address;
+  /**
+   * Get auth info for a given address
+   *
+   * @param {string}    domain - Domain which hosts the user's info
+   * @param {string}    address - Address of user who's info we are retreiving
+   */
 
-      callback(null, url);
-    });
-  };
-
-  function getUserAddress(url, callback) {
-    self._getUser(url, function(err, res) {
-      if (err || res.error) {
-        callback(new Error('Authentication info server unreachable'));
-      } else {
-        callback(null, res.body);
-      }
-    });
-  };
-
-  async.waterfall([ getRippleTxt, getUserAddress ], callback);
-};
-
-/*
-  **
- * Get auth info for a given username or ripple address
- *
- * @param {string}    domain - Domain which hosts the user's info
- * @param {string}    address - Username or ripple address who's info we are retreiving
- * @param {function}  fn - Callback function
- */
-
-AuthInfo.get = function(domain, address, callback) {
-  var self = this;
-  
-  function getRippleTxt(callback) {
-    self._getRippleTxt(domain, function(err, txt) {
-      if (err) {
-        return callback(err);
-      }
-
-      if (!txt.authinfo_url) {
-        return callback(new Error('Authentication is not supported on ' + domain));
-      }
-
-      var url = Array.isArray(txt.authinfo_url) ? txt.authinfo_url[0] : txt.authinfo_url;
-
-      url += '?domain=' + domain + '&username=' + address;
-
-      callback(null, url);
-    });
-  };
-
-  function getUser(url, callback) {
-    self._getUser(url, function(err, res) {
-      if (err || res.error) {
-        console.error(err);
-        console.error(res.error);
-        callback(new Error('Authentication info server unreachable'));
-      } else {
-        callback(null, res.body);
-      }
-    });
-  };
-
-  async.waterfall([ getRippleTxt, getUser ], callback);
-};
-
-exports.AuthInfo = AuthInfo;
+  // TODO rename to getAddress
+  // TODO remove this function
+  static getAddress(domain, address) {
+    return AuthInfo.get(domain, address);
+  }
+}

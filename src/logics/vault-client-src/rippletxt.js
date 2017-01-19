@@ -21,34 +21,39 @@ RippleTxt.urlTemplates = [
  * @param {function}  fn - Callback function
  */
 
-RippleTxt.get = function(domain, fn) {
-  var self = this;
+RippleTxt.get = function(domain) {
+  return new Promise((resolve, reject) => {
+    var self = this;
 
-  if (self.txts[domain]) {
-    return fn(null, self.txts[domain]);
-  }
-
-  ;(function nextUrl(i) {
-    var url = RippleTxt.urlTemplates[i];
-
-    if (!url) {
-      return fn(new Error('No ripple.txt found'));
+    if (self.txts[domain]) {
+      resolve(self.txts[domain]);
+      return;
     }
 
-    url = url.replace('{{domain}}', domain);
-    console.log(url);
-    
-    request.get(url, function(err, resp) {
-      if (err || !resp.text) {
-        return nextUrl(++i);
+    ;(function nextUrl(i) {
+      var url = RippleTxt.urlTemplates[i];
+
+      if (!url) {
+        reject(new Error('No ripple.txt found'));
+        return;
       }
 
-      var sections = self.parse(resp.text);
-      self.txts[domain] = sections;
+      url = url.replace('{{domain}}', domain);
+      console.log(url);
+      
+      request.get(url, function(err, resp) {
+        if (err || !resp.text) {
+          nextUrl(++i);
+          return;
+        }
 
-      fn(null, sections);
-    });
-  })(0);
+        var sections = self.parse(resp.text);
+        self.txts[domain] = sections;
+
+        resolve(sections);
+      });
+    })(0);
+  });
 };
 
 /**

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import * as VaultClientDemo from '../logics/VaultClientDemo'
+import VaultClientDemo from '../logics/VaultClientDemo'
 import AsyncButton from './AsyncButton'
 
 export default class RegistrationPage extends React.Component {

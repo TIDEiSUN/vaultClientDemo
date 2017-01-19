@@ -91,57 +91,65 @@ var idTypeFields = [
  * @param {function} fn - Callback function
  */
 
-BlobObj.prototype.init = function(fn) {
-  var self = this, url;
+BlobObj.prototype.init = function() {
+  return new Promise((resolve, reject) => {
+    var self = this, url;
 
-  if (self.url.indexOf('://') === -1) {
-    self.url = 'http://' + url;
-  }
-
-  url  = self.url + '/v1/blob/' + self.id;
-  if (this.device_id) url += '?device_id=' + this.device_id;
-  
-  request.get(url, function(err, resp) {
-    if (err) {
-      return fn(new Error(err.message || 'Could not retrieve blob'));
-    } else if (!resp.body) {
-      return fn(new Error('Could not retrieve blob'));
-    } else if (resp.body.twofactor) {
-      resp.body.twofactor.blob_id   = self.id;
-      resp.body.twofactor.blob_url  = self.url;
-      resp.body.twofactor.device_id = self.device_id;
-      resp.body.twofactor.blob_key  = self.key
-      return fn(resp.body);
-    } else if (resp.body.result !== 'success') {
-      return fn(new Error('Incorrect username or password'));
-    }
-    
-    self.revision         = resp.body.revision;
-    self.encrypted_secret = resp.body.encrypted_secret;
-    self.identity_id      = resp.body.identity_id;
-    self.id_token         = resp.body.id_token;
-    self.missing_fields   = resp.body.missing_fields;
-    //self.attestations     = resp.body.attestation_summary;
-    
-    if (!self.decrypt(resp.body.blob)) {
-      return fn(new Error('Error while decrypting blob'));
+    if (self.url.indexOf('://') === -1) {
+      self.url = 'http://' + url;
     }
 
-    //Apply patches
-    if (resp.body.patches && resp.body.patches.length) {
-      var successful = true;
-      resp.body.patches.forEach(function(patch) {
-        successful = successful && self.applyEncryptedPatch(patch);
-      });
-
-      if (successful) {
-        self.consolidate();
+    url  = self.url + '/v1/blob/' + self.id;
+    if (this.device_id) url += '?device_id=' + this.device_id;
+    
+    request.get(url, function(err, resp) {
+      if (err) {
+        reject(new Error(err.message || 'Could not retrieve blob'));
+        return;
+      } else if (!resp.body) {
+        reject(new Error('Could not retrieve blob'));
+        return;
+      } else if (resp.body.twofactor) {
+        resp.body.twofactor.blob_id   = self.id;
+        resp.body.twofactor.blob_url  = self.url;
+        resp.body.twofactor.device_id = self.device_id;
+        resp.body.twofactor.blob_key  = self.key;
+        // TODO check
+        reject(resp.body);
+        return;
+      } else if (resp.body.result !== 'success') {
+        reject(new Error('Incorrect username or password'));
+        return;
       }
-    }
+      
+      self.revision         = resp.body.revision;
+      self.encrypted_secret = resp.body.encrypted_secret;
+      self.identity_id      = resp.body.identity_id;
+      self.id_token         = resp.body.id_token;
+      self.missing_fields   = resp.body.missing_fields;
+      //self.attestations     = resp.body.attestation_summary;
+      
+      if (!self.decrypt(resp.body.blob)) {
+        reject(new Error('Error while decrypting blob'));
+        return;
+      }
 
-    //return with newly decrypted blob
-    fn(null, self);
-  }).timeout(8000);
+      //Apply patches
+      if (resp.body.patches && resp.body.patches.length) {
+        var successful = true;
+        resp.body.patches.forEach(function(patch) {
+          successful = successful && self.applyEncryptedPatch(patch);
+        });
+
+        if (successful) {
+          self.consolidate();
+        }
+      }
+
+      //return with newly decrypted blob
+      resolve(self);
+    }).timeout(8000);
+  });
 };
 
 /**
@@ -879,21 +887,27 @@ exports.Blob = BlobObj;
  */
 
 BlobClient.getRippleName = function(url, address, fn) {
-  if (!crypt.isValidAddress(address)) {
-    return fn (new Error('Invalid ripple address'));
-  }
-
-  if (!crypt.isValidAddress(address)) return fn (new Error("Invalid ripple address"));
-  request.get(url + '/v1/user/' + address, function(err, resp){
-    if (err) {
-      fn(new Error('Unable to access vault sever'));
-    } else if (resp.body && resp.body.username) {
-      fn(null, resp.body.username);
-    } else if (resp.body && resp.body.exists === false) {
-      fn (new Error('No ripple name for this address'));
-    } else {
-      fn(new Error('Unable to determine if ripple name exists'));
+  return new Promise((resolve, reject) => {
+    if (!crypt.isValidAddress(address)) {
+      reject(new Error('Invalid ripple address'));
+      return;
     }
+
+    if (!crypt.isValidAddress(address)) {
+      reject(new Error("Invalid ripple address"));
+      return;
+    }
+    request.get(url + '/v1/user/' + address, function(err, resp){
+      if (err) {
+        reject(new Error('Unable to access vault sever'));
+      } else if (resp.body && resp.body.username) {
+        resolve(resp.body.username);
+      } else if (resp.body && resp.body.exists === false) {
+        reject(new Error('No ripple name for this address'));
+      } else {
+        reject(new Error('Unable to determine if ripple name exists'));
+      }
+    });
   });
 };
 
@@ -906,9 +920,9 @@ BlobClient.getRippleName = function(url, address, fn) {
  * @params {string} options.device_id //optional
  */
 
-BlobClient.get = function (options, fn) {
-  var blob = new BlobObj(options);
-  blob.init(fn);
+BlobClient.get = function(options) {
+  let blob = new BlobObj(options);
+  return blob.init();
 };
 
 /**
@@ -987,16 +1001,18 @@ BlobClient.verifyToken = function (options, fn) {
  * Verify email address
  */
 
-BlobClient.verify = function(url, username, token, fn) {
-  url += '/v1/user/' + username + '/verify/' + token;
-  request.get(url, function(err, resp) {
-    if (err) {    
-      fn(new Error("Failed to verify the account - XHR error"));
-    } else if (resp.body && resp.body.result === 'success') {
-      fn(null, resp.body);
-    } else {
-      fn(new Error('Failed to verify the account'));
-    }
+BlobClient.verify = function(url, username, token) {
+  return new Promise((resolve, reject) => {
+    url += '/v1/user/' + username + '/verify/' + token;
+    request.get(url, function(err, resp) {
+      if (err) {    
+        reject(new Error("Failed to verify the account - XHR error"));
+      } else if (resp.body && resp.body.result === 'success') {
+        resolve(resp.body);
+      } else {
+        reject(new Error('Failed to verify the account'));
+      }
+    });
   });
 };
 
@@ -1012,36 +1028,38 @@ BlobClient.verify = function(url, username, token, fn) {
  * @param {function} fn - Callback
  */
 
-BlobClient.resendEmail = function (opts, fn) {
-  var config = {
-    method : 'POST',
-    url    : opts.url + '/v1/user/email',
-    data   : {
-      blob_id  : opts.id,
-      username : opts.username,
-      email    : opts.email,
-      hostlink : opts.activateLink
-    }
-  };
-
-  var signedRequest = new SignedRequest(config);
-  var signed = signedRequest.signAsymmetric(opts.masterkey, opts.account_id, opts.id);
-
-  request.post(signed.url)
-    .send(signed.data)
-    .end(function(err, resp) {
-      if (err) {
-        console.log('error:', "resendEmail:", err);
-        fn(new Error("Failed to resend the token"));
-      } else if (resp.body && resp.body.result === 'success') {
-        fn(null, resp.body);
-      } else if (resp.body && resp.body.result === 'error') {
-        console.log('error:', "resendEmail:", resp.body.message);
-        fn(new Error("Failed to resend the token"));
-      } else {
-        fn(new Error("Failed to resend the token")); 
+BlobClient.resendEmail = function (opts) {
+  return new Promise((resolve, reject) => {
+    var config = {
+      method : 'POST',
+      url    : opts.url + '/v1/user/email',
+      data   : {
+        blob_id  : opts.id,
+        username : opts.username,
+        email    : opts.email,
+        hostlink : opts.activateLink
       }
-    });
+    };
+
+    var signedRequest = new SignedRequest(config);
+    var signed = signedRequest.signAsymmetric(opts.masterkey, opts.account_id, opts.id);
+
+    request.post(signed.url)
+      .send(signed.data)
+      .end(function(err, resp) {
+        if (err) {
+          console.log('error:', "resendEmail:", err);
+          reject(new Error("Failed to resend the token"));
+        } else if (resp.body && resp.body.result === 'success') {
+          resolve(resp.body);
+        } else if (resp.body && resp.body.result === 'error') {
+          console.log('error:', "resendEmail:", resp.body.message);
+          reject(new Error("Failed to resend the token"));
+        } else {
+          reject(new Error("Failed to resend the token")); 
+        }
+      });
+  });
 };
 
 /**
@@ -1055,64 +1073,73 @@ BlobClient.resendEmail = function (opts, fn) {
  */
 
 BlobClient.recoverBlob = function (opts, fn) {
-  var username = String(opts.username).trim();
-  var config   = {
-    method : 'GET',
-    url    : opts.url + '/v1/user/recov/' + username,
-  };
+  const getRequest = function() {
+    return new Promise((resolve, reject) => {
+      var username = String(opts.username).trim();
+      var config   = {
+        method : 'GET',
+        url    : opts.url + '/v1/user/recov/' + username,
+      };
 
-  var signedRequest = new SignedRequest(config);
-  var signed = signedRequest.signAsymmetricRecovery(opts.masterkey, username);  
+      var signedRequest = new SignedRequest(config);
+      var signed = signedRequest.signAsymmetricRecovery(opts.masterkey, username);  
 
-  request.get(signed.url)
-    .end(function(err, resp) {
-      if (err) {
-        fn(err);
-      } else if (resp.body && resp.body.result === 'success') {
-        if (!resp.body.encrypted_blobdecrypt_key) {
-          fn(new Error('Missing encrypted blob decrypt key.'));      
-        } else {
-          handleRecovery(resp);  
-        }       
-      } else if (resp.body && resp.body.result === 'error') {
-        fn(new Error(resp.body.message)); 
-      } else {
-        fn(new Error('Could not recover blob'));
-      }
+      request.get(signed.url)
+        .end(function(err, resp) {
+          if (err) {
+            reject(err);
+          } else if (resp.body && resp.body.result === 'success') {
+            if (!resp.body.encrypted_blobdecrypt_key) {
+              reject(new Error('Missing encrypted blob decrypt key.'));      
+            } else {
+              resolve(resp);  
+            }       
+          } else if (resp.body && resp.body.result === 'error') {
+            reject(new Error(resp.body.message)); 
+          } else {
+            reject(new Error('Could not recover blob'));
+          }
+        });
     });
-    
-  function handleRecovery (resp) {
+  }
 
-    var params = {
-      url     : opts.url,
-      blob_id : resp.body.blob_id,
-      key     : decryptBlobCrypt(opts.masterkey, resp.body.encrypted_blobdecrypt_key)
-    }
-    
-    var blob  = new BlobObj(params);
-    
-    blob.revision = resp.body.revision;
-    blob.encrypted_secret = resp.body.encrypted_secret;
-
-    if (!blob.decrypt(resp.body.blob)) {
-      return fn(new Error('Error while decrypting blob'));
-    }
-
-    //Apply patches
-    if (resp.body.patches && resp.body.patches.length) {
-      var successful = true;
-      resp.body.patches.forEach(function(patch) {
-        successful = successful && blob.applyEncryptedPatch(patch);
-      });
-
-      if (successful) {
-        blob.consolidate();
+  const handleRecovery = function(resp) {
+    return new Promise((resolve, reject) => {
+      var params = {
+        url     : opts.url,
+        blob_id : resp.body.blob_id,
+        key     : decryptBlobCrypt(opts.masterkey, resp.body.encrypted_blobdecrypt_key)
       }
-    }
+      
+      var blob  = new BlobObj(params);
+      
+      blob.revision = resp.body.revision;
+      blob.encrypted_secret = resp.body.encrypted_secret;
 
-    //return with newly decrypted blob
-    fn(null, blob);
+      if (!blob.decrypt(resp.body.blob)) {
+        reject(new Error('Error while decrypting blob'));
+        return;
+      }
+
+      //Apply patches
+      if (resp.body.patches && resp.body.patches.length) {
+        var successful = true;
+        resp.body.patches.forEach(function(patch) {
+          successful = successful && blob.applyEncryptedPatch(patch);
+        });
+
+        if (successful) {
+          blob.consolidate();
+        }
+      }
+
+      //return with newly decrypted blob
+      resolve(blob);
+    });
   };
+
+  return getRequest()
+    .then(handleRecovery);
 };
 
 
@@ -1126,40 +1153,42 @@ BlobClient.recoverBlob = function (opts, fn) {
  * @param {string} masterkey
  */
 
-BlobClient.updateKeys = function (opts, fn) {
-  var old_id    = opts.blob.id;
-  opts.blob.id  = opts.keys.id;
-  opts.blob.key = opts.keys.crypt;
-  opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
-  
-  var config = {
-    method : 'POST',
-    url    : opts.blob.url + '/v1/user/' + opts.username + '/updatekeys',
-    data   : {
-      blob_id  : opts.blob.id,
-      data     : opts.blob.encrypt(),
-      revision : opts.blob.revision,
-      encrypted_secret : opts.blob.encrypted_secret,
-      encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt),
-    }
-  };
-
-  var signedRequest = new SignedRequest(config);
-  var signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id); 
-
-  request.post(signed.url)
-    .send(signed.data)
-    .end(function(err, resp) {
-      if (err) {
-        console.log('error:', 'updateKeys:', err);
-        fn(new Error('Failed to update blob - XHR error'));
-      } else if (!resp.body || resp.body.result !== 'success') {
-        console.log('error:', 'updateKeys:', resp.body ? resp.body.message : null);
-        fn(new Error('Failed to update blob - bad result')); 
-      } else {
-        fn(null, resp.body);
+BlobClient.updateKeys = function (opts) {
+  return new Promise((resolve, reject) => {
+    var old_id    = opts.blob.id;
+    opts.blob.id  = opts.keys.id;
+    opts.blob.key = opts.keys.crypt;
+    opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+    
+    var config = {
+      method : 'POST',
+      url    : opts.blob.url + '/v1/user/' + opts.username + '/updatekeys',
+      data   : {
+        blob_id  : opts.blob.id,
+        data     : opts.blob.encrypt(),
+        revision : opts.blob.revision,
+        encrypted_secret : opts.blob.encrypted_secret,
+        encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt),
       }
-    });     
+    };
+
+    var signedRequest = new SignedRequest(config);
+    var signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id); 
+
+    request.post(signed.url)
+      .send(signed.data)
+      .end(function(err, resp) {
+        if (err) {
+          console.log('error:', 'updateKeys:', err);
+          reject(new Error('Failed to update blob - XHR error'));
+        } else if (!resp.body || resp.body.result !== 'success') {
+          console.log('error:', 'updateKeys:', resp.body ? resp.body.message : null);
+          reject(new Error('Failed to update blob - bad result')); 
+        } else {
+          resolve(resp.body);
+        }
+      });     
+  });
 }; 
  
 /**
@@ -1173,43 +1202,45 @@ BlobClient.updateKeys = function (opts, fn) {
  * @param {string} masterkey
  */
 
-BlobClient.rename = function (opts, fn) {
-  var old_id    = opts.blob.id;
-  opts.blob.id  = opts.keys.id;
-  opts.blob.key = opts.keys.crypt;
-  opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+BlobClient.rename = function (opts) {
+  return new Promise((resolve, reject) => {
+    var old_id    = opts.blob.id;
+    opts.blob.id  = opts.keys.id;
+    opts.blob.key = opts.keys.crypt;
+    opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
 
-  var config = {
-    method: 'POST',
-    url: opts.blob.url + '/v1/user/' + opts.username + '/rename',
-    data: {
-      blob_id  : opts.blob.id,
-      username : opts.new_username,
-      data     : opts.blob.encrypt(),
-      revision : opts.blob.revision,
-      encrypted_secret : opts.blob.encryptedSecret,
-      encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt)
-    }
-  };
-
-  var signedRequest = new SignedRequest(config);
-  var signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
-
-  request.post(signed.url)
-    .send(signed.data)
-    .end(function(err, resp) {
-      if (err) {
-        console.log('error:', 'rename:', err);
-        fn(new Error('Failed to rename'));
-      } else if (resp.body && resp.body.result === 'success') {
-        fn(null, resp.body);
-      } else if (resp.body && resp.body.result === 'error') {
-        console.log('error:', 'rename:', resp.body.message);
-        fn(new Error('Failed to rename'));
-      } else {
-        fn(new Error('Failed to rename'));
+    var config = {
+      method: 'POST',
+      url: opts.blob.url + '/v1/user/' + opts.username + '/rename',
+      data: {
+        blob_id  : opts.blob.id,
+        username : opts.new_username,
+        data     : opts.blob.encrypt(),
+        revision : opts.blob.revision,
+        encrypted_secret : opts.blob.encryptedSecret,
+        encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt)
       }
-    });
+    };
+
+    var signedRequest = new SignedRequest(config);
+    var signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
+
+    request.post(signed.url)
+      .send(signed.data)
+      .end(function(err, resp) {
+        if (err) {
+          console.log('error:', 'rename:', err);
+          reject(new Error('Failed to rename'));
+        } else if (resp.body && resp.body.result === 'success') {
+          resolve(resp.body);
+        } else if (resp.body && resp.body.result === 'error') {
+          console.log('error:', 'rename:', resp.body.message);
+          reject(new Error('Failed to rename'));
+        } else {
+          reject(new Error('Failed to rename'));
+        }
+      });
+  });
 };
 
 /**
@@ -1227,68 +1258,71 @@ BlobClient.rename = function (opts, fn) {
  * @param {function} fn
  */
 
-BlobClient.create = function(options, fn) {
-  var params = {
-    url     : options.url,
-    blob_id : options.id,
-    key     : options.crypt
-  }
-  var blob = new BlobObj(params);
-
-  blob.revision = 0;
-
-  blob.data = {
-    auth_secret : crypt.createSecret(8),
-    account_id  : crypt.getAddress(options.masterkey),
-    email       : options.email,
-    contacts    : [],
-    created     : (new Date()).toJSON()
-  };
-
-  blob.encrypted_secret = blob.encryptSecret(options.unlock, options.masterkey);
-
-  // Migration
-  if (options.oldUserBlob) {
-    blob.data.contacts = options.oldUserBlob.data.contacts;
-  }
-
-  //post to the blob vault to create
-  var config = {
-    method : 'POST',
-    url    : options.url + '/v1/user',
-    data   : {
-      blob_id     : options.id,
-      username    : options.username,
-      address     : blob.data.account_id,
-      auth_secret : blob.data.auth_secret,
-      data        : blob.encrypt(),
-      email       : options.email,
-      hostlink    : options.activateLink,
-      domain      : options.domain,
-      encrypted_blobdecrypt_key : blob.encryptBlobCrypt(options.masterkey, options.crypt),
-      encrypted_secret : blob.encrypted_secret
+BlobClient.create = function(options) {
+  return new Promise((resolve, reject) => {
+    var params = {
+      url     : options.url,
+      blob_id : options.id,
+      key     : options.crypt
     }
-  };
+    var blob = new BlobObj(params);
 
-  var signedRequest = new SignedRequest(config);
-  var signed = signedRequest.signAsymmetric(options.masterkey, blob.data.account_id, options.id);
-  
-  request.post(signed.url)
-    .send(signed.data)
-    .end(function(err, resp) {
-      if (err) {
-        fn(err);
-      } else if (resp.body && resp.body.result === 'success') {
-        blob.identity_id = resp.body.identity_id;
-        fn(null, blob, resp.body);
-      } else if (resp.body && resp.body.result === 'error') {
-        var err = new Error(resp.body.message);
-        if (resp.body.missing) err.missing = resp.body.missing;
-        fn (err);
-      } else {
-        fn(new Error('Could not create blob'));
+    blob.revision = 0;
+
+    blob.data = {
+      auth_secret : crypt.createSecret(8),
+      account_id  : crypt.getAddress(options.masterkey),
+      email       : options.email,
+      contacts    : [],
+      created     : (new Date()).toJSON()
+    };
+
+    blob.encrypted_secret = blob.encryptSecret(options.unlock, options.masterkey);
+
+    // Migration
+    if (options.oldUserBlob) {
+      blob.data.contacts = options.oldUserBlob.data.contacts;
+    }
+
+    //post to the blob vault to create
+    var config = {
+      method : 'POST',
+      url    : options.url + '/v1/user',
+      data   : {
+        blob_id     : options.id,
+        username    : options.username,
+        address     : blob.data.account_id,
+        auth_secret : blob.data.auth_secret,
+        data        : blob.encrypt(),
+        email       : options.email,
+        hostlink    : options.activateLink,
+        domain      : options.domain,
+        encrypted_blobdecrypt_key : blob.encryptBlobCrypt(options.masterkey, options.crypt),
+        encrypted_secret : blob.encrypted_secret
       }
-    });
+    };
+
+    var signedRequest = new SignedRequest(config);
+    var signed = signedRequest.signAsymmetric(options.masterkey, blob.data.account_id, options.id);
+    
+    request.post(signed.url)
+      .send(signed.data)
+      .end(function(err, resp) {
+        if (err) {
+          reject(err);
+        } else if (resp.body && resp.body.result === 'success') {
+          blob.identity_id = resp.body.identity_id;
+          // TODO need second argument ?
+          resolve({ blob, body: resp.body });
+        } else if (resp.body && resp.body.result === 'error') {
+          var err = new Error(resp.body.message);
+          if (resp.body.missing) err.missing = resp.body.missing;
+          reject(err);
+        } else {
+          reject(new Error('Could not create blob'));
+        }
+      });
+  });
 };
 
 /**
@@ -1596,30 +1630,32 @@ BlobClient.parseAttestation = function (attestation) {
  * @param {string} options.country_code
  */
 
-BlobClient.requestPhoneToken = function (options, fn) {
-  var config = {
-    method : 'POST',
-    url    : options.url + '/v1/user/' + options.username + '/phone',
-    data   : {
-      via          : 'sms',
-      phone_number : options.phone_number,
-      country_code : options.country_code
-    }
-  };
-  
-  request.post(config.url)
-    .send(config.data)
-    .end(function(err, resp) { 
-      if (err) {
-        fn(err);
-      } else if (resp.body && resp.body.result === 'success') {
-        fn(null, resp.body);
-      } else if (resp.body && resp.body.result === 'error') {
-        fn(new Error(resp.body.message)); 
-      } else {
-        fn(new Error('Unable to request phone token.'));
+BlobClient.requestPhoneToken = function (options) {
+  return new Promise((resolve, reject) => {
+    var config = {
+      method : 'POST',
+      url    : options.url + '/v1/user/' + options.username + '/phone',
+      data   : {
+        via          : 'sms',
+        phone_number : options.phone_number,
+        country_code : options.country_code
       }
-    });
+    };
+
+    request.post(config.url)
+      .send(config.data)
+      .end(function(err, resp) { 
+        if (err) {
+          reject(err);
+        } else if (resp.body && resp.body.result === 'success') {
+          resolve(resp.body);
+        } else if (resp.body && resp.body.result === 'error') {
+          reject(new Error(resp.body.message)); 
+        } else {
+          reject(new Error('Unable to request phone token.'));
+        }
+      });
+  });
 };
 
 /**
@@ -1633,30 +1669,32 @@ BlobClient.requestPhoneToken = function (options, fn) {
  * @param {string} options.token
  */
 
-BlobClient.verifyPhoneToken = function (options, fn) {
-  var config = {
-    method : 'POST',
-    url    : options.url + '/v1/user/' + options.username + '/phone/validate',
-    data   : {
-      phone_number : options.phone_number,
-      country_code : options.country_code,
-      token        : options.token
-    }
-  };
-  
-  request.post(config.url)
-    .send(config.data)
-    .end(function(err, resp) { 
-      if (err) {
-        fn(err);
-      } else if (resp.body && resp.body.result === 'success') {
-        fn(null, resp.body);
-      } else if (resp.body && resp.body.result === 'error') {
-        fn(new Error(resp.body.message)); 
-      } else {
-        fn(new Error('Unable to request phone token.'));
+BlobClient.verifyPhoneToken = function (options) {
+  return new Promise((resolve, reject) => {
+    var config = {
+      method : 'POST',
+      url    : options.url + '/v1/user/' + options.username + '/phone/validate',
+      data   : {
+        phone_number : options.phone_number,
+        country_code : options.country_code,
+        token        : options.token
       }
-    });
+    };
+    
+    request.post(config.url)
+      .send(config.data)
+      .end(function(err, resp) { 
+        if (err) {
+          reject(err);
+        } else if (resp.body && resp.body.result === 'success') {
+          resolve(resp.body);
+        } else if (resp.body && resp.body.result === 'error') {
+          reject(new Error(resp.body.message)); 
+        } else {
+          reject(new Error('Unable to request phone token.'));
+        }
+      });
+  });
 };
 
 exports.BlobClient = BlobClient;

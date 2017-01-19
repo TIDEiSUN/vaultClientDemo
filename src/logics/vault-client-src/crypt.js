@@ -84,73 +84,77 @@ function randomWords (nWords) {
  * @param {function}  fn
  */
 
-Crypt.derive = function(opts, purpose, username, secret, fn) {
-  var tokens;
+Crypt.derive = function(opts, purpose, username, secret) {
+  return new Promise((resolve, reject) => {
+    var tokens;
 
-  if (purpose === 'login') {
-    tokens = ['id', 'crypt'];
-  } else {
-    tokens = ['unlock'];
-  }
-
-  var iExponent = new sjcl.bn(String(opts.exponent));
-  var iModulus  = new sjcl.bn(String(opts.modulus));
-  var iAlpha    = new sjcl.bn(String(opts.alpha));
-
-  var publicInfo = [ 'PAKDF_1_0_0', opts.host.length, opts.host, username.length, username, purpose.length, purpose ].join(':') + ':';
-  var publicSize = Math.ceil(Math.min((7 + iModulus.bitLength()) >>> 3, 256) / 8);
-  var publicHash = fdh(publicInfo, publicSize);
-  var publicHex  = sjcl.codec.hex.fromBits(publicHash);
-  var iPublic    = new sjcl.bn(String(publicHex)).setBitM(0);
-  var secretInfo = [ publicInfo, secret.length, secret ].join(':') + ':';
-  var secretSize = (7 + iModulus.bitLength()) >>> 3;
-  var secretHash = fdh(secretInfo, secretSize);
-  var secretHex  = sjcl.codec.hex.fromBits(secretHash);
-  var iSecret    = new sjcl.bn(String(secretHex)).mod(iModulus);
-
-  if (jacobi(iSecret, iModulus) !== 1) {
-    iSecret = iSecret.mul(iAlpha).mod(iModulus);
-  }
-
-  var iRandom;
-
-  for (;;) {
-    iRandom = sjcl.bn.random(iModulus, SJCL_PARANOIA_256_BITS);
-    if (jacobi(iRandom, iModulus) === 1) {
-      break;
+    if (purpose === 'login') {
+      tokens = ['id', 'crypt'];
+    } else {
+      tokens = ['unlock'];
     }
-  }
 
-  var iBlind   = iRandom.powermod(iPublic.mul(iExponent), iModulus);
-  var iSignreq = iSecret.mulmod(iBlind, iModulus);
-  var signreq  = sjcl.codec.hex.fromBits(iSignreq.toBits());
+    var iExponent = new sjcl.bn(String(opts.exponent));
+    var iModulus  = new sjcl.bn(String(opts.modulus));
+    var iAlpha    = new sjcl.bn(String(opts.alpha));
 
-  request.post(opts.url)
-    .send({ info: publicInfo, signreq: signreq })
-    .end(function(err, resp) {
-      
-      if (err || !resp) {
-        return fn(new Error('Could not query PAKDF server ' + opts.host));
+    var publicInfo = [ 'PAKDF_1_0_0', opts.host.length, opts.host, username.length, username, purpose.length, purpose ].join(':') + ':';
+    var publicSize = Math.ceil(Math.min((7 + iModulus.bitLength()) >>> 3, 256) / 8);
+    var publicHash = fdh(publicInfo, publicSize);
+    var publicHex  = sjcl.codec.hex.fromBits(publicHash);
+    var iPublic    = new sjcl.bn(String(publicHex)).setBitM(0);
+    var secretInfo = [ publicInfo, secret.length, secret ].join(':') + ':';
+    var secretSize = (7 + iModulus.bitLength()) >>> 3;
+    var secretHash = fdh(secretInfo, secretSize);
+    var secretHex  = sjcl.codec.hex.fromBits(secretHash);
+    var iSecret    = new sjcl.bn(String(secretHex)).mod(iModulus);
+
+    if (jacobi(iSecret, iModulus) !== 1) {
+      iSecret = iSecret.mul(iAlpha).mod(iModulus);
+    }
+
+    var iRandom;
+
+    for (;;) {
+      iRandom = sjcl.bn.random(iModulus, SJCL_PARANOIA_256_BITS);
+      if (jacobi(iRandom, iModulus) === 1) {
+        break;
       }
+    }
 
-      var data = resp.body || resp.text ? JSON.parse(resp.text) : {};
+    var iBlind   = iRandom.powermod(iPublic.mul(iExponent), iModulus);
+    var iSignreq = iSecret.mulmod(iBlind, iModulus);
+    var signreq  = sjcl.codec.hex.fromBits(iSignreq.toBits());
 
-      if (data.result !== 'success') {
-        return fn(new Error('Could not query PAKDF server '+opts.host));
-      }
+    request.post(opts.url)
+      .send({ info: publicInfo, signreq: signreq })
+      .end(function(err, resp) {
+        
+        if (err || !resp) {
+          reject(new Error('Could not query PAKDF server ' + opts.host));
+          return;
+        }
 
-      var iSignres = new sjcl.bn(String(data.signres));
-      var iRandomInv = iRandom.inverseMod(iModulus);
-      var iSigned    = iSignres.mulmod(iRandomInv, iModulus);
-      var key        = iSigned.toBits();
-      var result     = { };
+        var data = resp.body || resp.text ? JSON.parse(resp.text) : {};
 
-      tokens.forEach(function(token) {
-        result[token] = keyHash(key, token);
+        if (data.result !== 'success') {
+          reject(new Error('Could not query PAKDF server '+opts.host));
+          return;
+        }
+
+        var iSignres = new sjcl.bn(String(data.signres));
+        var iRandomInv = iRandom.inverseMod(iModulus);
+        var iSigned    = iSignres.mulmod(iRandomInv, iModulus);
+        var key        = iSigned.toBits();
+        var result     = { };
+
+        tokens.forEach(function(token) {
+          result[token] = keyHash(key, token);
+        });
+
+        resolve(result);
       });
-
-      fn(null, result);
-    });
+  });
 };
 
 /**

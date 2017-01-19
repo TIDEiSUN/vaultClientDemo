@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
-import * as VaultClientDemo from '../logics/VaultClientDemo'
-import { CurrentLogin } from './Data'
+import VaultClientDemo from '../logics/VaultClientDemo';
+import { CurrentLogin } from './Data';
 
 export default class VerifyPhonePage extends React.Component {
   constructor(props) {
@@ -9,45 +9,45 @@ export default class VerifyPhonePage extends React.Component {
     this.state = {
       countryCode: '',
       phoneNumber: '',
-      token: ''
+      token: '',
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
   handleSubmitSend(event) {
     console.log('Handle send verification code by sms');
-    VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.username, 
-                                              CurrentLogin.loginInfo, 
-                                              this.state.countryCode, 
+    VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.username,
+                                              CurrentLogin.loginInfo,
+                                              this.state.countryCode,
                                               this.state.phoneNumber)
-      .then(result => {
-        //CurrentLogin.password = this.state.newPassword;
+      .then((result) => {
+        // CurrentLogin.password = this.state.newPassword;
         console.log(result);
         alert('Success!');
-      }).catch(err => {
-        alert('Failed to send verification code by sms: ' + err.message);
+      }).catch((err) => {
+        alert(`Failed to send verification code by sms: ${err.message}`);
       });
     event.preventDefault();
   }
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
-    VaultClientDemo.verifyPhone(CurrentLogin.username, 
-                                CurrentLogin.loginInfo, 
-                                this.state.countryCode, 
+    VaultClientDemo.verifyPhone(CurrentLogin.username,
+                                CurrentLogin.loginInfo,
+                                this.state.countryCode,
                                 this.state.phoneNumber,
                                 this.state.token)
-      .then(result => {
-        //CurrentLogin.password = this.state.newPassword;
+      .then((result) => {
+        // CurrentLogin.password = this.state.newPassword;
         console.log(result);
         alert('Success!');
-      }).catch(err => {
-        alert('Failed to verify phone: ' + err.message);
+      }).catch((err) => {
+        alert(`Failed to verify phone: ${err.message}`);
       });
     event.preventDefault();
   }
@@ -59,11 +59,11 @@ export default class VerifyPhonePage extends React.Component {
         <form onSubmit={this.handleSubmitSend}>
           <div>
             <label>
-              Country code: 
+              Country code:
               <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
             </label>
             <label>
-              Phone number: 
+              Phone number:
               <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
             </label>
             <input type="submit" value="Send" />
@@ -72,7 +72,7 @@ export default class VerifyPhonePage extends React.Component {
         <form onSubmit={this.handleSubmitVerify}>
           <div>
             <label>
-              Received token: 
+              Received token:
               <input type="text" value={this.state.token} onChange={this.handleChange.bind(this, 'token')} />
             </label>
             <input type="submit" value="Verify" />

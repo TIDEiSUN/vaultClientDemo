@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
-import * as VaultClientDemo from '../logics/VaultClientDemo'
+import VaultClientDemo from '../logics/VaultClientDemo'
 
 function ResendVerificationButton(props) {
   if(props.verified) {
