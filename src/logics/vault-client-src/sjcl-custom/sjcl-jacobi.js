@@ -1,6 +1,6 @@
 import { sjcl } from 'ripple-lib';
 
-var jacobi = function (a, that) {
+export default function jacobi(a, that) {
   that = new sjcl.bn(that);
 
   if (that.sign() === -1) return;
@@ -11,18 +11,18 @@ var jacobi = function (a, that) {
   // 2. If a = 1 then return(1).
   if (a.equals(1)) { return 1; }
 
-  var s = 0;
+  let s = 0;
 
   // 3. Write a = 2^e * a1, where a1 is odd.
-  var e = 0;
+  let e = 0;
   while (!a.testBit(e)) e++;
-  var a1 = a.shiftRight(e);
+  const a1 = a.shiftRight(e);
 
   // 4. If e is even then set s ← 1.
   if ((e & 1) === 0) {
     s = 1;
   } else {
-    var residue = that.modInt(8);
+    const residue = that.modInt(8);
 
     if (residue === 1 || residue === 7) {
       // Otherwise set s ← 1 if n ≡ 1 or 7 (mod 8)
@@ -40,9 +40,6 @@ var jacobi = function (a, that) {
 
   if (a1.equals(1)) {
     return s;
-  } else {
-    return s * jacobi(that.mod(a1), a1);
   }
-};
-
-exports.jacobi = jacobi;
+  return s * jacobi(that.mod(a1), a1);
+}

@@ -1,5 +1,5 @@
 import * as superagent from 'superagent';
-import { RippleTxt } from './rippletxt';
+import RippleTxt from './rippletxt';
 
 class SuperAgentHelper {
   static getRequest(url) {

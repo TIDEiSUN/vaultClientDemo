@@ -3,7 +3,7 @@ import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
 import parser from 'url';
-import { jacobi } from './sjcl-custom/sjcl-jacobi.js';
+import jacobi from './sjcl-custom/sjcl-jacobi.js';
 
 const SJCL_PARANOIA_256_BITS = 6;
 const cryptConfig = {

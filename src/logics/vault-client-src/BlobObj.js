@@ -1,7 +1,7 @@
 import request from 'superagent';
 import extend from 'extend';
 import crypt from './crypt';
-import { SignedRequest } from './signedrequest';
+import SignedRequest from './signedrequest';
 import Identity, { identityRoot } from './Identity';
 
 // Blob object class

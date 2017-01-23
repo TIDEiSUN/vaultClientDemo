@@ -1,6 +1,6 @@
 import blobClient, { Blob } from './blob';
 import AuthInfo from './authinfo';
-import { RippleTxt } from './rippletxt';
+import RippleTxt from './rippletxt';
 import crypt from './crypt';
 
 class DeriveHelper {

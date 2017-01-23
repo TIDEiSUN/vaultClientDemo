@@ -1,6 +1,6 @@
 import request from 'superagent';
 import crypt from './crypt';
-import { SignedRequest } from './signedrequest';
+import SignedRequest from './signedrequest';
 import BlobObj from './BlobObj';
 
 /***** blob client methods ****/
