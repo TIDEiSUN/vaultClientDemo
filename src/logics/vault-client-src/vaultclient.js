@@ -1,7 +1,7 @@
-import { BlobClient as blobClient, Blob } from './blob';
+import blobClient, { Blob } from './blob';
 import AuthInfo from './authinfo';
 import { RippleTxt } from './rippletxt';
-import { Crypt as crypt } from './crypt';
+import crypt from './crypt';
 
 class DeriveHelper {
   /**
@@ -45,8 +45,7 @@ export default class VaultClient {
    * @param {function} callback
    */
   getAuthInfo(username) {
-    // FIXME needs username.toLowercase() ?
-    return AuthInfo.get(this.domain, username.toLowerCase()).then((authInfo) => {
+    return AuthInfo.get(this.domain, username).then((authInfo) => {
       if (authInfo.version !== 3) {
         return Promise.reject(new Error('This wallet is incompatible with this version of the vault-client.'));
       }
@@ -85,7 +84,7 @@ export default class VaultClient {
    */
 
   exists(username) {
-    return AuthInfo.get(this.domain, username.toLowerCase())
+    return AuthInfo.get(this.domain, username)
       .then(authInfo => Promise.resolve(!!authInfo.exists));
   }
 
@@ -97,8 +96,8 @@ export default class VaultClient {
    */
 
   addressExists(address) {
-    return AuthInfo.getAddress(this.domain, address)
-      .then(authInfo => Promise.resolve(!!authInfo.addressExists));
+    return AuthInfo.get(this.domain, address)
+      .then(authInfo => Promise.resolve(!!authInfo.exists));
   }
 
   /**
@@ -222,7 +221,8 @@ export default class VaultClient {
       device_id: device_id,
     };
 
-    return blobClient.get(options);
+    return blobClient.get(options)
+      .then(blob => Promise.resolve({blob}));
   }
 
   /**
@@ -332,7 +332,7 @@ export default class VaultClient {
   verify(username, token) {
     return this.getAuthInfo(username)
       .then((authInfo) => {
-        return blobClient.verify(authInfo.blobvault, username.toLowerCase(), token);
+        return blobClient.verify(authInfo.blobvault, username, token);
       });
   }
 

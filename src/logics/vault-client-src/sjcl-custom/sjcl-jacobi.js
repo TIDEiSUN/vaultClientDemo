@@ -1,5 +1,4 @@
-var ripple = require('ripple-lib');
-var sjcl        = ripple.sjcl;
+import { sjcl } from 'ripple-lib';
 
 var jacobi = function (a, that) {
   that = new sjcl.bn(that);

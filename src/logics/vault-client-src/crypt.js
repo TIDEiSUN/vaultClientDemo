@@ -1,19 +1,12 @@
-var ripple = require('ripple-lib');
+import { sjcl, Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
+import request from 'superagent';
+import querystring from 'querystring';
+import extend from 'extend';
+import parser from 'url';
+import { jacobi } from './sjcl-custom/sjcl-jacobi.js';
 
-var sjcl        = ripple.sjcl;
-var base        = ripple.Base;
-var Seed        = ripple.Seed;
-var UInt160     = ripple.UInt160;
-var UInt256     = ripple.UInt256;
-var request     = require('superagent');
-var querystring = require('querystring');
-var extend      = require("extend");
-var parser      = require("url");
-var jacobi      = require('./sjcl-custom/sjcl-jacobi.js').jacobi;
-var Crypt       = { };
-
-var SJCL_PARANOIA_256_BITS = 6;
-var cryptConfig = {
+const SJCL_PARANOIA_256_BITS = 6;
+const cryptConfig = {
   cipher : 'aes',
   mode   : 'ccm',
   ts     : 64,   // tag length
@@ -70,6 +63,8 @@ function randomWords (nWords) {
 
 /****** exposed functions ******/
 
+const Crypt = {
+
 /**
  * KEY DERIVATION FUNCTION
  *
@@ -84,78 +79,78 @@ function randomWords (nWords) {
  * @param {function}  fn
  */
 
-Crypt.derive = function(opts, purpose, username, secret) {
-  return new Promise((resolve, reject) => {
-    var tokens;
+  derive(opts, purpose, username, secret) {
+    return new Promise((resolve, reject) => {
+      var tokens;
 
-    if (purpose === 'login') {
-      tokens = ['id', 'crypt'];
-    } else {
-      tokens = ['unlock'];
-    }
-
-    var iExponent = new sjcl.bn(String(opts.exponent));
-    var iModulus  = new sjcl.bn(String(opts.modulus));
-    var iAlpha    = new sjcl.bn(String(opts.alpha));
-
-    var publicInfo = [ 'PAKDF_1_0_0', opts.host.length, opts.host, username.length, username, purpose.length, purpose ].join(':') + ':';
-    var publicSize = Math.ceil(Math.min((7 + iModulus.bitLength()) >>> 3, 256) / 8);
-    var publicHash = fdh(publicInfo, publicSize);
-    var publicHex  = sjcl.codec.hex.fromBits(publicHash);
-    var iPublic    = new sjcl.bn(String(publicHex)).setBitM(0);
-    var secretInfo = [ publicInfo, secret.length, secret ].join(':') + ':';
-    var secretSize = (7 + iModulus.bitLength()) >>> 3;
-    var secretHash = fdh(secretInfo, secretSize);
-    var secretHex  = sjcl.codec.hex.fromBits(secretHash);
-    var iSecret    = new sjcl.bn(String(secretHex)).mod(iModulus);
-
-    if (jacobi(iSecret, iModulus) !== 1) {
-      iSecret = iSecret.mul(iAlpha).mod(iModulus);
-    }
-
-    var iRandom;
-
-    for (;;) {
-      iRandom = sjcl.bn.random(iModulus, SJCL_PARANOIA_256_BITS);
-      if (jacobi(iRandom, iModulus) === 1) {
-        break;
+      if (purpose === 'login') {
+        tokens = ['id', 'crypt'];
+      } else {
+        tokens = ['unlock'];
       }
-    }
 
-    var iBlind   = iRandom.powermod(iPublic.mul(iExponent), iModulus);
-    var iSignreq = iSecret.mulmod(iBlind, iModulus);
-    var signreq  = sjcl.codec.hex.fromBits(iSignreq.toBits());
+      var iExponent = new sjcl.bn(String(opts.exponent));
+      var iModulus  = new sjcl.bn(String(opts.modulus));
+      var iAlpha    = new sjcl.bn(String(opts.alpha));
 
-    request.post(opts.url)
-      .send({ info: publicInfo, signreq: signreq })
-      .end(function(err, resp) {
-        
-        if (err || !resp) {
-          reject(new Error('Could not query PAKDF server ' + opts.host));
-          return;
+      var publicInfo = [ 'PAKDF_1_0_0', opts.host.length, opts.host, username.length, username, purpose.length, purpose ].join(':') + ':';
+      var publicSize = Math.ceil(Math.min((7 + iModulus.bitLength()) >>> 3, 256) / 8);
+      var publicHash = fdh(publicInfo, publicSize);
+      var publicHex  = sjcl.codec.hex.fromBits(publicHash);
+      var iPublic    = new sjcl.bn(String(publicHex)).setBitM(0);
+      var secretInfo = [ publicInfo, secret.length, secret ].join(':') + ':';
+      var secretSize = (7 + iModulus.bitLength()) >>> 3;
+      var secretHash = fdh(secretInfo, secretSize);
+      var secretHex  = sjcl.codec.hex.fromBits(secretHash);
+      var iSecret    = new sjcl.bn(String(secretHex)).mod(iModulus);
+
+      if (jacobi(iSecret, iModulus) !== 1) {
+        iSecret = iSecret.mul(iAlpha).mod(iModulus);
+      }
+
+      var iRandom;
+
+      for (;;) {
+        iRandom = sjcl.bn.random(iModulus, SJCL_PARANOIA_256_BITS);
+        if (jacobi(iRandom, iModulus) === 1) {
+          break;
         }
+      }
 
-        var data = resp.body || resp.text ? JSON.parse(resp.text) : {};
+      var iBlind   = iRandom.powermod(iPublic.mul(iExponent), iModulus);
+      var iSignreq = iSecret.mulmod(iBlind, iModulus);
+      var signreq  = sjcl.codec.hex.fromBits(iSignreq.toBits());
 
-        if (data.result !== 'success') {
-          reject(new Error('Could not query PAKDF server '+opts.host));
-          return;
-        }
+      request.post(opts.url)
+        .send({ info: publicInfo, signreq: signreq })
+        .end(function(err, resp) {
+          
+          if (err || !resp) {
+            reject(new Error('Could not query PAKDF server ' + opts.host));
+            return;
+          }
 
-        var iSignres = new sjcl.bn(String(data.signres));
-        var iRandomInv = iRandom.inverseMod(iModulus);
-        var iSigned    = iSignres.mulmod(iRandomInv, iModulus);
-        var key        = iSigned.toBits();
-        var result     = { };
+          var data = resp.body || resp.text ? JSON.parse(resp.text) : {};
 
-        tokens.forEach(function(token) {
-          result[token] = keyHash(key, token);
+          if (data.result !== 'success') {
+            reject(new Error('Could not query PAKDF server '+opts.host));
+            return;
+          }
+
+          var iSignres = new sjcl.bn(String(data.signres));
+          var iRandomInv = iRandom.inverseMod(iModulus);
+          var iSigned    = iSignres.mulmod(iRandomInv, iModulus);
+          var key        = iSigned.toBits();
+          var result     = { };
+
+          tokens.forEach(function(token) {
+            result[token] = keyHash(key, token);
+          });
+
+          resolve(result);
         });
-
-        resolve(result);
-      });
-  });
-};
+    });
+  },
 
 /**
  * Imported from ripple-client
@@ -170,21 +165,21 @@ Crypt.derive = function(opts, purpose, username, secret) {
  * @param {string} data
  */
 
-Crypt.encrypt = function(key, data) {
-  key = sjcl.codec.hex.toBits(key);
+  encrypt(key, data) {
+    key = sjcl.codec.hex.toBits(key);
 
-  var opts = extend(true, {}, cryptConfig);
+    var opts = extend(true, {}, cryptConfig);
 
-  var encryptedObj = JSON.parse(sjcl.encrypt(key, data, opts));
-  var version = [sjcl.bitArray.partial(8, 0)];
-  var initVector = sjcl.codec.base64.toBits(encryptedObj.iv);
-  var ciphertext = sjcl.codec.base64.toBits(encryptedObj.ct);
+    var encryptedObj = JSON.parse(sjcl.encrypt(key, data, opts));
+    var version = [sjcl.bitArray.partial(8, 0)];
+    var initVector = sjcl.codec.base64.toBits(encryptedObj.iv);
+    var ciphertext = sjcl.codec.base64.toBits(encryptedObj.ct);
 
-  var encryptedBits = sjcl.bitArray.concat(version, initVector);
-  encryptedBits = sjcl.bitArray.concat(encryptedBits, ciphertext);
+    var encryptedBits = sjcl.bitArray.concat(version, initVector);
+    encryptedBits = sjcl.bitArray.concat(encryptedBits, ciphertext);
 
-  return sjcl.codec.base64.fromBits(encryptedBits);
-};
+    return sjcl.codec.base64.fromBits(encryptedBits);
+  },
 
 /**
  * Decrypt data
@@ -193,24 +188,24 @@ Crypt.encrypt = function(key, data) {
  * @param {string} data
  */
 
-Crypt.decrypt = function (key, data) {
-  
-  key = sjcl.codec.hex.toBits(key);
-  var encryptedBits = sjcl.codec.base64.toBits(data);
+  decrypt(key, data) {
+    
+    key = sjcl.codec.hex.toBits(key);
+    var encryptedBits = sjcl.codec.base64.toBits(data);
 
-  var version = sjcl.bitArray.extract(encryptedBits, 0, 8);
+    var version = sjcl.bitArray.extract(encryptedBits, 0, 8);
 
-  if (version !== 0) {
-    throw new Error('Unsupported encryption version: '+version);
-  }
+    if (version !== 0) {
+      throw new Error('Unsupported encryption version: '+version);
+    }
 
-  var encrypted = extend(true, {}, cryptConfig, {
-    iv: sjcl.codec.base64.fromBits(sjcl.bitArray.bitSlice(encryptedBits, 8, 8+128)),
-    ct: sjcl.codec.base64.fromBits(sjcl.bitArray.bitSlice(encryptedBits, 8+128))
-  });
+    var encrypted = extend(true, {}, cryptConfig, {
+      iv: sjcl.codec.base64.fromBits(sjcl.bitArray.bitSlice(encryptedBits, 8, 8+128)),
+      ct: sjcl.codec.base64.fromBits(sjcl.bitArray.bitSlice(encryptedBits, 8+128))
+    });
 
-  return sjcl.decrypt(key, JSON.stringify(encrypted));
-};
+    return sjcl.decrypt(key, JSON.stringify(encrypted));
+  },
 
 
 /**
@@ -219,9 +214,9 @@ Crypt.decrypt = function (key, data) {
  * @param {string} address
  */
 
-Crypt.isValidAddress = function (address) {
-  return UInt160.is_valid(address);
-};
+  isValidAddress(address) {
+    return UInt160.is_valid(address);
+  },
 
 /**
  * Create an encryption key
@@ -229,17 +224,17 @@ Crypt.isValidAddress = function (address) {
  * @param {integer} nWords - number of words
  */
 
-Crypt.createSecret = function (nWords) {
-  return sjcl.codec.hex.fromBits(randomWords(nWords));
-};
+  createSecret(nWords) {
+    return sjcl.codec.hex.fromBits(randomWords(nWords));
+  },
 
 /**
  * Create a new master key
  */
 
-Crypt.createMaster = function () {
-  return base.encode_check(33, sjcl.codec.bytes.fromBits(randomWords(4)));
-};
+  createMaster() {
+    return base.encode_check(33, sjcl.codec.bytes.fromBits(randomWords(4)));
+  },
 
 
 /**
@@ -248,9 +243,9 @@ Crypt.createMaster = function () {
  * @param {string} masterkey
  */
 
-Crypt.getAddress = function (masterkey) {
-  return Seed.from_json(masterkey).get_key().get_address().to_json();
-};
+  getAddress(masterkey) {
+    return Seed.from_json(masterkey).get_key().get_address().to_json();
+  },
 
 /**
  * Hash data using SHA-512.
@@ -259,10 +254,10 @@ Crypt.getAddress = function (masterkey) {
  * @return {string} Hash of the data
  */
 
-Crypt.hashSha512 = function (data) {
-  // XXX Should return a UInt512
-  return sjcl.codec.hex.fromBits(sjcl.hash.sha512.hash(data)); 
-};
+  hashSha512(data) {
+    // XXX Should return a UInt512
+    return sjcl.codec.hex.fromBits(sjcl.hash.sha512.hash(data)); 
+  },
 
 /**
  * Hash data using SHA-512 and return the first 256 bits.
@@ -270,9 +265,9 @@ Crypt.hashSha512 = function (data) {
  * @param {string|bitArray} data
  * @return {UInt256} Hash of the data
  */
-Crypt.hashSha512Half = function (data) {
-  return UInt256.from_hex(Crypt.hashSha512(data).substr(0, 64));
-};
+  hashSha512Half(data) {
+    return UInt256.from_hex(Crypt.hashSha512(data).substr(0, 64));
+  },
 
 
 /**
@@ -282,10 +277,10 @@ Crypt.hashSha512Half = function (data) {
  * @param {string} data
  */
 
-Crypt.signString = function(secret, data) {
-  var hmac = new sjcl.misc.hmac(sjcl.codec.hex.toBits(secret), sjcl.hash.sha512);
-  return sjcl.codec.hex.fromBits(hmac.mac(data));
-};
+  signString(secret, data) {
+    var hmac = new sjcl.misc.hmac(sjcl.codec.hex.toBits(secret), sjcl.hash.sha512);
+    return sjcl.codec.hex.fromBits(hmac.mac(data));
+  },
 
 /**
  * Create an an accout recovery key
@@ -293,13 +288,13 @@ Crypt.signString = function(secret, data) {
  * @param {string} secret
  */
 
-Crypt.deriveRecoveryEncryptionKeyFromSecret = function(secret) {
-  var seed = Seed.from_json(secret).to_bits();
-  var hmac = new sjcl.misc.hmac(seed, sjcl.hash.sha512);
-  var key  = hmac.mac('ripple/hmac/recovery_encryption_key/v1');
-  key      = sjcl.bitArray.bitSlice(key, 0, 256);
-  return sjcl.codec.hex.fromBits(key);
-};
+  deriveRecoveryEncryptionKeyFromSecret(secret) {
+    var seed = Seed.from_json(secret).to_bits();
+    var hmac = new sjcl.misc.hmac(seed, sjcl.hash.sha512);
+    var key  = hmac.mac('ripple/hmac/recovery_encryption_key/v1');
+    key      = sjcl.bitArray.bitSlice(key, 0, 256);
+    return sjcl.codec.hex.fromBits(key);
+  },
 
 /**
  * Convert base64 encoded data into base64url encoded data.
@@ -307,9 +302,9 @@ Crypt.deriveRecoveryEncryptionKeyFromSecret = function(secret) {
  * @param {String} base64 Data
  */
 
-Crypt.base64ToBase64Url = function(encodedData) {
-  return encodedData.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
-};
+  base64ToBase64Url(encodedData) {
+    return encodedData.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]+$/, '');
+  },
 
 /**
  * Convert base64url encoded data into base64 encoded data.
@@ -317,22 +312,24 @@ Crypt.base64ToBase64Url = function(encodedData) {
  * @param {String} base64 Data
  */
 
-Crypt.base64UrlToBase64 = function(encodedData) {
-  encodedData = encodedData.replace(/-/g, '+').replace(/_/g, '/');
+  base64UrlToBase64(encodedData) {
+    encodedData = encodedData.replace(/-/g, '+').replace(/_/g, '/');
 
-  while (encodedData.length % 4) {
-    encodedData += '=';
-  }
+    while (encodedData.length % 4) {
+      encodedData += '=';
+    }
 
-  return encodedData;
-};
+    return encodedData;
+  },
 
 /**
  * base64 to UTF8
  */
 
-Crypt.decodeBase64 = function (data) {
-  return sjcl.codec.utf8String.fromBits(sjcl.codec.base64.toBits(data));
-}
+  decodeBase64(data) {
+    return sjcl.codec.utf8String.fromBits(sjcl.codec.base64.toBits(data));
+  }
 
-exports.Crypt = Crypt;
+};
+
+export default Crypt;

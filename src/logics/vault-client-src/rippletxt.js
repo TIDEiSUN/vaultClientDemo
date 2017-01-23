@@ -1,6 +1,5 @@
-var ripple = require('ripple-lib');
-var request   = require('superagent');
-var Currency  = ripple.Currency;
+import request from 'superagent';
+import { Currency } from 'ripple-lib';
 
 var RippleTxt = {
   txts : { }
@@ -96,7 +95,7 @@ RippleTxt.parse = function(txt) {
  */
 
 RippleTxt.extractDomain = function (url) {
-  match = /[^.]*\.[^.]{2,3}(?:\.[^.]{2,3})?([^.\?][^\?.]+?)?$/.exec(url);
+  let match = /[^.]*\.[^.]{2,3}(?:\.[^.]{2,3})?([^.\?][^\?.]+?)?$/.exec(url);
   return match && match[0] ? match[0] : url;
 };
 
@@ -108,49 +107,42 @@ RippleTxt.extractDomain = function (url) {
  * @param {Object} fn
  */
 
-RippleTxt.getCurrencies = function(domain, fn) {
+RippleTxt.getCurrencies = function(domain) {
   var extracted = RippleTxt.extractDomain(domain);
   var self      = this;
   
-  //try with extracted domain
-  getCurrencies (extracted, function(err, resp) {
-    
-    //try with original domain
-    if (err) {
-      return getCurrencies(domain, fn);
-    
-    } else {
-      return fn (null, resp);
-    }
-  });
-  
-  function getCurrencies (domain, fn) {
-    self.get(domain, function(err, txt) {
-      if (err) {
-        return fn(err);  
-      }
+  function getCurrencies(domain) {
+    return self.get(domain)
+      .then((txt) => {
+        if (!txt.currencies || !txt.accounts) {
+          return Promise.resolve([]);
+        }
+        //NOTE: this won't be accurate if there are
+        //multiple issuer accounts with different 
+        //currencies associated with each.
+        var issuer     = txt.accounts[0];
+        var currencies = [];
 
-      if (err || !txt.currencies || !txt.accounts) {
-        return fn(null, []);
-      }
-
-      //NOTE: this won't be accurate if there are
-      //multiple issuer accounts with different 
-      //currencies associated with each.
-      var issuer     = txt.accounts[0];
-      var currencies = [];
-
-      txt.currencies.forEach(function(currency) {
-        currencies.push({
-          issuer   : issuer,
-          currency : Currency.from_json(currency),
-          domain   : domain
+        txt.currencies.forEach(function(currency) {
+          currencies.push({
+            issuer   : issuer,
+            currency : Currency.from_json(currency),
+            domain   : domain
+          });
         });
-      });
 
-      fn(null, currencies);
-    });
+        return Promise.resolve(currencies);
+      });
   }
+  
+  //try with extracted domain
+  return getCurrencies(extracted)
+    .then(resp => {
+      return Promise.resolve(resp);
+    }).catch(err => {
+      //try with original domain
+      return getCurrencies(domain);
+    });
 }; 
 
 exports.RippleTxt = RippleTxt;

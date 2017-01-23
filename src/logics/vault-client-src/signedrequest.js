@@ -1,9 +1,8 @@
-var ripple = require('ripple-lib');
-var Crypt   = require('./crypt').Crypt;
-var Message = ripple.Message;
-var parser  = require("url");
-var extend  = require("extend");
-var querystring = require('querystring');
+import Crypt from './crypt';
+import { Message } from 'ripple-lib';
+import parser from 'url';
+import extend from 'extend';
+import querystring from 'querystring';
 
 var SignedRequest = function (config) {
   // XXX Constructor should be generalized and constructing from an Angular.js
