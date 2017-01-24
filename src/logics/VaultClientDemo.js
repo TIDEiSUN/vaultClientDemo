@@ -68,26 +68,34 @@ class VaultClientDemoClass {
     return this.client.register(options);
   }
 
-  sendPhoneVerificationCode(username, loginInfo, countryCode, phoneNumber) {
+  getPhoneInfo(loginInfo) {
+    return loginInfo.blob.get2FA();
+  }
+
+  setPhoneInfo(loginInfo, countryCode, phoneNumber) {
     const options = {
-      url: loginInfo.blob.url,
-      username: username,
-      phone_number: phoneNumber,
+      masterkey: loginInfo.secret,
+      enabled: false,
+      phone: phoneNumber,
       country_code: countryCode,
     };
+    return loginInfo.blob.set2FA(options);
+  }
 
+  sendPhoneVerificationCode(loginInfo) {
+    const options = {
+      url: loginInfo.blob.url,
+      blob_id: loginInfo.blob.id,
+    };
     return this.client.requestPhoneToken(options);
   }
 
-  verifyPhone(username, loginInfo, countryCode, phoneNumber, token) {
+  verifyPhone(loginInfo, token) {
     const options = {
       url: loginInfo.blob.url,
-      username: username,
-      phone_number: phoneNumber,
-      country_code: countryCode,
+      blob_id: loginInfo.blob.id,
       token: token,
     };
-
     return this.client.verifyPhoneToken(options);
   }
 

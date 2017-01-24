@@ -3,6 +3,19 @@ import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 
+function PhoneInfoDiv(props) {
+  if (props.oldPhoneInfo === null) {
+    return null;
+  }
+
+  return (
+    <div>
+      Phone number: {props.oldPhoneInfo.country_code} {props.oldPhoneInfo.masked_phone}
+      [{props.oldPhoneInfo.verified?'Verified':'Not verified'}]
+    </div>
+  );
+}
+
 export default class VerifyPhonePage extends React.Component {
   constructor(props) {
     super(props);
@@ -10,9 +23,25 @@ export default class VerifyPhonePage extends React.Component {
       countryCode: '',
       phoneNumber: '',
       token: '',
+      oldPhoneInfo: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
+
+    this.getPhoneInfo();
+  }
+
+  getPhoneInfo() {
+    // get phone info
+    VaultClientDemo.getPhoneInfo(CurrentLogin.loginInfo)
+      .then((result) => {
+        console.log(result);
+        this.setState({
+          oldPhoneInfo: result,
+        });
+      }).catch((err) => {
+        console.error(err);
+      });
   }
 
   handleChange(name, event) {
@@ -21,30 +50,54 @@ export default class VerifyPhonePage extends React.Component {
 
   handleSubmitSend(event) {
     console.log('Handle send verification code by sms');
-    VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.username,
-                                              CurrentLogin.loginInfo,
-                                              this.state.countryCode,
-                                              this.state.phoneNumber)
-      .then((result) => {
-        // CurrentLogin.password = this.state.newPassword;
-        console.log(result);
-        alert('Success!');
-      }).catch((err) => {
-        alert(`Failed to send verification code by sms: ${err.message}`);
-      });
+
+    const oldPhoneNumber = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.phone : null;
+    const phoneNumber = this.state.phoneNumber ? this.state.phoneNumber : oldPhoneNumber;
+
+    const oldCountryCode = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.country_code : null;
+    const countryCode = this.state.countryCode ? this.state.countryCode : oldCountryCode;
+
+    const oldVerified = this.state.oldPhoneInfo !== null && this.state.oldPhoneInfo.verified;
+
+    if (phoneNumber && countryCode) {
+      if (countryCode !== oldCountryCode || phoneNumber !== oldPhoneNumber) {
+        VaultClientDemo.setPhoneInfo(CurrentLogin.loginInfo,
+                                    this.state.countryCode,
+                                    this.state.phoneNumber)
+          .then((result) => {
+            console.log('set phone info', result);
+            this.getPhoneInfo();
+            return VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo);
+          }).then((result) => {
+            console.log('request phone token', result);
+            alert('Success!');
+          }).catch((err) => {
+            alert(`Failed to send verification code by sms: ${err.message}`);          
+          });
+      } else if (!oldVerified) {
+        VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo)
+          .then((result) => {
+            console.log('request phone token', result);
+            alert('Success!');            
+          }).catch((err) => {
+            alert(`Failed to send verification code by sms: ${err.message}`);          
+          });
+      } else {
+        alert('Phone number has been verified');
+      }
+    } else {
+      alert('Missing country code / phone number');
+    }
     event.preventDefault();
   }
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
-    VaultClientDemo.verifyPhone(CurrentLogin.username,
-                                CurrentLogin.loginInfo,
-                                this.state.countryCode,
-                                this.state.phoneNumber,
+    VaultClientDemo.verifyPhone(CurrentLogin.loginInfo,
                                 this.state.token)
       .then((result) => {
-        // CurrentLogin.password = this.state.newPassword;
-        console.log(result);
+        console.log('verify phone token', result);
+        this.getPhoneInfo();
         alert('Success!');
       }).catch((err) => {
         alert(`Failed to verify phone: ${err.message}`);
@@ -56,6 +109,7 @@ export default class VerifyPhonePage extends React.Component {
     return (
       <div className="home">
         <h1>Send Verification Code</h1>
+        <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} />
         <form onSubmit={this.handleSubmitSend}>
           <div>
             <label>

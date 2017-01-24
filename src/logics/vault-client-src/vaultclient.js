@@ -293,7 +293,6 @@ export default class VaultClient {
     let unlockSecret = (unlock, authInfo, blob) => {
       var secret;
       try {
-        console.log(unlock, blob.encrypted_secret);
         secret = crypt.decrypt(unlock, blob.encrypted_secret);
       } catch (error) {
         return Promise.reject(error);

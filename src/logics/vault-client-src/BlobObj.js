@@ -496,8 +496,11 @@ export default class BlobObj {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'GET',
-        url    : `${this.url}/v1/blob/${this.id}/2FA?device_id=${this.device_id}`,
+        url    : `${this.url}/v1/blob/${this.id}/2FA`,
       };
+      if (this.device_id) {
+        config.url += `?device_id=${this.device_id}`;
+      }
 
       const signedRequest = new SignedRequest(config);
       const signed = signedRequest.signHmac(this.data.auth_secret, this.id);

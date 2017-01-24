@@ -768,20 +768,16 @@ const BlobClient = {
    * request a token for phone verification
    * @param {object} options
    * @param {string} options.url
-   * @param {string} options.username
-   * @param {string} options.phone_number
-   * @param {string} options.country_code
+   * @param {string} options.blob_id
    */
 
   requestPhoneToken(options) {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${options.url}/v1/user/${options.username}/phone`,
+        url    : `${options.url}/v1/blob/${options.blob_id}/phone/request`,
         data   : {
-          via          : 'sms',
-          phone_number : options.phone_number,
-          country_code : options.country_code,
+          via  : 'sms',
         },
       };
 
@@ -806,9 +802,7 @@ const BlobClient = {
    * verify a phone token
    * @param {object} options
    * @param {string} options.url
-   * @param {string} options.username
-   * @param {string} options.phone_number
-   * @param {string} options.country_code
+   * @param {string} options.blob_id
    * @param {string} options.token
    */
 
@@ -816,11 +810,9 @@ const BlobClient = {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${options.url}/v1/user/${options.username}/phone/validate`,
+        url    : `${options.url}/v1/blob/${options.blob_id}/phone/verify`,
         data   : {
-          phone_number : options.phone_number,
-          country_code : options.country_code,
-          token        : options.token,
+          token : options.token,
         },
       };
 
