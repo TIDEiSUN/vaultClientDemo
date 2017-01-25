@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
-import VaultClientDemo from '../logics/VaultClientDemo'
+import VaultClientDemo from '../logics/VaultClientDemo';
+import Config from '../../config';
 
 function ResendVerificationButton(props) {
   if(props.verified) {
@@ -40,7 +41,7 @@ export default class IndexPage extends React.Component {
 
   handleResendEmail(event) {
     console.log('Resend verification email');
-    const activateLink = 'http://localhost:3000/activate';     // TODO
+    const activateLink = Config.emailVerificationURL;
 
     VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.resendEmail, activateLink, CurrentLogin.loginInfo)
       .then(result => {

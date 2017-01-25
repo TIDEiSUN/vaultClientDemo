@@ -1,9 +1,10 @@
 import VaultClient, { AuthInfo } from './vault-client-src/';
+import Config from '../../config';
 
 class VaultClientDemoClass {
   constructor() {
     // initialize vault client with a domain
-    this.domain = 'localhost:27183';
+    this.domain = Config.rippleTxtDomain;
     this.client = new VaultClient(this.domain);
   }
 

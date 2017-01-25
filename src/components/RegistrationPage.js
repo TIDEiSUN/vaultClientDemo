@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo'
-import AsyncButton from './AsyncButton'
+import VaultClientDemo from '../logics/VaultClientDemo';
+import AsyncButton from './AsyncButton';
+import Config from '../../config';
 
 export default class RegistrationPage extends React.Component {
   constructor(props) {
@@ -20,7 +21,7 @@ export default class RegistrationPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Register account');
-    const activateLink = 'http://localhost:3000/activate';     // TODO
+    const activateLink = Config.emailVerificationURL;
 
     return VaultClientDemo.registerAccount(this.state.username, this.state.password, this.state.email, activateLink)
       .then(result => {
