@@ -69,24 +69,26 @@ class VaultClientDemoClass {
     return this.client.register(options);
   }
 
-  getPhoneInfo(loginInfo) {
+  get2FAInfo(loginInfo) {
     return loginInfo.blob.get2FA();
   }
 
-  setPhoneInfo(loginInfo, countryCode, phoneNumber) {
+  set2FAInfo(loginInfo, enable) {
     const options = {
       masterkey: loginInfo.secret,
-      enabled: false,
-      phone: phoneNumber,
-      country_code: countryCode,
+      enabled: enable,
     };
     return loginInfo.blob.set2FA(options);
   }
 
-  sendPhoneVerificationCode(loginInfo) {
+  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber) {
     const options = {
       url: loginInfo.blob.url,
       blob_id: loginInfo.blob.id,
+      account_id: loginInfo.blob.data.account_id,
+      masterkey: loginInfo.secret,
+      phone_number: phoneNumber,
+      country_code: countryCode,
     };
     return this.client.requestPhoneToken(options);
   }

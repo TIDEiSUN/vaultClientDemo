@@ -140,6 +140,7 @@ const BlobClient = {
         } else if (resp.body && resp.body.result === 'success') {
           resolve(resp.body);
         } else {
+          console.log(resp.body.message);
           reject(new Error('Failed to verify the account'));
         }
       });
@@ -155,6 +156,8 @@ const BlobClient = {
    * @param {string}   opts.account_id
    * @param {string}   opts.email
    * @param {string}   opts.activateLink
+   * @param {string}   opts.url
+   * @param {string}   opts.masterkey
    */
 
   resendEmail(opts) {
@@ -769,6 +772,9 @@ const BlobClient = {
    * @param {object} options
    * @param {string} options.url
    * @param {string} options.blob_id
+   * @param {string} options.phone_number
+   * @param {string} options.country_code
+   * @param {string} options.masterkey
    */
 
   requestPhoneToken(options) {
@@ -777,12 +783,17 @@ const BlobClient = {
         method : 'POST',
         url    : `${options.url}/v1/blob/${options.blob_id}/phone/request`,
         data   : {
-          via  : 'sms',
+          via          : 'sms',
+          phone_number : options.phone_number,
+          country_code : options.country_code,
         },
       };
 
-      request.post(config.url)
-        .send(config.data)
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(options.masterkey, options.account_id, options.blob_id);
+
+      request.post(signed.url)
+        .send(signed.data)
         .end((err, resp) => {
           if (err) {
             reject(err);

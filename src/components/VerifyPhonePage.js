@@ -33,7 +33,7 @@ export default class VerifyPhonePage extends React.Component {
 
   getPhoneInfo() {
     // get phone info
-    VaultClientDemo.getPhoneInfo(CurrentLogin.loginInfo)
+    VaultClientDemo.get2FAInfo(CurrentLogin.loginInfo)
       .then((result) => {
         console.log(result);
         this.setState({
@@ -57,34 +57,15 @@ export default class VerifyPhonePage extends React.Component {
     const oldCountryCode = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.country_code : null;
     const countryCode = this.state.countryCode ? this.state.countryCode : oldCountryCode;
 
-    const oldVerified = this.state.oldPhoneInfo !== null && this.state.oldPhoneInfo.verified;
-
     if (phoneNumber && countryCode) {
-      if (countryCode !== oldCountryCode || phoneNumber !== oldPhoneNumber) {
-        VaultClientDemo.setPhoneInfo(CurrentLogin.loginInfo,
-                                    this.state.countryCode,
-                                    this.state.phoneNumber)
-          .then((result) => {
-            console.log('set phone info', result);
-            this.getPhoneInfo();
-            return VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo);
-          }).then((result) => {
-            console.log('request phone token', result);
-            alert('Success!');
-          }).catch((err) => {
-            alert(`Failed to send verification code by sms: ${err.message}`);          
-          });
-      } else if (!oldVerified) {
-        VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo)
-          .then((result) => {
-            console.log('request phone token', result);
-            alert('Success!');            
-          }).catch((err) => {
-            alert(`Failed to send verification code by sms: ${err.message}`);          
-          });
-      } else {
-        alert('Phone number has been verified');
-      }
+      VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo, countryCode, phoneNumber)
+        .then((result) => {
+          console.log('request phone token', result);
+          this.getPhoneInfo();
+          alert('Success!');
+        }).catch((err) => {
+            alert(`Failed to send verification code by sms: ${err.message}`);
+        });
     } else {
       alert('Missing country code / phone number');
     }
