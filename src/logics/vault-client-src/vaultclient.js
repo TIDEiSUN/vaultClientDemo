@@ -347,12 +347,23 @@ export default class VaultClient {
   changePassword(options) {
     var password = String(options.password).trim();
 
+    const checkEmailVerified = (authInfo) => {
+      if (!authInfo.exists) {
+        return Promise.reject(new Error('User does not exists.'));
+      }
+      if (!authInfo.emailVerified) {
+        return Promise.reject(new Error('Email address has not been verified.'));
+      }
+      return Promise.resolve(authInfo);
+    };
+
     const changePassword = (authInfo, keys, callback) => {
       options.keys = keys;
       return blobClient.updateKeys(options, callback);
     };
 
     return this.getAuthInfo(options.username)
+      .then(checkEmailVerified)
       .then(authInfo => DeriveHelper.deriveLoginKeys(authInfo, password))
       .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
       .then(result => changePassword(result.authInfo, result.keys));
@@ -374,6 +385,17 @@ export default class VaultClient {
     var new_username = String(options.new_username).trim();
     var password     = String(options.password).trim();
 
+    const checkEmailVerified = this.getAuthInfo(options.username)
+      .then((authInfo) => {
+        if (!authInfo.exists) {
+          return Promise.reject(new Error('User does not exists.'));
+        }
+        if (!authInfo.emailVerified) {
+          return Promise.reject(new Error('Email address has not been verified.'));
+        }
+        return Promise.resolve();
+      });
+
     const checkNewUsernameExists = (authInfo) => {
       if (authInfo && authInfo.exists) {
         return Promise.reject(new Error('username already taken.'));
@@ -389,7 +411,8 @@ export default class VaultClient {
       return blobClient.rename(options);
     };
 
-    return this.getAuthInfo(new_username)
+    return checkEmailVerified
+      .then(() => this.getAuthInfo(new_username))
       .then(checkNewUsernameExists)
       .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
       .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
@@ -413,8 +436,20 @@ export default class VaultClient {
     var username = String(options.username).trim();
     var password = String(options.password).trim();
 
-    if (!this.validateUsername(username).valid) {
-      return Promise.reject(new Error('invalid username.'));
+    if (!this.validateEmail(options.email).valid) {
+      return Promise.reject(new Error('Invalid email address'));
+    }
+
+    if (username.indexOf('@') > 0) {
+      // email address
+      if (options.email !== username) {
+        return Promise.reject(new Error('Username does not match email address'));
+      }
+    } else {
+      // ordinary username
+      if (!this.validateUsername(username).valid) {
+        return Promise.reject(new Error('Invalid username'));
+      }
     }
 
     const create = (authInfo, keys) => {
@@ -470,6 +505,28 @@ export default class VaultClient {
       result.reason = 'endhyphen';
     } else if (/--/.exec(username)) {
       result.reason = 'multhyphen';
+    } else {
+      result.valid = true;
+    }
+
+    return result;
+  }
+
+  /**
+   * validateEmail
+   * check email adderss for validity
+   */
+
+  validateEmail(email) {
+    email   = String(email).trim();
+    var result = {
+      valid: false,
+      reason: '',
+    };
+
+    var emailRE = new RegExp('^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$');
+    if (!emailRE.exec(email)) {
+      result.reason = 'invalidemail';
     } else {
       result.valid = true;
     }

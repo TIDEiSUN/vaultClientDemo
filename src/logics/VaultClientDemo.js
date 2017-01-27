@@ -39,7 +39,7 @@ class VaultClientDemoClass {
 
   renameAccount(username, newUsername, password, loginInfo) {
     const options = {
-      username: username,        // loginInfo.username
+      username: username,
       new_username: newUsername,
       password: password,
       masterkey: loginInfo.secret,
@@ -50,12 +50,23 @@ class VaultClientDemoClass {
 
   changePassword(username, newPassword, loginInfo) {
     const options = {
-      username: username,         // loginInfo.username
+      username: username,
       password: newPassword,
       masterkey: loginInfo.secret,
       blob: loginInfo.blob,
     };
     return this.client.changePassword(options);
+  }
+
+  renameAndChangePassword(username, newUsername, newPassword, loginInfo) {
+    const options = {
+      username: username,
+      new_username: newUsername,
+      password: newPassword,
+      masterkey: loginInfo.secret,
+      blob: loginInfo.blob,
+    };
+    return this.client.rename(options);
   }
 
   registerAccount(username, password, email, activateLink) {

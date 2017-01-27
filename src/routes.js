@@ -11,19 +11,21 @@ import NotFoundPage from './components/NotFoundPage';
 import ActivatePage from './components/ActivatePage';
 import VerifyPhonePage from './components/VerifyPhonePage';
 import RecoverPage from './components/RecoverPage';
+import RenameAndChangePasswordPage from './components/RenameAndChangePasswordPage';
 
 const routes = (
   <Route path="/" component={Layout}>
-    <IndexRoute component={LoginPage}/>
-    <Route path="/main" component={IndexPage}/>
-    <Route path="/payment" component={MakePaymentPage}/>
-    <Route path="/changepw" component={ChangePasswordPage}/>
-    <Route path="/reg" component={RegistrationPage}/>
-    <Route path="/rename" component={RenamePage}/>   
-    <Route path="/activate" component={ActivatePage}/>
-    <Route path="/phone" component={VerifyPhonePage}/>
-    <Route path="/recover" component={RecoverPage}/>
-  <Route path="*" component={NotFoundPage}/>
+    <IndexRoute component={LoginPage} />
+    <Route path="/main" component={IndexPage} />
+    <Route path="/payment" component={MakePaymentPage} />
+    <Route path="/changepw" component={ChangePasswordPage} />
+    <Route path="/reg" component={RegistrationPage} />
+    <Route path="/rename" component={RenamePage} />
+    <Route path="/activate" component={ActivatePage} />
+    <Route path="/phone" component={VerifyPhonePage} />
+    <Route path="/recover" component={RecoverPage} />
+    <Route path="/renameandchangepw" component={RenameAndChangePasswordPage} />
+  <Route path="*" component={NotFoundPage} />
 </Route>
 );
 
