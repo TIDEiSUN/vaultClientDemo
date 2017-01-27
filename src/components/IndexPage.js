@@ -5,7 +5,7 @@ import VaultClientDemo from '../logics/VaultClientDemo';
 import Config from '../../config';
 
 function ResendVerificationButton(props) {
-  if(props.verified) {
+  if (props.verified) {
     return null;
   }
 
@@ -29,14 +29,14 @@ export default class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      resendEmail: CurrentLogin.loginInfo.blob.data.email
-    }
+      resendEmail: CurrentLogin.loginInfo.blob.data.email,
+    };
     this.handleResendEmail = this.handleResendEmail.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
   handleResendEmail(event) {
@@ -44,10 +44,10 @@ export default class IndexPage extends React.Component {
     const activateLink = Config.emailVerificationURL;
 
     VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.resendEmail, activateLink, CurrentLogin.loginInfo)
-      .then(result => {
+      .then((result) => {
         alert('Verification email has been sent to ' + this.state.resendEmail);
         CurrentLogin.loginInfo.blob.data.email = this.state.resendEmail;
-      }).catch(err => {
+      }).catch((err) => {
         alert('Verication email cannot be sent: ' + err.message);
       });
     event.preventDefault();
@@ -66,21 +66,21 @@ export default class IndexPage extends React.Component {
         <div>Welcome {CurrentLogin.username}!</div>
         <div>Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}</div>
         <div>
-          Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.verified?'Verified':'Not verified'}]
-          <ResendVerificationButton verified={CurrentLogin.loginInfo.verified} target={this} />
+          Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
+          <ResendVerificationButton verified={CurrentLogin.loginInfo.emailVerified} target={this} />
         </div>
-        <br/>
+        <br />
         <div>
           <Link to="/rename">Change Username</Link>
-          <br/>
+          <br />
           <Link to="/changepw">Change Password</Link>
-          <br/>
+          <br />
           <Link to="/renameandchangepw">Change Username and Password</Link>
-          <br/>
+          <br />
           <Link to="/changeemail">Change Email</Link>
-          <br/>
+          <br />
           <Link to="/phone">Verify Phone</Link>
-          <br/>
+          <br />
           <Link to="/payment">Make Payment</Link>
         </div>
         <div>

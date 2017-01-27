@@ -133,10 +133,7 @@ class VaultClientDemoClass {
           blob: blob,
           secret: rippleSecret,
           username: authInfo.username,
-          verified: authInfo.emailVerified, // DEPRECIATE
           emailVerified: authInfo.emailVerified,
-          profileVerified: authInfo.profile_verified,
-          identityVerified: authInfo.identity_verified,
         });
       });
   }

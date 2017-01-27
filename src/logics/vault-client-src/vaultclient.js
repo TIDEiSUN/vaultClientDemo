@@ -177,10 +177,7 @@ export default class VaultClient {
       return Promise.resolve({
         blob: blob,
         username: authInfo.username,
-        verified: authInfo.emailVerified, // DEPRECIATE
         emailVerified: authInfo.emailVerified,
-        profileVerified: authInfo.profile_verified,
-        identityVerified: authInfo.identity_verified,
       });
     };
 
@@ -303,10 +300,7 @@ export default class VaultClient {
         unlock: unlock,
         secret: secret,
         username: authInfo.username,
-        verified: authInfo.emailVerified, // DEPRECIATE
         emailVerified: authInfo.emailVerified,
-        profileVerified: authInfo.profile_verified,
-        identityVerified: authInfo.identity_verified,
       });
     };
 
