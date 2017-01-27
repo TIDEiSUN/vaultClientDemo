@@ -34,7 +34,7 @@ export default class RenamePage extends React.Component {
   render() {
     return (
       <div className="home">
-        <h1>Change username</h1>
+        <h1>Change Username</h1>
         <form>
           <div>
             <label>

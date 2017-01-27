@@ -77,6 +77,8 @@ export default class IndexPage extends React.Component {
           <br/>
           <Link to="/renameandchangepw">Change Username and Password</Link>
           <br/>
+          <Link to="/changeemail">Change Email</Link>
+          <br/>
           <Link to="/phone">Verify Phone</Link>
           <br/>
           <Link to="/payment">Make Payment</Link>

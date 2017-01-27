@@ -3,13 +3,13 @@ import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 import AsyncButton from './AsyncButton';
+import Config from '../../config';
 
-export default class RenameAndChangePasswordPage extends React.Component {
+export default class ChangeEmailPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      newUsername: '',
-      newPassword: '',
+      newEmail: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -19,15 +19,14 @@ export default class RenameAndChangePasswordPage extends React.Component {
   }
 
   handleSubmit(event) {
-    console.log('Handle rename and change password');
-    return VaultClientDemo.renameAndChangePassword(CurrentLogin.username, this.state.newUsername, this.state.newPassword, CurrentLogin.loginInfo)
+    console.log('Handle rename account');
+    const activateLink = Config.emailVerificationURL;
+    return VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.newEmail, activateLink, CurrentLogin.loginInfo)
       .then(result => {
-        CurrentLogin.username = this.state.newUsername;
-        CurrentLogin.password = this.state.newPassword;
-        console.log(result);
-        alert('Success!');
+        alert('Verification email has been sent to ' + this.state.newEmail);
+        CurrentLogin.loginInfo.blob.data.email = this.state.newEmail;
       }).catch(err => {
-        alert('Failed to rename and change password: ' + err.message);
+        alert('Verication email cannot be sent: ' + err.message);
         throw err;
       });
     //event.preventDefault();
@@ -36,16 +35,12 @@ export default class RenameAndChangePasswordPage extends React.Component {
   render() {
     return (
       <div className="home">
-        <h1>Change Username and Password</h1>
+        <h1>Change Email</h1>
         <form>
           <div>
             <label>
-              New username: 
-              <input type="text" value={this.state.newUsername} onChange={this.handleChange.bind(this, 'newUsername')} />
-            </label>
-            <label>
-              New password: 
-              <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
+              New email: 
+              <input type="text" value={this.state.newEmail} onChange={this.handleChange.bind(this, 'newEmail')} />
             </label>
           </div>
           <AsyncButton
