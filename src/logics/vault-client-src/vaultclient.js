@@ -347,12 +347,12 @@ export default class VaultClient {
   changePassword(options) {
     var password = String(options.password).trim();
 
-    const checkEmailVerified = (authInfo) => {
+    const checkAccountVerified = (authInfo) => {
       if (!authInfo.exists) {
         return Promise.reject(new Error('User does not exists.'));
       }
-      if (!authInfo.emailVerified) {
-        return Promise.reject(new Error('Email address has not been verified.'));
+      if (!authInfo.emailVerified && !authInfo.phoneVerified) {
+        return Promise.reject(new Error('Account has not been verified.'));
       }
       return Promise.resolve(authInfo);
     };
@@ -363,7 +363,7 @@ export default class VaultClient {
     };
 
     return this.getAuthInfo(options.username)
-      .then(checkEmailVerified)
+      .then(checkAccountVerified)
       .then(authInfo => DeriveHelper.deriveLoginKeys(authInfo, password))
       .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
       .then(result => changePassword(result.authInfo, result.keys));
@@ -385,13 +385,13 @@ export default class VaultClient {
     var new_username = String(options.new_username).trim();
     var password     = String(options.password).trim();
 
-    const checkEmailVerified = this.getAuthInfo(options.username)
+    const checkAccountVerified = this.getAuthInfo(options.username)
       .then((authInfo) => {
         if (!authInfo.exists) {
           return Promise.reject(new Error('User does not exists.'));
         }
-        if (!authInfo.emailVerified) {
-          return Promise.reject(new Error('Email address has not been verified.'));
+        if (!authInfo.emailVerified && !authInfo.phoneVerified) {
+          return Promise.reject(new Error('Account has not been verified.'));
         }
         return Promise.resolve();
       });
@@ -411,7 +411,7 @@ export default class VaultClient {
       return blobClient.rename(options);
     };
 
-    return checkEmailVerified
+    return checkAccountVerified
       .then(() => this.getAuthInfo(new_username))
       .then(checkNewUsernameExists)
       .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
