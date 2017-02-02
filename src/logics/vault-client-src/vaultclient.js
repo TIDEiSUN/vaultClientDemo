@@ -2,6 +2,7 @@ import blobClient, { Blob } from './blob';
 import AuthInfo from './authinfo';
 import RippleTxt from './rippletxt';
 import crypt from './crypt';
+import Utils from './utils';
 
 class DeriveHelper {
   /**
@@ -161,8 +162,8 @@ export default class VaultClient {
 
       // migrate missing fields
       if (blob.missing_fields) {
-        if (blob.missing_fields.encrypted_blobdecrypt_key) {
-          console.log('migration: saving encrypted blob decrypt key');
+        if (blob.missing_fields.encrypted_blobdecrypt_key || blob.missing_fields.encrypted_secretdecrypt_key) {
+          console.log('migration: saving encrypted blob / secret decrypt key');
           // get the key to unlock the secret, then update the blob keys
           DeriveHelper.deriveUnlockKey(authInfo, password, keys)
             .then((result) => {
@@ -178,6 +179,7 @@ export default class VaultClient {
         blob: blob,
         username: authInfo.username,
         emailVerified: authInfo.emailVerified,
+        phoneVerified: authInfo.phoneVerified,
       });
     };
 
@@ -301,6 +303,7 @@ export default class VaultClient {
         secret: secret,
         username: authInfo.username,
         emailVerified: authInfo.emailVerified,
+        phoneVerified: authInfo.phoneVerified,
       });
     };
 
@@ -322,10 +325,45 @@ export default class VaultClient {
    * @param {function}  fn - Callback function
    */
 
-  verify(username, token) {
+  verifyEmailToken(username, token, email, blob, masterkey, password) {
     return this.getAuthInfo(username)
       .then((authInfo) => {
-        return blobClient.verify(authInfo.blobvault, username, token);
+        return DeriveHelper.deriveLoginKeys(authInfo, password);
+      }).then((result) => {
+        return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
+      }).then((result) => {
+        blob.data.email = email;
+        const options = {
+          blob,
+          keys: result.keys,
+          masterkey,
+        };
+        return blobClient.verifyEmailToken(result.authInfo.blobvault, username, token, options);
+      });
+  }
+
+  /**
+   * Verify a phone number for an existing user
+   *
+   * @param {string}    username
+   * @param {string}    token - Verification token
+   * @param {function}  fn - Callback function
+   */
+
+  verifyPhoneToken(username, token, phone, blob, masterkey, password) {
+    return this.getAuthInfo(username)
+      .then((authInfo) => {
+        return DeriveHelper.deriveLoginKeys(authInfo, password);
+      }).then((result) => {
+        return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
+      }).then((result) => {
+        blob.data.phone = phone;
+        const options = {
+          blob,
+          keys: result.keys,
+          masterkey,
+        };
+        return blobClient.verifyPhoneToken(result.authInfo.blobvault, username, token, options);
       });
   }
 
@@ -351,9 +389,9 @@ export default class VaultClient {
       return Promise.resolve(authInfo);
     };
 
-    const changePassword = (authInfo, keys, callback) => {
+    const changePassword = (authInfo, keys) => {
       options.keys = keys;
-      return blobClient.updateKeys(options, callback);
+      return blobClient.updateKeys(options);
     };
 
     return this.getAuthInfo(options.username)
@@ -372,7 +410,6 @@ export default class VaultClient {
    * @param {string} options.password
    * @param {string} options.masterkey
    * @param {object} options.blob
-   * @param {function} fn
    */
 
   rename(options) {
@@ -559,7 +596,5 @@ VaultClient.prototype.getAttestationSummary = blobClient.getAttestationSummary;
 
 VaultClient.prototype.requestPhoneToken = blobClient.requestPhoneToken;
 
-VaultClient.prototype.verifyPhoneToken = blobClient.verifyPhoneToken;
-
 // export by name
-export { AuthInfo, Blob, RippleTxt };
+export { AuthInfo, Blob, RippleTxt, Utils };

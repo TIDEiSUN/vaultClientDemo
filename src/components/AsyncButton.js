@@ -70,6 +70,7 @@ export default class  AsyncButton extends React.Component {
       fulFilledClass,
       rejectedClass,
 			fullFilledRedirect,
+			disabled,
 			...restProps
     } = this.props;
     const isDisabled = this.props.disabled || isPending;

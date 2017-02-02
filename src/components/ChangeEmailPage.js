@@ -24,7 +24,6 @@ export default class ChangeEmailPage extends React.Component {
     return VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.newEmail, activateLink, CurrentLogin.loginInfo)
       .then(result => {
         alert('Verification email has been sent to ' + this.state.newEmail);
-        CurrentLogin.loginInfo.blob.data.email = this.state.newEmail;
       }).catch(err => {
         alert('Verication email cannot be sent: ' + err.message);
         throw err;
@@ -39,18 +38,18 @@ export default class ChangeEmailPage extends React.Component {
         <form>
           <div>
             <label>
-              New email: 
+              New email:
               <input type="text" value={this.state.newEmail} onChange={this.handleChange.bind(this, 'newEmail')} />
             </label>
           </div>
           <AsyncButton
-           type="button"
-           onClick={this.handleSubmit}
-           pendingText="Changing..."
-           fulFilledText="Changed"
-           rejectedText="Failed! Try Again"
-           text="Change"
-          />
+            type="button"
+            onClick={this.handleSubmit}
+            pendingText="Changing..."
+            fulFilledText="Changed"
+            rejectedText="Failed! Try Again"
+            text="Change"
+            />
         </form>
         <Link to="/main">Back to main page</Link>
       </div>

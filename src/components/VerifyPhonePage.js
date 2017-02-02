@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo';
+import VaultClientDemo, { Utils } from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 
 function PhoneInfoDiv(props) {
-  if (props.oldPhoneInfo === null) {
+  if (!props.oldPhoneInfo) {
     return null;
   }
 
+  const maskedPhone = Utils.maskphone(props.oldPhoneInfo.phoneNumber);
+
   return (
     <div>
-      Phone number: {props.oldPhoneInfo.country_code} {props.oldPhoneInfo.masked_phone}
-      [{props.oldPhoneInfo.verified?'Verified':'Not verified'}]
+      Phone number: {props.oldPhoneInfo.countryCode} {maskedPhone}
+      [{props.verified?'Verified':'Not verified'}]
     </div>
   );
 }
@@ -23,25 +25,11 @@ export default class VerifyPhonePage extends React.Component {
       countryCode: '',
       phoneNumber: '',
       token: '',
-      oldPhoneInfo: null,
+      oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
+      verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
-
-    this.getPhoneInfo();
-  }
-
-  getPhoneInfo() {
-    // get phone info
-    VaultClientDemo.get2FAInfo(CurrentLogin.loginInfo)
-      .then((result) => {
-        console.log(result);
-        this.setState({
-          oldPhoneInfo: result,
-        });
-      }).catch((err) => {
-        console.error(err);
-      });
   }
 
   handleChange(name, event) {
@@ -51,17 +39,23 @@ export default class VerifyPhonePage extends React.Component {
   handleSubmitSend(event) {
     console.log('Handle send verification code by sms');
 
-    const oldPhoneNumber = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.phone : null;
+    const oldPhoneNumber = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.phoneNumber : null;
     const phoneNumber = this.state.phoneNumber ? this.state.phoneNumber : oldPhoneNumber;
 
-    const oldCountryCode = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.country_code : null;
+    const oldCountryCode = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.countryCode : null;
     const countryCode = this.state.countryCode ? this.state.countryCode : oldCountryCode;
 
+    const phoneChanged = oldPhoneNumber !== phoneNumber || oldCountryCode !== countryCode;
+    console.log('phone:', '(' + countryCode + ')' + phoneNumber);
+    console.log('changed:', phoneChanged);
+
     if (phoneNumber && countryCode) {
-      VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo, countryCode, phoneNumber)
+      VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo,
+                                                countryCode,
+                                                phoneNumber,
+                                                phoneChanged)
         .then((result) => {
           console.log('request phone token', result);
-          this.getPhoneInfo();
           alert('Success!');
         }).catch((err) => {
             alert(`Failed to send verification code by sms: ${err.message}`);
@@ -74,11 +68,21 @@ export default class VerifyPhonePage extends React.Component {
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
-    VaultClientDemo.verifyPhone(CurrentLogin.loginInfo,
-                                this.state.token)
+    const phone = {
+      countryCode: this.state.countryCode,
+      phoneNumber: this.state.phoneNumber,
+    };
+    VaultClientDemo.verifyPhone(CurrentLogin.username,
+                                this.state.token,
+                                phone,
+                                CurrentLogin.password,
+                                CurrentLogin.loginInfo)
       .then((result) => {
         console.log('verify phone token', result);
-        this.getPhoneInfo();
+        this.setState({
+          oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
+          verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
+        });
         alert('Success!');
       }).catch((err) => {
         alert(`Failed to verify phone: ${err.message}`);
@@ -90,7 +94,7 @@ export default class VerifyPhonePage extends React.Component {
     return (
       <div className="home">
         <h1>Send Verification Code</h1>
-        <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} />
+        <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} verified={this.state.verified} />
         <form onSubmit={this.handleSubmitSend}>
           <div>
             <label>

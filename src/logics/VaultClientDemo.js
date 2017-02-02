@@ -1,4 +1,4 @@
-import VaultClient, { AuthInfo } from './vault-client-src/';
+import VaultClient, { AuthInfo, Utils } from './vault-client-src/';
 import Config from '../../config';
 
 class VaultClientDemoClass {
@@ -33,8 +33,8 @@ class VaultClientDemoClass {
     return this.client.resendEmail(options);
   }
 
-  verifyEmailToken(username, emailToken) {
-    return this.client.verify(username, emailToken);
+  verifyEmailToken(username, emailToken, email, password, loginInfo) {
+    return this.client.verifyEmailToken(username, emailToken, email, loginInfo.blob, loginInfo.secret, password);
   }
 
   renameAccount(username, newUsername, password, loginInfo) {
@@ -92,7 +92,7 @@ class VaultClientDemoClass {
     return loginInfo.blob.set2FA(options);
   }
 
-  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber) {
+  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, phoneChanged) {
     const options = {
       url: loginInfo.blob.url,
       blob_id: loginInfo.blob.id,
@@ -100,20 +100,16 @@ class VaultClientDemoClass {
       masterkey: loginInfo.secret,
       phone_number: phoneNumber,
       country_code: countryCode,
+      phone_changed: phoneChanged,
     };
     return this.client.requestPhoneToken(options);
   }
 
-  verifyPhone(loginInfo, token) {
-    const options = {
-      url: loginInfo.blob.url,
-      blob_id: loginInfo.blob.id,
-      token: token,
-    };
-    return this.client.verifyPhoneToken(options);
+  verifyPhone(username, token, phone, password, loginInfo) {
+    return this.client.verifyPhoneToken(username, token, phone, loginInfo.blob, loginInfo.secret, password);
   }
 
-  recoverBlob(username, rippleSecret) {
+  recoverBlob(username, email, phone) {
     const authInfoPromise = AuthInfo.get(this.domain, username);
 
     const recoverBlobPromise = authInfoPromise
@@ -121,17 +117,18 @@ class VaultClientDemoClass {
         const options = {
           url: authInfo.blobvault,
           username: authInfo.username,
-          masterkey: rippleSecret,
+          email: email,
+          phone: phone,
         };
         return this.client.recoverBlob(options);
       });
 
     return Promise.all([authInfoPromise, recoverBlobPromise])
       .then((results) => {
-        const [authInfo, blob] = results;
+        const [authInfo, recovered] = results;
         return Promise.resolve({
-          blob: blob,
-          secret: rippleSecret,
+          blob: recovered.blob,
+          secret: recovered.secret,
           username: authInfo.username,
           emailVerified: authInfo.emailVerified,
         });
@@ -141,3 +138,4 @@ class VaultClientDemoClass {
 
 const VaultClientDemo = new VaultClientDemoClass();
 export default VaultClientDemo;
+export { Utils };
