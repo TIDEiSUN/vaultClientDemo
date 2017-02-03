@@ -132,7 +132,7 @@ const BlobClient = {
    * Verify email address
    */
 
-  verifyEmailToken(blobVaultURL, username, token, opts) {
+  verifyEmailToken(opts) {
     return new Promise((resolve, reject) => {
       const old_id  = opts.blob.id;
       opts.blob.id  = opts.keys.id;
@@ -143,7 +143,7 @@ const BlobClient = {
 
       const config = {
         method : 'POST',
-        url    : `${blobVaultURL}/v1/user/${username}/verify/${token}`,
+        url    : `${opts.url}/v1/user/${opts.username}/verify/${opts.token}`,
         data   : {
           email    : opts.blob.data.email,
           blob_id  : opts.blob.id,
@@ -853,27 +853,27 @@ const BlobClient = {
    * @param {string} options.token
    */
 
-  verifyPhoneToken(blobVaultURL, username, token, options) {
+  verifyPhoneToken(opts) {
     return new Promise((resolve, reject) => {
-      const old_id  = options.blob.id;
-      options.blob.id  = options.keys.id;
-      options.blob.key = options.keys.crypt;
-      options.blob.encrypted_secret = options.blob.encryptSecret(options.keys.unlock, options.masterkey);
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
 
-      const recoveryKey = Utils.createRecoveryKey(options.blob.data.email, options.blob.data.phone);
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
 
       const config = {
         method : 'POST',
-        url    : `${blobVaultURL}/v1/blob/${options.blob.id}/phone/verify`,
+        url    : `${opts.url}/v1/blob/${opts.blob.id}/phone/verify`,
         data   : {
-          country_code      : options.blob.data.phone.countryCode,
-          phone_number      : options.blob.data.phone.phoneNumber,
-          token             : token,
-          data              : options.blob.encrypt(),
-          revision          : options.blob.revision,
-          encrypted_secret  : options.blob.encrypted_secret,
-          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, options.keys.crypt),
-          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, options.keys.unlock),
+          country_code      : opts.blob.data.phone.countryCode,
+          phone_number      : opts.blob.data.phone.phoneNumber,
+          token             : opts.token,
+          data              : opts.blob.encrypt(),
+          revision          : opts.blob.revision,
+          encrypted_secret  : opts.blob.encrypted_secret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
         },
       };
 

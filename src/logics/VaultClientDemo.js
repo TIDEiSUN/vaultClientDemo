@@ -24,7 +24,7 @@ class VaultClientDemoClass {
     const options = {
       url: loginInfo.blob.url,
       id: loginInfo.blob.id,
-      username: username,        // loginInfo.username
+      username: username,
       account_id: loginInfo.blob.data.account_id,
       email: email === null ? loginInfo.blob.data.email : email,
       activateLink: activateLink,
@@ -33,8 +33,16 @@ class VaultClientDemoClass {
     return this.client.resendEmail(options);
   }
 
-  verifyEmailToken(username, emailToken, email, password, loginInfo) {
-    return this.client.verifyEmailToken(username, emailToken, email, loginInfo.blob, loginInfo.secret, password);
+  verifyEmailToken(username, emailToken, password, email, loginInfo) {
+    const options = {
+      username: username,
+      password: password,
+      email: email,
+      token: emailToken,
+      masterkey: loginInfo.secret,
+      blob: loginInfo.blob,
+    };
+    return this.client.verifyEmailToken(options);
   }
 
   renameAccount(username, newUsername, password, loginInfo) {
@@ -105,8 +113,16 @@ class VaultClientDemoClass {
     return this.client.requestPhoneToken(options);
   }
 
-  verifyPhone(username, token, phone, password, loginInfo) {
-    return this.client.verifyPhoneToken(username, token, phone, loginInfo.blob, loginInfo.secret, password);
+  verifyPhone(loginInfo, phoneToken, username, password, phone) {
+    const options = {
+      username: username,
+      password: password,
+      phone: phone,
+      token: phoneToken,
+      masterkey: loginInfo.secret,
+      blob: loginInfo.blob,
+    };
+    return this.client.verifyPhoneToken(options);
   }
 
   recoverBlob(username, email, phone) {

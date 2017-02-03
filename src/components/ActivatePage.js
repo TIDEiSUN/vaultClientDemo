@@ -70,7 +70,7 @@ export default class ActivatePage extends React.Component {
 
   handleActivate() {
     const queryString = this.props.location.query;
-    return VaultClientDemo.verifyEmailToken(queryString.username, queryString.token, queryString.email, CurrentLogin.password, CurrentLogin.loginInfo)
+    return VaultClientDemo.verifyEmailToken(queryString.username, queryString.token, CurrentLogin.password, queryString.email, CurrentLogin.loginInfo)
       .then(result => {
         alert('Success!');
       }).catch(err => {

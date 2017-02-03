@@ -325,20 +325,23 @@ export default class VaultClient {
    * @param {function}  fn - Callback function
    */
 
-  verifyEmailToken(username, token, email, blob, masterkey, password) {
-    return this.getAuthInfo(username)
+  verifyEmailToken(opts) {
+    return this.getAuthInfo(opts.username)
       .then((authInfo) => {
-        return DeriveHelper.deriveLoginKeys(authInfo, password);
+        return DeriveHelper.deriveLoginKeys(authInfo, opts.password);
       }).then((result) => {
         return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
       }).then((result) => {
-        blob.data.email = email;
-        const options = {
-          blob,
+        opts.blob.data.email = opts.email;
+        const blobOpts = {
+          url: result.authInfo.blobvault,
+          username: opts.username,
+          token: opts.token,
+          blob: opts.blob,
           keys: result.keys,
-          masterkey,
+          masterkey: opts.masterkey,
         };
-        return blobClient.verifyEmailToken(result.authInfo.blobvault, username, token, options);
+        return blobClient.verifyEmailToken(blobOpts);
       });
   }
 
@@ -350,20 +353,23 @@ export default class VaultClient {
    * @param {function}  fn - Callback function
    */
 
-  verifyPhoneToken(username, token, phone, blob, masterkey, password) {
-    return this.getAuthInfo(username)
+  verifyPhoneToken(opts) {
+    return this.getAuthInfo(opts.username)
       .then((authInfo) => {
-        return DeriveHelper.deriveLoginKeys(authInfo, password);
+        return DeriveHelper.deriveLoginKeys(authInfo, opts.password);
       }).then((result) => {
         return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
       }).then((result) => {
-        blob.data.phone = phone;
-        const options = {
-          blob,
+        opts.blob.data.phone = opts.phone;
+        const blobOpts = {
+          url: result.authInfo.blobvault,
+          username: opts.username,
+          token: opts.token,
+          blob: opts.blob,
           keys: result.keys,
-          masterkey,
+          masterkey: opts.masterkey,
         };
-        return blobClient.verifyPhoneToken(result.authInfo.blobvault, username, token, options);
+        return blobClient.verifyPhoneToken(blobOpts);
       });
   }
 

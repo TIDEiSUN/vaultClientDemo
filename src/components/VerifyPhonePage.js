@@ -72,21 +72,27 @@ export default class VerifyPhonePage extends React.Component {
       countryCode: this.state.countryCode,
       phoneNumber: this.state.phoneNumber,
     };
-    VaultClientDemo.verifyPhone(CurrentLogin.username,
-                                this.state.token,
-                                phone,
-                                CurrentLogin.password,
-                                CurrentLogin.loginInfo)
-      .then((result) => {
-        console.log('verify phone token', result);
-        this.setState({
-          oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
-          verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
+
+    if (phone.phoneNumber && phone.countryCode) {
+      VaultClientDemo.verifyPhone(CurrentLogin.loginInfo,
+                                  this.state.token,
+                                  CurrentLogin.username,
+                                  CurrentLogin.password,
+                                  phone)
+        .then((result) => {
+          console.log('verify phone token', result);
+          CurrentLogin.loginInfo.phoneVerified = true;
+          this.setState({
+            oldPhoneInfo: CurrentLogin.loginInfo.blob.data.phone,
+            verified: CurrentLogin.loginInfo.phoneVerified,
+          });
+          alert('Success!');
+        }).catch((err) => {
+          alert(`Failed to verify phone: ${err.message}`);
         });
-        alert('Success!');
-      }).catch((err) => {
-        alert(`Failed to verify phone: ${err.message}`);
-      });
+    } else {
+      alert('Missing country code / phone number');
+    }
     event.preventDefault();
   }
 
