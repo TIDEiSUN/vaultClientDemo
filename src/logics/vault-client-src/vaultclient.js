@@ -111,7 +111,7 @@ export default class VaultClient {
 
   login(username, password, device_id) {
     const checkExists = (authInfo) => {
-      if (authInfo && !authInfo.exists) {
+      if (!authInfo || !authInfo.exists) {
         return Promise.reject(new Error('User does not exists.'));
       }
       return Promise.resolve({ authInfo, password });
@@ -389,7 +389,7 @@ export default class VaultClient {
       if (!authInfo.exists) {
         return Promise.reject(new Error('User does not exists.'));
       }
-      if (!authInfo.emailVerified && !authInfo.phoneVerified) {
+      if (!authInfo.emailVerified) {
         return Promise.reject(new Error('Account has not been verified.'));
       }
       return Promise.resolve(authInfo);
@@ -405,6 +405,51 @@ export default class VaultClient {
       .then(authInfo => DeriveHelper.deriveLoginKeys(authInfo, password))
       .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
       .then(result => changePassword(result.authInfo, result.keys));
+  }
+
+  /**
+   * activate a ripple account
+   * @param {object} options
+   * @param {string} options.username
+   * @param {string} options.new_username
+   * @param {string} options.password
+   * @param {string} options.masterkey
+   * @param {object} options.blob
+   */
+
+  activate(options) {
+    var new_username = String(options.new_username).trim();
+    var password     = String(options.password).trim();
+
+    const checkAccountExists = this.getAuthInfo(options.username)
+      .then((authInfo) => {
+        if (!authInfo.exists) {
+          return Promise.reject(new Error('User does not exists.'));
+        }
+        return Promise.resolve();
+      });
+
+    const checkNewUsernameExists = (authInfo) => {
+      if (authInfo && authInfo.exists) {
+        return Promise.reject(new Error('username already taken.'));
+      }
+      // user name is replaced because of case
+      // FIXME another way to change user name
+      authInfo.username = new_username;
+      return Promise.resolve({ authInfo, password });
+    };
+
+    function activateAccount (authInfo, keys) {
+      options.keys = keys;
+      return blobClient.activate(options);
+    };
+
+    return checkAccountExists
+      .then(() => this.getAuthInfo(new_username))
+      .then(checkNewUsernameExists)
+      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
+      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
+      .then(result => activateAccount(result.authInfo, result.keys));
   }
 
   /**
@@ -427,7 +472,7 @@ export default class VaultClient {
         if (!authInfo.exists) {
           return Promise.reject(new Error('User does not exists.'));
         }
-        if (!authInfo.emailVerified && !authInfo.phoneVerified) {
+        if (!authInfo.emailVerified) {
           return Promise.reject(new Error('Account has not been verified.'));
         }
         return Promise.resolve();

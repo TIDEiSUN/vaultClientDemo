@@ -13,6 +13,7 @@ import VerifyPhonePage from './components/VerifyPhonePage';
 import RecoverPage from './components/RecoverPage';
 import RenameAndChangePasswordPage from './components/RenameAndChangePasswordPage';
 import ChangeEmailPage from './components/ChangeEmailPage';
+import VerifyEmailPage from './components/VerifyEmailPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -23,6 +24,7 @@ const routes = (
     <Route path="/reg" component={RegistrationPage} />
     <Route path="/rename" component={RenamePage} />
     <Route path="/activate" component={ActivatePage} />
+    <Route path="/verifyEmail" component={VerifyEmailPage} />
     <Route path="/phone" component={VerifyPhonePage} />
     <Route path="/recover" component={RecoverPage} />
     <Route path="/renameandchangepw" component={RenameAndChangePasswordPage} />

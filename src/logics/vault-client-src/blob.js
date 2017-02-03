@@ -352,6 +352,60 @@ const BlobClient = {
   },
 
   /**
+   * Activate an account
+   * @param {object} opts
+   * @param {string} opts.username
+   * @param {string} opts.new_username
+   * @param {object} opts.keys
+   * @param {object} opts.blob
+   * @param {string} masterkey
+   */
+
+  activate(opts) {
+    return new Promise((resolve, reject) => {
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
+      const config = {
+        method: 'POST',
+        url: `${opts.blob.url}/v1/user/${opts.username}/activate`,
+        data: {
+          blob_id  : opts.blob.id,
+          username : opts.new_username,
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+          encrypted_secret : opts.blob.encryptedSecret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+        },
+      };
+
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
+
+      request.post(signed.url)
+        .send(signed.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'activate:', err);
+            reject(new Error(`Failed to activate: ${err.message}`));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            console.log('error:', 'activate:', resp.body.message);
+            reject(new Error(`Failed to activate: ${resp.body.message}`));
+          } else {
+            reject(new Error('Failed to activate'));
+          }
+        });
+    });
+  },
+
+  /**
    * rename
    * Change the username
    * @param {object} opts

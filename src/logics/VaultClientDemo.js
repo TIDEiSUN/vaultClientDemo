@@ -77,6 +77,17 @@ class VaultClientDemoClass {
     return this.client.rename(options);
   }
 
+  activateAccount(username, newUsername, newPassword, loginInfo) {
+    const options = {
+      username: username,
+      new_username: newUsername,
+      password: newPassword,
+      masterkey: loginInfo.secret,
+      blob: loginInfo.blob,
+    };
+    return this.client.activate(options);
+  }
+
   registerAccount(username, password, email, activateLink) {
     const options = {
       username: username,

@@ -8,9 +8,7 @@ export default class RegistrationPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
-      password: '',
-      email: ''
+      email: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -21,12 +19,16 @@ export default class RegistrationPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Register account');
-    const activateLink = Config.emailVerificationURL;
+    const activateLink = Config.accountActivationURL;
 
-    return VaultClientDemo.registerAccount(this.state.username, this.state.password, this.state.email, activateLink)
+    const email = this.state.email;
+    const username = email;
+    const password = '';
+
+    return VaultClientDemo.registerAccount(username, password, email, activateLink)
       .then(result => {
         console.log('Register sucessfully', result);
-        alert('Account created. Verification email has been sent to ' + this.state.email);
+        alert('Account created. Verification email has been sent to ' + email);
       }).catch(err => {
         alert('Failed to register: ' + err.message);
         throw err;
@@ -39,18 +41,6 @@ export default class RegistrationPage extends React.Component {
       <div className="home">
         <h1>Register Account</h1>
         <form>
-          <div>
-            <label>
-              Username: 
-              <input type="text" value={this.state.username} onChange={this.handleChange.bind(this, 'username')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Password: 
-              <input type="password" value={this.state.password} onChange={this.handleChange.bind(this, 'password')} />
-            </label>
-          </div>
           <div>
             <label>
               Email: 
