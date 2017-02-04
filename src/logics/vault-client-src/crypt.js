@@ -1,4 +1,5 @@
-import { sjcl, Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
+import sjcl from 'sjcl';
+import { Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
 import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
