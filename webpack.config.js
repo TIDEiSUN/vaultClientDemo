@@ -9,13 +9,19 @@ module.exports = {
   },
   module: {
     loaders: [{
-      test: path.join(__dirname, 'src'),
-      loader: ['babel-loader'],
+      test:  /\.js$/,
+      loader: 'babel-loader',
+      exclude: /node_modules/,
       query: {
         cacheDirectory: 'babel_cache',
         presets: ['react', 'es2015']
       }
-    }]
+    }, {
+      test: /\.json$/,
+      loader: 'json-loader'
+    }
+    
+    ]
   },
   plugins: [
     new webpack.DefinePlugin({
