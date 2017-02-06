@@ -1,0 +1,6 @@
+[authinfo_url]
+http://192.168.100.91:27182/v1/authinfo
+[accounts]
+raVUps4RghLYkVBcpMaRbVKRTTzhesPXd
+[currencies]
+USD
