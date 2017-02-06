@@ -104,7 +104,7 @@ export default class VerifyEmailPage extends React.Component {
     const queryString = this.props.location.query;
     return (
       <div className="home">
-        <h1>Activate Account</h1>
+        <h1>Verify Email Token</h1>
         <LoginDiv loggedIn={this.state.loggedIn} target={this} />
         <VerifyButton username={queryString.username} token={queryString.token} email={queryString.email} disabled={!this.state.loggedIn} target={this}/>
         <Link to="/">Back to login page</Link>
