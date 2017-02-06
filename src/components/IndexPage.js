@@ -41,12 +41,11 @@ export default class IndexPage extends React.Component {
 
   handleResendEmail(event) {
     console.log('Resend verification email');
-    const activateLink = Config.emailVerificationURL;
+    const activateLink = Config.accountActivationURL;
 
     VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.resendEmail, activateLink, CurrentLogin.loginInfo)
       .then((result) => {
         alert('Verification email has been sent to ' + this.state.resendEmail);
-        CurrentLogin.loginInfo.blob.data.email = this.state.resendEmail;
       }).catch((err) => {
         alert('Verication email cannot be sent: ' + err.message);
       });

@@ -86,7 +86,7 @@ export default class BlobObj {
         self.revision         = resp.body.revision;
         self.encrypted_secret = resp.body.encrypted_secret;
         self.identity_id      = resp.body.identity_id;
-        self.id_token         = resp.body.id_token;
+        self.id_token         = resp.body.id_token;   // FIXME not assigned
         self.missing_fields   = resp.body.missing_fields;
         // self.attestations     = resp.body.attestation_summary;
 
@@ -235,7 +235,7 @@ export default class BlobObj {
    * @param {string} blobDecryptKey
    */
 
-  encryptBlobCrypt(secret, blobDecryptKey) {
+  static encryptBlobCrypt(secret, blobDecryptKey) {
     const recoveryEncryptionKey = crypt.deriveRecoveryEncryptionKeyFromSecret(secret);
     return crypt.encrypt(recoveryEncryptionKey, blobDecryptKey);
   }

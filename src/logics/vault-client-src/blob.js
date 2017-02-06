@@ -2,6 +2,7 @@ import request from 'superagent';
 import crypt from './crypt';
 import SignedRequest from './signedrequest';
 import BlobObj from './BlobObj';
+import Utils from './utils';
 
 /***** blob client methods ****/
 
@@ -131,19 +132,41 @@ const BlobClient = {
    * Verify email address
    */
 
-  verify(blobVaultURL, username, token) {
+  verifyEmailToken(opts) {
     return new Promise((resolve, reject) => {
-      const url = `${blobVaultURL}/v1/user/${username}/verify/${token}`;
-      request.get(url, (err, resp) => {
-        if (err) {
-          reject(new Error('Failed to verify the account - XHR error'));
-        } else if (resp.body && resp.body.result === 'success') {
-          resolve(resp.body);
-        } else {
-          console.log(resp.body.message);
-          reject(new Error('Failed to verify the account'));
-        }
-      });
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
+      const config = {
+        method : 'POST',
+        url    : `${opts.url}/v1/user/${opts.username}/verify/${opts.token}`,
+        data   : {
+          email    : opts.blob.data.email,
+          blob_id  : opts.blob.id,
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+          encrypted_secret : opts.blob.encrypted_secret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+        },
+      };
+
+      request.post(config.url)
+        .send(config.data)
+        .end((err, resp) => {
+          if (err) {
+            reject(new Error('Failed to verify the account - XHR error'));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else {
+            console.log(resp.body.message);
+            reject(new Error('Failed to verify the account'));
+          }
+        });
     });
   },
 
@@ -200,27 +223,27 @@ const BlobClient = {
    * @param {object} opts
    * @param {string} opts.url
    * @param {string} opts.username
-   * @param {string} opts.masterkey
+   * @param {string} opts.email
+   * @param {string} opts.phone (optional)
    */
 
   recoverBlob(opts) {
+    const recoveryKey = Utils.createRecoveryKey(opts.email, opts.phone);
+
     function getRequest() {
       return new Promise((resolve, reject) => {
         const username = String(opts.username).trim();
         const config   = {
           method : 'GET',
-          url    : `${opts.url}/v1/user/recov/${username}`,
+          url    : `${opts.url}/v1/user/recover/${username}`,
         };
 
-        const signedRequest = new SignedRequest(config);
-        const signed = signedRequest.signAsymmetricRecovery(opts.masterkey, username);
-
-        request.get(signed.url)
+        request.get(config.url)
           .end((err, resp) => {
             if (err) {
               reject(err);
             } else if (resp.body && resp.body.result === 'success') {
-              if (!resp.body.encrypted_blobdecrypt_key) {
+              if (!resp.body.encrypted_blobdecrypt_key || !resp.body.encrypted_secretdecrypt_key) {
                 reject(new Error('Missing encrypted blob decrypt key.'));
               } else {
                 resolve(resp);
@@ -239,8 +262,7 @@ const BlobClient = {
         const params = {
           url     : opts.url,
           blob_id : resp.body.blob_id,
-          // FIXME
-          key     : BlobObj.decryptBlobCrypt(opts.masterkey, resp.body.encrypted_blobdecrypt_key),
+          key     : BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_blobdecrypt_key),
         };
 
         const blob = new BlobObj(params);
@@ -252,6 +274,9 @@ const BlobClient = {
           reject(new Error('Error while decrypting blob'));
           return;
         }
+
+        const unlock = BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_secretdecrypt_key);
+        const secret = crypt.decrypt(unlock, resp.body.encrypted_secret);
 
         // Apply patches
         if (resp.body.patches && resp.body.patches.length) {
@@ -266,7 +291,7 @@ const BlobClient = {
         }
 
         // return with newly decrypted blob
-        resolve(blob);
+        resolve({ blob, secret });
       });
     }
 
@@ -292,6 +317,8 @@ const BlobClient = {
       opts.blob.key = opts.keys.crypt;
       opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
 
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
       const config = {
         method : 'POST',
         url    : `${opts.blob.url}/v1/user/${opts.username}/updatekeys`,
@@ -300,7 +327,8 @@ const BlobClient = {
           data     : opts.blob.encrypt(),
           revision : opts.blob.revision,
           encrypted_secret : opts.blob.encrypted_secret,
-          encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt),
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
         },
       };
 
@@ -324,6 +352,60 @@ const BlobClient = {
   },
 
   /**
+   * Activate an account
+   * @param {object} opts
+   * @param {string} opts.username
+   * @param {string} opts.new_username
+   * @param {object} opts.keys
+   * @param {object} opts.blob
+   * @param {string} masterkey
+   */
+
+  activate(opts) {
+    return new Promise((resolve, reject) => {
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
+      const config = {
+        method: 'POST',
+        url: `${opts.blob.url}/v1/user/${opts.username}/activate`,
+        data: {
+          blob_id  : opts.blob.id,
+          username : opts.new_username,
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+          encrypted_secret : opts.blob.encryptedSecret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+        },
+      };
+
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
+
+      request.post(signed.url)
+        .send(signed.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'activate:', err);
+            reject(new Error(`Failed to activate: ${err.message}`));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            console.log('error:', 'activate:', resp.body.message);
+            reject(new Error(`Failed to activate: ${resp.body.message}`));
+          } else {
+            reject(new Error('Failed to activate'));
+          }
+        });
+    });
+  },
+
+  /**
    * rename
    * Change the username
    * @param {object} opts
@@ -341,6 +423,8 @@ const BlobClient = {
       opts.blob.key = opts.keys.crypt;
       opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
 
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
       const config = {
         method: 'POST',
         url: `${opts.blob.url}/v1/user/${opts.username}/rename`,
@@ -350,7 +434,8 @@ const BlobClient = {
           data     : opts.blob.encrypt(),
           revision : opts.blob.revision,
           encrypted_secret : opts.blob.encryptedSecret,
-          encrypted_blobdecrypt_key : opts.blob.encryptBlobCrypt(opts.masterkey, opts.keys.crypt),
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
         },
       };
 
@@ -406,6 +491,7 @@ const BlobClient = {
         email       : options.email,
         contacts    : [],
         created     : (new Date()).toJSON(),
+        phone       : null,
       };
 
       blob.encrypted_secret = blob.encryptSecret(options.unlock, options.masterkey);
@@ -414,6 +500,8 @@ const BlobClient = {
       if (options.oldUserBlob) {
         blob.data.contacts = options.oldUserBlob.data.contacts;
       }
+
+      const recoveryKey = Utils.createRecoveryKey(options.email);
 
       // post to the blob vault to create
       const config = {
@@ -428,7 +516,8 @@ const BlobClient = {
           email       : options.email,
           hostlink    : options.activateLink,
           domain      : options.domain,
-          encrypted_blobdecrypt_key : blob.encryptBlobCrypt(options.masterkey, options.crypt),
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, options.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, options.unlock),
           encrypted_secret : blob.encrypted_secret,
         },
       };
@@ -786,6 +875,7 @@ const BlobClient = {
           via          : 'sms',
           phone_number : options.phone_number,
           country_code : options.country_code,
+          phone_changed: options.phone_changed,
         },
       };
 
@@ -817,13 +907,27 @@ const BlobClient = {
    * @param {string} options.token
    */
 
-  verifyPhoneToken(options) {
+  verifyPhoneToken(opts) {
     return new Promise((resolve, reject) => {
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
       const config = {
         method : 'POST',
-        url    : `${options.url}/v1/blob/${options.blob_id}/phone/verify`,
+        url    : `${opts.url}/v1/blob/${opts.blob.id}/phone/verify`,
         data   : {
-          token : options.token,
+          country_code      : opts.blob.data.phone.countryCode,
+          phone_number      : opts.blob.data.phone.phoneNumber,
+          token             : opts.token,
+          data              : opts.blob.encrypt(),
+          revision          : opts.blob.revision,
+          encrypted_secret  : opts.blob.encrypted_secret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
         },
       };
 

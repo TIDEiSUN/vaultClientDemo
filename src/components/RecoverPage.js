@@ -9,7 +9,9 @@ export default class RecoverPage extends React.Component {
     super(props);
     this.state = {
       username: '',
-      secret: '',
+      email: '',
+      countryCode: '',
+      phoneNumber: '',
       newPassword: ''
     };
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -22,7 +24,10 @@ export default class RecoverPage extends React.Component {
   handleSubmit(event) {
     console.log('Recover account');
 
-    return VaultClientDemo.recoverBlob(this.state.username, this.state.secret)
+    const email = this.state.email;
+    const phone = (this.state.countryCode && this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
+
+    return VaultClientDemo.recoverBlob(this.state.username, email, phone)
       .then(result => {
         console.log('Recover blob successfully', result);
         CurrentLogin.username = this.state.username;
@@ -56,8 +61,20 @@ export default class RecoverPage extends React.Component {
           </div>
           <div>
             <label>
-              Secret: 
-              <input type="text" value={this.state.secret} onChange={this.handleChange.bind(this, 'secret')} />
+              Email: 
+              <input type="text" value={this.state.email} onChange={this.handleChange.bind(this, 'email')} />
+            </label>
+          </div>
+          <div>
+            <label>
+              Country code: 
+              <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
+            </label>
+          </div>
+          <div>
+            <label>
+              Phone number: 
+              <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
             </label>
           </div>
           <div>

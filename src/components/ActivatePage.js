@@ -1,47 +1,143 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo'
+import VaultClientDemo from '../logics/VaultClientDemo';
+import { CurrentLogin } from './Data';
+import AsyncButton from './AsyncButton';
 
-function ActivateButton(props) {
-  if(!props.username || !props.token) {
-    return (
-      <div>
-        <li>Invalid Username or Token</li>
-      </div>
-    );
-  }
+function VerifyButton(props) {
+  const disabled = !props.token || !props.email;
 
   return (
     <div>
-      <li>Username: {props.username}</li>
       <li>Token: {props.token}</li>
-      <button onClick={props.target.handleActivate}>Activate</button>
+      <li>Email: {props.email}</li>
+      <AsyncButton
+        type="button"
+        onClick={props.target.handleVerifyToken}
+        pendingText="Verifying..."
+        fulFilledText="Verified"
+        rejectedText="Failed! Try Again"
+        text="Verify"
+        disabled={disabled}
+      />
     </div>
+  );
+}
+
+function ActivateAccountForm(props) {
+  const self = props.self;
+  return (
+    <form>
+      <div>
+        <label>
+          Username: 
+          <input type="text" value={self.state.newUsername} onChange={self.handleChange.bind(self, 'newUsername')} />
+        </label>
+        <label>
+          Password: 
+          <input type="password" value={self.state.newPassword} onChange={self.handleChange.bind(self, 'newPassword')} />
+        </label>
+        <label>
+          First Name: 
+          <input type="text" value={self.state.firstName} onChange={self.handleChange.bind(self, 'firstName')} />
+        </label>
+        <label>
+          Last Name: 
+          <input type="text" value={self.state.lastName} onChange={self.handleChange.bind(self, 'lastName')} />
+        </label>
+      </div>
+      <AsyncButton
+        type="button"
+        onClick={self.handleSubmitForm}
+        pendingText="Activating..."
+        fulFilledText="Activated"
+        rejectedText="Failed! Try Again"
+        text="Activate"
+      />
+    </form>
   );
 }
 
 export default class ActivatePage extends React.Component {
   constructor(props) {
     super(props);
-    this.handleActivate = this.handleActivate.bind(this);
+    this.state = {
+      newUsername: '',
+      newPassword: '',
+      firstName: '',
+      lastName: '',
+      verified: false,
+    };
+    this.handleVerifyToken = this.handleVerifyToken.bind(this);
+    this.handleSubmitForm = this.handleSubmitForm.bind(this);
   }
 
-  handleActivate() {
-    VaultClientDemo.verifyEmailToken(this.props.location.query.username, this.props.location.query.token)
-      .then(result => {
-        alert('Success!');
+  handleVerifyToken() {
+    const queryString = this.props.location.query;
+    const email = queryString.email;
+    const token = queryString.token;
+    const username = email;
+    const password = '';
+    return VaultClientDemo.loginAccount(username, password)
+      .then((result) => {
+        CurrentLogin.username = result.username;
+        CurrentLogin.password = password;
+        CurrentLogin.loginInfo = result;
+        console.log('Login sucessfully', result);
+        return VaultClientDemo.verifyEmailToken(username, token, password, email, CurrentLogin.loginInfo);
+      }).then(result => {
+        this.setState({
+          verified: true,
+        });
+        alert('Verified!');
       }).catch(err => {
-        alert('Failed to activate account: ' + err.message);
+        alert('Failed to verify token: ' + err.message);
+        throw err;
       });
   }
 
+  handleSubmitForm() {
+    const queryString = this.props.location.query;
+    const username = queryString.email;
+    const newUsername = this.state.newUsername;
+    const newPassword = this.state.newPassword;
+
+    // update blob
+    const blob = CurrentLogin.loginInfo.blob;
+    blob.data.firstName = this.state.firstName;
+    blob.data.lastName = this.state.lastName;
+    
+    return VaultClientDemo.activateAccount(username, newUsername, newPassword, CurrentLogin.loginInfo)
+      .then(result => {
+        alert('Activated!');
+      }).catch(err => {
+        alert('Failed to activate account: ' + err.message);
+        throw err;
+      });
+  }
+
+  handleChange(name, event) {
+    this.setState({[name]: event.target.value});
+  }
+
   render() {
-    return (
-      <div className="home">
-        <h1>Activate Account</h1>
-        <ActivateButton username={this.props.location.query.username} token={this.props.location.query.token} target={this}/>
-        <Link to="/">Back to login page</Link>
-      </div>
-    );
+    const queryString = this.props.location.query;
+    if (this.state.verified) {
+      return (
+        <div className="home">
+          <h1>Activate Account</h1>
+          <ActivateAccountForm self={this} />
+          <Link to="/">Back to login page</Link>
+        </div>
+      );
+    } else {
+      return (
+        <div className="home">
+          <h1>Activate Account</h1>
+          <VerifyButton token={queryString.token} email={queryString.email} target={this} />
+          <Link to="/">Back to login page</Link>
+        </div>
+      );      
+    }
   }
 }
