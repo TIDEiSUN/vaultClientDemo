@@ -20,27 +20,25 @@ class VaultClientDemoClass {
       });
   }
 
-  resendVerificationEmail(username, password, email, activateLink, loginInfo) {
+  resendVerificationEmail(username, password, email, activateLink, loginInfo, notifyChange) {
     const options = {
       url: loginInfo.blob.url,
       id: loginInfo.blob.id,
       username: username,
       account_id: loginInfo.blob.data.account_id,
-      email: email === null ? loginInfo.blob.data.email : email,
+      email: email,
       activateLink: activateLink,
       masterkey: loginInfo.secret,
+      notify_change: notifyChange,
     };
     return this.client.resendEmail(options);
   }
 
-  verifyEmailToken(username, emailToken, password, email, loginInfo) {
+  verifyEmailToken(username, emailToken, email) {
     const options = {
       username: username,
-      password: password,
       email: email,
       token: emailToken,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
     };
     return this.client.verifyEmailToken(options);
   }
@@ -77,15 +75,28 @@ class VaultClientDemoClass {
     return this.client.rename(options);
   }
 
-  activateAccount(username, newUsername, newPassword, loginInfo) {
+  updateEmail(username, newUsername, newPassword, loginInfo, email) {
     const options = {
       username: username,
       new_username: newUsername,
       password: newPassword,
       masterkey: loginInfo.secret,
       blob: loginInfo.blob,
+      email: email,
     };
-    return this.client.activate(options);
+    return this.client.updateEmail(options);
+  }
+
+  updatePhone(username, newUsername, newPassword, loginInfo, phone) {
+    const options = {
+      username: username,
+      new_username: newUsername,
+      password: newPassword,
+      masterkey: loginInfo.secret,
+      blob: loginInfo.blob,
+      phone: phone,
+    };
+    return this.client.updatePhone(options);
   }
 
   registerAccount(username, password, email, activateLink) {
@@ -111,7 +122,7 @@ class VaultClientDemoClass {
     return loginInfo.blob.set2FA(options);
   }
 
-  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, phoneChanged) {
+  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, notifyChange = false) {
     const options = {
       url: loginInfo.blob.url,
       blob_id: loginInfo.blob.id,
@@ -119,45 +130,47 @@ class VaultClientDemoClass {
       masterkey: loginInfo.secret,
       phone_number: phoneNumber,
       country_code: countryCode,
-      phone_changed: phoneChanged,
+      notify_change: notifyChange,
     };
     return this.client.requestPhoneToken(options);
   }
 
-  verifyPhone(loginInfo, phoneToken, username, password, phone) {
+  verifyPhone(loginInfo, phoneToken, username, phone) {
     const options = {
       username: username,
-      password: password,
       phone: phone,
       token: phoneToken,
-      masterkey: loginInfo.secret,
       blob: loginInfo.blob,
     };
     return this.client.verifyPhoneToken(options);
   }
 
-  recoverBlob(username, email, phone) {
-    const authInfoPromise = AuthInfo.get(this.domain, username);
-
-    const recoverBlobPromise = authInfoPromise
+  recoverBlob(email, phone) {
+    const dummyUsername = 'dummy';
+    const recoverBlobPromise = AuthInfo.get(this.domain, dummyUsername)
       .then((authInfo) => {
         const options = {
           url: authInfo.blobvault,
-          username: authInfo.username,
           email: email,
           phone: phone,
         };
         return this.client.recoverBlob(options);
       });
 
-    return Promise.all([authInfoPromise, recoverBlobPromise])
+    const authInfoPromise = recoverBlobPromise
+      .then((recovered) => {
+        return AuthInfo.get(this.domain, recovered.username);
+      });
+
+    return Promise.all([recoverBlobPromise, authInfoPromise])
       .then((results) => {
-        const [authInfo, recovered] = results;
+        const [recovered, authInfo] = results;
         return Promise.resolve({
           blob: recovered.blob,
           secret: recovered.secret,
           username: authInfo.username,
           emailVerified: authInfo.emailVerified,
+          phoneVerified: authInfo.phoneVerified,
         });
       });
   }

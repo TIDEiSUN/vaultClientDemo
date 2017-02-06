@@ -52,7 +52,7 @@ function LoginDiv(props) {
   );
 }
 
-export default class ActivatePage extends React.Component {
+export default class VerifyEmailPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -64,11 +64,18 @@ export default class ActivatePage extends React.Component {
 
   handleVerifyToken() {
     const queryString = this.props.location.query;
-    return VaultClientDemo.verifyEmailToken(queryString.username, queryString.token, CurrentLogin.password, queryString.email, CurrentLogin.loginInfo)
-      .then(result => {
+    return VaultClientDemo.verifyEmailToken(queryString.username, queryString.token, queryString.email)
+      .then((result) => {
+        console.log('verifiy email token:', result);
+        return VaultClientDemo.updateEmail(CurrentLogin.username, CurrentLogin.username, CurrentLogin.password, CurrentLogin.loginInfo, queryString.email);
+      })
+      .then((result) => {
+        console.log('update email:', result);
+        CurrentLogin.loginInfo.emailVerified = true;
         alert('Success!');
       }).catch(err => {
-        alert('Failed to activate account: ' + err.message);
+        alert('Failed to verify email: ' + err.message);
+        console.error('Failed to verify email:', err);
         throw err;
       });
   }

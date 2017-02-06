@@ -84,7 +84,7 @@ export default class ActivatePage extends React.Component {
         CurrentLogin.password = password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
-        return VaultClientDemo.verifyEmailToken(username, token, password, email, CurrentLogin.loginInfo);
+        return VaultClientDemo.verifyEmailToken(username, token, email);
       }).then(result => {
         this.setState({
           verified: true,
@@ -98,7 +98,8 @@ export default class ActivatePage extends React.Component {
 
   handleSubmitForm() {
     const queryString = this.props.location.query;
-    const username = queryString.email;
+    const email = queryString.email;
+    const username = email;
     const newUsername = this.state.newUsername;
     const newPassword = this.state.newPassword;
 
@@ -107,11 +108,14 @@ export default class ActivatePage extends React.Component {
     blob.data.firstName = this.state.firstName;
     blob.data.lastName = this.state.lastName;
     
-    return VaultClientDemo.activateAccount(username, newUsername, newPassword, CurrentLogin.loginInfo)
+    return VaultClientDemo.updateEmail(username, newUsername, newPassword, CurrentLogin.loginInfo, email)
       .then(result => {
+        CurrentLogin.username = newUsername;
+        CurrentLogin.password = newPassword;
         alert('Activated!');
       }).catch(err => {
         alert('Failed to activate account: ' + err.message);
+        console.error('Failed to update email:', err);
         throw err;
       });
   }

@@ -8,7 +8,6 @@ export default class RecoverPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
       email: '',
       countryCode: '',
       phoneNumber: '',
@@ -27,18 +26,16 @@ export default class RecoverPage extends React.Component {
     const email = this.state.email;
     const phone = (this.state.countryCode && this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
 
-    return VaultClientDemo.recoverBlob(this.state.username, email, phone)
-      .then(result => {
+    return VaultClientDemo.recoverBlob(email, phone)
+      .then((result) => {
         console.log('Recover blob successfully', result);
-        CurrentLogin.username = this.state.username;
+        CurrentLogin.username = result.username;
         CurrentLogin.loginInfo = result;
-        return VaultClientDemo.changePassword(this.state.username, this.state.newPassword, CurrentLogin.loginInfo);
-      }).then(result => {
+        return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
+      }).then((result) => {
         CurrentLogin.password = this.state.newPassword;
         console.log(result);
-//        alert('Recover account successfully!');
-        //browserHistory.push('/main');
-      }).catch(err => {
+      }).catch((err) => {
         delete CurrentLogin.username;
         delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
@@ -53,12 +50,6 @@ export default class RecoverPage extends React.Component {
       <div className="home">
         <h1>Recover Account</h1>
         <form>
-          <div>
-            <label>
-              Username: 
-              <input type="text" value={this.state.username} onChange={this.handleChange.bind(this, 'username')} />
-            </label>
-          </div>
           <div>
             <label>
               Email: 

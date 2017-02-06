@@ -46,20 +46,25 @@ export default class VerifyPhonePage extends React.Component {
     const countryCode = this.state.countryCode ? this.state.countryCode : oldCountryCode;
 
     const phoneChanged = oldPhoneNumber !== phoneNumber || oldCountryCode !== countryCode;
-    console.log('phone:', '(' + countryCode + ')' + phoneNumber);
-    console.log('changed:', phoneChanged);
+    console.log(`old phone: (${oldCountryCode})${oldPhoneNumber}`);
+    console.log(`new phone: (${countryCode})${phoneNumber}`);
+    console.log(`phone changed: ${phoneChanged}`);
 
     if (phoneNumber && countryCode) {
-      VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo,
-                                                countryCode,
-                                                phoneNumber,
-                                                phoneChanged)
-        .then((result) => {
-          console.log('request phone token', result);
-          alert('Success!');
-        }).catch((err) => {
-            alert(`Failed to send verification code by sms: ${err.message}`);
-        });
+      if (!phoneChanged && this.state.verified) {
+        alert('Phone has been verified');
+      } else {
+        VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo,
+                                                  countryCode,
+                                                  phoneNumber,
+                                                  phoneChanged)
+          .then((result) => {
+            console.log('request phone token', result);
+            alert('Success!');
+          }).catch((err) => {
+              alert(`Failed to send verification code by sms: ${err.message}`);
+          });
+      }
     } else {
       alert('Missing country code / phone number');
     }
@@ -77,10 +82,13 @@ export default class VerifyPhonePage extends React.Component {
       VaultClientDemo.verifyPhone(CurrentLogin.loginInfo,
                                   this.state.token,
                                   CurrentLogin.username,
-                                  CurrentLogin.password,
                                   phone)
         .then((result) => {
-          console.log('verify phone token', result);
+          console.log('verify phone token:', result);
+          return VaultClientDemo.updatePhone(CurrentLogin.username, CurrentLogin.username, CurrentLogin.password, CurrentLogin.loginInfo, phone);
+        })
+        .then((result) => {
+          console.log('update phone:', result);
           CurrentLogin.loginInfo.phoneVerified = true;
           this.setState({
             oldPhoneInfo: CurrentLogin.loginInfo.blob.data.phone,
@@ -89,6 +97,7 @@ export default class VerifyPhonePage extends React.Component {
           alert('Success!');
         }).catch((err) => {
           alert(`Failed to verify phone: ${err.message}`);
+          console.error('Failed to verify phone:', err);
         });
     } else {
       alert('Missing country code / phone number');

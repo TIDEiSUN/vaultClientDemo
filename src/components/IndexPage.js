@@ -43,12 +43,23 @@ export default class IndexPage extends React.Component {
     console.log('Resend verification email');
     const activateLink = Config.accountActivationURL;
 
-    VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.resendEmail, activateLink, CurrentLogin.loginInfo)
-      .then((result) => {
-        alert('Verification email has been sent to ' + this.state.resendEmail);
-      }).catch((err) => {
-        alert('Verication email cannot be sent: ' + err.message);
-      });
+    const oldEmail = CurrentLogin.loginInfo.blob.data.email ? CurrentLogin.loginInfo.blob.data.email : '';
+    const newEmail = this.state.resendEmail ? this.state.resendEmail : oldEmail;
+    const emailChanged = oldEmail !== newEmail;
+    console.log(`old email: ${oldEmail}`);
+    console.log(`new email: ${newEmail}`);
+    console.log(`email changed: ${emailChanged}`);
+
+    if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
+      alert('Email has been verified.');
+    } else {
+      VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo, emailChanged)
+        .then((result) => {
+          alert('Verification email has been sent to ' + newEmail);
+        }).catch((err) => {
+          alert('Verication email cannot be sent: ' + err.message);
+        });
+    }
     event.preventDefault();
   }
 

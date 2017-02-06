@@ -134,24 +134,11 @@ const BlobClient = {
 
   verifyEmailToken(opts) {
     return new Promise((resolve, reject) => {
-      const old_id  = opts.blob.id;
-      opts.blob.id  = opts.keys.id;
-      opts.blob.key = opts.keys.crypt;
-      opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
-
-      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
-
       const config = {
         method : 'POST',
         url    : `${opts.url}/v1/user/${opts.username}/verify/${opts.token}`,
         data   : {
-          email    : opts.blob.data.email,
-          blob_id  : opts.blob.id,
-          data     : opts.blob.encrypt(),
-          revision : opts.blob.revision,
-          encrypted_secret : opts.blob.encrypted_secret,
-          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
-          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+          email    : opts.email,
         },
       };
 
@@ -193,6 +180,7 @@ const BlobClient = {
           username : opts.username,
           email    : opts.email,
           hostlink : opts.activateLink,
+          notify_change: opts.notify_change,
         },
       };
 
@@ -232,10 +220,9 @@ const BlobClient = {
 
     function getRequest() {
       return new Promise((resolve, reject) => {
-        const username = String(opts.username).trim();
         const config   = {
           method : 'GET',
-          url    : `${opts.url}/v1/user/recover/${username}`,
+          url    : `${opts.url}/v1/user/recover/${opts.email}`,
         };
 
         request.get(config.url)
@@ -265,6 +252,8 @@ const BlobClient = {
           key     : BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_blobdecrypt_key),
         };
 
+        const username = resp.body.username;
+
         const blob = new BlobObj(params);
 
         blob.revision = resp.body.revision;
@@ -291,7 +280,7 @@ const BlobClient = {
         }
 
         // return with newly decrypted blob
-        resolve({ blob, secret });
+        resolve({ blob, secret, username });
       });
     }
 
@@ -352,7 +341,7 @@ const BlobClient = {
   },
 
   /**
-   * Activate an account
+   * Update email of an account
    * @param {object} opts
    * @param {string} opts.username
    * @param {string} opts.new_username
@@ -361,7 +350,7 @@ const BlobClient = {
    * @param {string} masterkey
    */
 
-  activate(opts) {
+  updateEmail(opts) {
     return new Promise((resolve, reject) => {
       const old_id  = opts.blob.id;
       opts.blob.id  = opts.keys.id;
@@ -372,7 +361,62 @@ const BlobClient = {
 
       const config = {
         method: 'POST',
-        url: `${opts.blob.url}/v1/user/${opts.username}/activate`,
+        url: `${opts.blob.url}/v1/user/${opts.username}/update/email`,
+        data: {
+          blob_id  : opts.blob.id,
+          username : opts.new_username,
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+          encrypted_secret : opts.blob.encryptedSecret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+          email: opts.email,
+        },
+      };
+
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
+
+      request.post(signed.url)
+        .send(signed.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'update email:', err);
+            reject(new Error(`Failed to update email: ${err.message}`));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            console.log('error:', 'update email:', resp.body.message);
+            reject(new Error(`Failed to update email: ${resp.body.message}`));
+          } else {
+            reject(new Error('Failed to update email'));
+          }
+        });
+    });
+  },
+
+  /**
+   * Update phone of an account
+   * @param {object} opts
+   * @param {string} opts.username
+   * @param {string} opts.new_username
+   * @param {object} opts.keys
+   * @param {object} opts.blob
+   * @param {string} masterkey
+   */
+
+  updatePhone(opts) {
+    return new Promise((resolve, reject) => {
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
+      const config = {
+        method: 'POST',
+        url: `${opts.blob.url}/v1/user/${opts.username}/update/phone`,
         data: {
           blob_id  : opts.blob.id,
           username : opts.new_username,
@@ -391,15 +435,15 @@ const BlobClient = {
         .send(signed.data)
         .end((err, resp) => {
           if (err) {
-            console.log('error:', 'activate:', err);
-            reject(new Error(`Failed to activate: ${err.message}`));
+            console.log('error:', 'update phone:', err);
+            reject(new Error(`Failed to update phone: ${err.message}`));
           } else if (resp.body && resp.body.result === 'success') {
             resolve(resp.body);
           } else if (resp.body && resp.body.result === 'error') {
-            console.log('error:', 'activate:', resp.body.message);
-            reject(new Error(`Failed to activate: ${resp.body.message}`));
+            console.log('error:', 'update phone:', resp.body.message);
+            reject(new Error(`Failed to update phone: ${resp.body.message}`));
           } else {
-            reject(new Error('Failed to activate'));
+            reject(new Error('Failed to update phone'));
           }
         });
     });
@@ -875,7 +919,7 @@ const BlobClient = {
           via          : 'sms',
           phone_number : options.phone_number,
           country_code : options.country_code,
-          phone_changed: options.phone_changed,
+          notify_change: options.notify_change,
         },
       };
 
@@ -909,25 +953,13 @@ const BlobClient = {
 
   verifyPhoneToken(opts) {
     return new Promise((resolve, reject) => {
-      const old_id  = opts.blob.id;
-      opts.blob.id  = opts.keys.id;
-      opts.blob.key = opts.keys.crypt;
-      opts.blob.encrypted_secret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
-
-      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
-
       const config = {
         method : 'POST',
         url    : `${opts.url}/v1/blob/${opts.blob.id}/phone/verify`,
         data   : {
-          country_code      : opts.blob.data.phone.countryCode,
-          phone_number      : opts.blob.data.phone.phoneNumber,
+          country_code      : opts.phone.countryCode,
+          phone_number      : opts.phone.phoneNumber,
           token             : opts.token,
-          data              : opts.blob.encrypt(),
-          revision          : opts.blob.revision,
-          encrypted_secret  : opts.blob.encrypted_secret,
-          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
-          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
         },
       };
 

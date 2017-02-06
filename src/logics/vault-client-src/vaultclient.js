@@ -322,24 +322,15 @@ export default class VaultClient {
    *
    * @param {string}    username
    * @param {string}    token - Verification token
-   * @param {function}  fn - Callback function
+   * @param {string}    opts.email
    */
 
   verifyEmailToken(opts) {
     return this.getAuthInfo(opts.username)
       .then((authInfo) => {
-        return DeriveHelper.deriveLoginKeys(authInfo, opts.password);
-      }).then((result) => {
-        return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
-      }).then((result) => {
-        opts.blob.data.email = opts.email;
         const blobOpts = {
-          url: result.authInfo.blobvault,
-          username: opts.username,
-          token: opts.token,
-          blob: opts.blob,
-          keys: result.keys,
-          masterkey: opts.masterkey,
+          url: authInfo.blobvault,
+          ...opts,
         };
         return blobClient.verifyEmailToken(blobOpts);
       });
@@ -356,18 +347,9 @@ export default class VaultClient {
   verifyPhoneToken(opts) {
     return this.getAuthInfo(opts.username)
       .then((authInfo) => {
-        return DeriveHelper.deriveLoginKeys(authInfo, opts.password);
-      }).then((result) => {
-        return DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys);
-      }).then((result) => {
-        opts.blob.data.phone = opts.phone;
         const blobOpts = {
-          url: result.authInfo.blobvault,
-          username: opts.username,
-          token: opts.token,
-          blob: opts.blob,
-          keys: result.keys,
-          masterkey: opts.masterkey,
+          url: authInfo.blobvault,
+          ...opts,
         };
         return blobClient.verifyPhoneToken(blobOpts);
       });
@@ -408,7 +390,7 @@ export default class VaultClient {
   }
 
   /**
-   * activate a ripple account
+   * Update email of a ripple account
    * @param {object} options
    * @param {string} options.username
    * @param {string} options.new_username
@@ -417,17 +399,9 @@ export default class VaultClient {
    * @param {object} options.blob
    */
 
-  activate(options) {
+  updateEmail(options) {
     var new_username = String(options.new_username).trim();
     var password     = String(options.password).trim();
-
-    const checkAccountExists = this.getAuthInfo(options.username)
-      .then((authInfo) => {
-        if (!authInfo.exists) {
-          return Promise.reject(new Error('User does not exists.'));
-        }
-        return Promise.resolve();
-      });
 
     const checkNewUsernameExists = (authInfo) => {
       if (authInfo && authInfo.exists) {
@@ -439,17 +413,83 @@ export default class VaultClient {
       return Promise.resolve({ authInfo, password });
     };
 
-    function activateAccount (authInfo, keys) {
+    const checkAccountExists = this.getAuthInfo(options.username)
+      .then((authInfo) => {
+        if (!authInfo.exists) {
+          return Promise.reject(new Error('User does not exists.'));
+        }
+        if (options.username === new_username) {
+          return Promise.resolve({ authInfo, password });
+        } else {
+          console.log(`Username changes from ${options.username} to ${new_username}`);
+          return this.getAuthInfo(new_username)
+            .then(checkNewUsernameExists);
+        }
+      });
+
+    function blobUpdateEmail(authInfo, keys) {
       options.keys = keys;
-      return blobClient.activate(options);
-    };
+      options.blob.data.email = options.email;
+      return blobClient.updateEmail(options);
+    }
 
     return checkAccountExists
-      .then(() => this.getAuthInfo(new_username))
-      .then(checkNewUsernameExists)
       .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
       .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => activateAccount(result.authInfo, result.keys));
+      .then(result => blobUpdateEmail(result.authInfo, result.keys));
+  }
+
+  /**
+   * Update phone of a ripple account
+   * @param {object} options
+   * @param {string} options.username
+   * @param {string} options.new_username
+   * @param {string} options.password
+   * @param {string} options.masterkey
+   * @param {object} options.blob
+   */
+
+  updatePhone(options) {
+    var new_username = String(options.new_username).trim();
+    var password     = String(options.password).trim();
+
+    const checkNewUsernameExists = (authInfo) => {
+      if (authInfo && authInfo.exists) {
+        return Promise.reject(new Error('username already taken.'));
+      }
+      // user name is replaced because of case
+      // FIXME another way to change user name
+      authInfo.username = new_username;
+      return Promise.resolve({ authInfo, password });
+    };
+
+    const checkAccountExists = this.getAuthInfo(options.username)
+      .then((authInfo) => {
+        if (!authInfo.exists) {
+          return Promise.reject(new Error('User does not exists.'));
+        }
+        if (!authInfo.emailVerified) {
+          return Promise.reject(new Error('Email has not been verified.'));          
+        }
+        if (options.username === new_username) {
+          return Promise.resolve({ authInfo, password });
+        } else {
+          console.log(`Username changes from ${options.username} to ${new_username}`);
+          return this.getAuthInfo(new_username)
+            .then(checkNewUsernameExists);
+        }
+      });
+
+    function blobUpdatePhone(authInfo, keys) {
+      options.keys = keys;
+      options.blob.data.phone = options.phone;
+      return blobClient.updatePhone(options);
+    }
+
+    return checkAccountExists
+      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
+      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
+      .then(result => blobUpdatePhone(result.authInfo, result.keys));
   }
 
   /**

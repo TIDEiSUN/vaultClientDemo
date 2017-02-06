@@ -21,13 +21,27 @@ export default class ChangeEmailPage extends React.Component {
   handleSubmit(event) {
     console.log('Handle rename account');
     const activateLink = Config.emailVerificationURL;
-    return VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, this.state.newEmail, activateLink, CurrentLogin.loginInfo)
-      .then(result => {
-        alert('Verification email has been sent to ' + this.state.newEmail);
-      }).catch(err => {
-        alert('Verication email cannot be sent: ' + err.message);
-        throw err;
-      });
+
+    const oldEmail = CurrentLogin.loginInfo.blob.data.email ? CurrentLogin.loginInfo.blob.data.email : '';
+    const newEmail = this.state.newEmail ? this.state.newEmail : oldEmail;
+    const emailChanged = oldEmail !== newEmail;
+    console.log(`old email: ${oldEmail}`);
+    console.log(`new email: ${newEmail}`);
+    console.log(`email changed: ${emailChanged}`);
+
+    if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
+      alert('Email has been verified.');
+      return Promise.reject(new Error('Email has been verified.'));
+    } else {
+      return VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo, emailChanged)
+        .then(result => {
+          alert('Verification email has been sent to ' + newEmail);
+        }).catch(err => {
+          alert('Verication email cannot be sent: ' + err.message);
+          throw err;
+        });
+    }
+    
     //event.preventDefault();
   }
 
