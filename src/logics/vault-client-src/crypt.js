@@ -1,4 +1,5 @@
-import { sjcl, Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
+import sjcl from 'sjcl-all'; 
+import { Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
 import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
@@ -61,6 +62,11 @@ function randomWords (nWords) {
   return sjcl.random.randomWords(nWords, SJCL_PARANOIA_256_BITS);
 }
 
+function setFirstBit (bigNumber) {
+  bigNumber.limbs[0] |= 1;
+  return bigNumber;
+}
+
 /****** exposed functions ******/
 
 const Crypt = {
@@ -97,7 +103,7 @@ const Crypt = {
       var publicSize = Math.ceil(Math.min((7 + iModulus.bitLength()) >>> 3, 256) / 8);
       var publicHash = fdh(publicInfo, publicSize);
       var publicHex  = sjcl.codec.hex.fromBits(publicHash);
-      var iPublic    = new sjcl.bn(String(publicHex)).setBitM(0);
+      var iPublic    = setFirstBit(new sjcl.bn(String(publicHex)));
       var secretInfo = [ publicInfo, secret.length, secret ].join(':') + ':';
       var secretSize = (7 + iModulus.bitLength()) >>> 3;
       var secretHash = fdh(secretInfo, secretSize);
