@@ -1,6 +1,4 @@
-import sjcl from 'sjcl';
-import { Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
-import { deriveKeypair } from 'ripple-keypairs';
+import { sjcl, Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
 import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
@@ -246,8 +244,6 @@ const Crypt = {
  */
 
   getAddress(masterkey) {
-    // const keypair = deriveKeypair(masterkey);
-    // return keypair.publicKey;
     return Seed.from_json(masterkey).get_key().get_address().to_json();
   },
 

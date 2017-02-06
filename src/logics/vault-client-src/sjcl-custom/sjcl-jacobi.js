@@ -1,4 +1,4 @@
-import { sjcl } from 'sjcl';
+import { sjcl } from 'ripple-lib';
 
 export default function jacobi(a, that) {
   that = new sjcl.bn(that);
