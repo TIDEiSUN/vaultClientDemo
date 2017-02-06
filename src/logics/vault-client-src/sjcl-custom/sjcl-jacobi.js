@@ -1,9 +1,10 @@
-import { sjcl } from 'ripple-lib';
+import sjcl from 'sjcl-all'; 
 
 export default function jacobi(a, that) {
   that = new sjcl.bn(that);
 
-  if (that.sign() === -1) return;
+  let neg = !that.greaterEquals(new sjcl.bn(0));
+  if (neg) return;
 
   // 1. If a = 0 then return(0).
   if (a.equals(0)) { return 0; }
@@ -12,17 +13,19 @@ export default function jacobi(a, that) {
   if (a.equals(1)) { return 1; }
 
   let s = 0;
-
   // 3. Write a = 2^e * a1, where a1 is odd.
   let e = 0;
-  while (!a.testBit(e)) e++;
-  const a1 = a.shiftRight(e);
+  const a1 = new sjcl.bn(a);
+  while ((a1.getLimb(0) & 1) === 0) {
+    e++;
+    a1.halveM();
+  }
 
   // 4. If e is even then set s ← 1.
   if ((e & 1) === 0) {
     s = 1;
   } else {
-    const residue = that.modInt(8);
+    const residue = that.getLimb(0) & 7;
 
     if (residue === 1 || residue === 7) {
       // Otherwise set s ← 1 if n ≡ 1 or 7 (mod 8)
@@ -34,7 +37,7 @@ export default function jacobi(a, that) {
   }
 
   // 5. If n ≡ 3 (mod 4) and a1 ≡ 3 (mod 4) then set s ← −s.
-  if (that.modInt(4) === 3 && a1.modInt(4) === 3) {
+  if ((that.getLimb(0) & 3) === 3 && (a1.getLimb(0) & 3) === 3) {
     s = -s;
   }
 
