@@ -1,4 +1,4 @@
-import VaultClient, { AuthInfo, Utils } from './vault-client-src/';
+import VaultClient, { AuthInfo, Utils, Blob as BlobObj } from './vault-client-src/';
 import Config from '../../config';
 
 class VaultClientDemoClass {
@@ -173,6 +173,49 @@ class VaultClientDemoClass {
           phoneVerified: authInfo.phoneVerified,
         });
       });
+  }
+
+  serializeLoginInfo(loginInfo) {
+    return JSON.stringify(loginInfo);
+  }
+
+  deserializeLoginInfo(str) {
+    const strData = JSON.parse(str);
+    if (!Object.prototype.hasOwnProperty.call(strData, 'blob')) {
+      return strData;
+    }
+
+    const {
+      blob,
+      ...strDataRest
+    } = strData;
+
+    const {
+      device_id,
+      url,
+      id,
+      key,
+      identity,
+      data,
+      ...blobRest
+    } = blob;
+
+    const params = {
+      device_id,
+      url,
+      blob_id: id,
+      key,
+    };
+
+    const blobObj = new BlobObj(params);
+    Object.keys(identity).forEach((identityKey) => {
+      blobObj.identity[identityKey] = identity[identityKey];
+    });
+    blobObj.data = data;
+    Object.keys(blobRest).forEach((blobRestKey) => {
+      blobObj[blobRestKey] = blobRest[blobRestKey];
+    });
+    return { blob: blobObj, ...strDataRest };
   }
 }
 
