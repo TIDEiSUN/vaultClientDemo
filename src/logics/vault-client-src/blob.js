@@ -18,13 +18,10 @@ export { BlobObj as Blob };
 const BlobClient = {
 
   getRippleName(url, address) {
-    if (!crypt.isValidAddress(address)) {
-      return Promise.reject(new Error('Invalid ripple address'));
-    }
-
-    if (!crypt.isValidAddress(address)) {
-      return Promise.reject(new Error('Invalid ripple address'));
-    }
+    // this function currently not actively used. 
+    // if (!crypt.isValidAddress(address)) {
+    //   return Promise.reject(new Error('Invalid ripple address'));
+    // }
 
     return new Promise((resolve, reject) => {
       request.get(`${url}/v1/user/${address}`, (err, resp) => {
