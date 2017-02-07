@@ -57,12 +57,13 @@ export default class VerifyPhonePage extends React.Component {
         VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo,
                                                   countryCode,
                                                   phoneNumber,
-                                                  phoneChanged)
+                                                  CurrentLogin.username)
           .then((result) => {
             console.log('request phone token', result);
             alert('Success!');
           }).catch((err) => {
-              alert(`Failed to send verification code by sms: ${err.message}`);
+            console.error(err);
+            alert(`Failed to send verification code by sms: ${err.message}`);
           });
       }
     } else {
@@ -79,8 +80,7 @@ export default class VerifyPhonePage extends React.Component {
     };
 
     if (phone.phoneNumber && phone.countryCode) {
-      VaultClientDemo.verifyPhone(CurrentLogin.loginInfo,
-                                  this.state.token,
+      VaultClientDemo.verifyPhone(this.state.token,
                                   CurrentLogin.username,
                                   phone)
         .then((result) => {

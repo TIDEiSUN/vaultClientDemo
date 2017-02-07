@@ -37,4 +37,19 @@ export default {
       .then(resolveAuthInfoURL)
       .then(SuperAgentHelper.getRequest);
   },
+
+  getByEmail(domain, email) {
+    const resolveAuthInfoURL = (txt) => {
+      if (!txt.authinfo_url) {
+        return Promise.reject(new Error(`Authentication is not supported on ${domain}`));
+      }
+      let url = Array.isArray(txt.authinfo_url) ? txt.authinfo_url[0] : txt.authinfo_url;
+      url += `?email=${email}`;
+      return Promise.resolve(url);
+    };
+
+    return RippleTxt.get(domain)
+      .then(resolveAuthInfoURL)
+      .then(SuperAgentHelper.getRequest);
+  },
 };

@@ -104,7 +104,7 @@ const BlobClient = {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${options.url}/v1/blob/${options.id}/2FA/verifyToken`,
+        url    : `${options.url}/v1/user/${options.id}/2FA/verifyToken`,
         data   : {
           device_id   : options.device_id,
           token       : options.token,
@@ -136,9 +136,10 @@ const BlobClient = {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${opts.url}/v1/user/${opts.username}/verify/${opts.token}`,
+        url    : `${opts.url}/v1/user/${opts.username}/email/verify`,
         data   : {
           email    : opts.email,
+          token    : opts.token,
         },
       };
 
@@ -146,12 +147,51 @@ const BlobClient = {
         .send(config.data)
         .end((err, resp) => {
           if (err) {
-            reject(new Error('Failed to verify the account - XHR error'));
+            reject(err);
           } else if (resp.body && resp.body.result === 'success') {
             resolve(resp.body);
           } else {
             console.log(resp.body.message);
-            reject(new Error('Failed to verify the account'));
+            reject(new Error(resp.body.message));
+          }
+        });
+    });
+  },
+
+  /**
+   * requestEmailTokenForRecovery
+   * send a verification email for account recovery
+   * @param {object}   opts
+   * @param {string}   opts.url
+   * @param {string}   opts.username
+   * @param {string}   opts.email
+   * @param {string}   opts.activateLink
+   */
+
+  requestEmailTokenForRecovery(opts) {
+    return new Promise((resolve, reject) => {
+      const config = {
+        method : 'POST',
+        url    : `${opts.url}/v1/user/${opts.username}/email/recoverRequest`,
+        data   : {
+          email    : opts.email,
+          hostlink : opts.activateLink,
+        },
+      };
+
+      request.post(config.url)
+        .send(config.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'requestEmailTokenForRecovery:', err);
+            reject(new Error('Failed to request email token for account recovery'));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            console.log('error:', 'requestEmailTokenForRecovery:', resp.body.message);
+            reject(new Error('Failed to request email token for account recovery'));
+          } else {
+            reject(new Error('Failed to request email token for account recovery'));
           }
         });
     });
@@ -174,18 +214,15 @@ const BlobClient = {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${opts.url}/v1/user/email`,
+        url    : `${opts.url}/v1/user/${opts.username}/email/changeRequest`,
         data   : {
-          blob_id  : opts.id,
-          username : opts.username,
           email    : opts.email,
           hostlink : opts.activateLink,
-          notify_change: opts.notify_change,
         },
       };
 
       const signedRequest = new SignedRequest(config);
-      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.account_id, opts.id);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.account_id, opts.blob_id);
 
       request.post(signed.url)
         .send(signed.data)
@@ -413,6 +450,7 @@ const BlobClient = {
       opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
 
       const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+      const hashedPhone = Utils.createHashedPhone(opts.blob.data.phone);
 
       const config = {
         method: 'POST',
@@ -425,6 +463,7 @@ const BlobClient = {
           encrypted_secret : opts.blob.encryptedSecret,
           encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
           encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+          hashed_phone: hashedPhone,
         },
       };
 
@@ -898,13 +937,50 @@ const BlobClient = {
     return decoded;
   },
 
+  /**
+   * requestPhoneToken
+   * request a phone verification token for account recovery
+   * @param {object} options
+   * @param {string} options.url
+   * @param {string} options.username
+   * @param {string} options.phone_number
+   * @param {string} options.country_code
+   */
+
+  requestPhoneTokenForRecovery(options) {
+    return new Promise((resolve, reject) => {
+      const config = {
+        method : 'POST',
+        url    : `${options.url}/v1/user/${options.username}/phone/recoverRequest`,
+        data   : {
+          via          : 'sms',
+          phone_number : options.phone_number,
+          country_code : options.country_code,
+        },
+      };
+
+      request.post(config.url)
+        .send(config.data)
+        .end((err, resp) => {
+          if (err) {
+            reject(err);
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            reject(new Error(resp.body.message));
+          } else {
+            reject(new Error('Unable to request phone token for account recovery.'));
+          }
+        });
+    });
+  },
 
   /**
    * requestPhoneToken
    * request a token for phone verification
    * @param {object} options
    * @param {string} options.url
-   * @param {string} options.blob_id
+   * @param {string} options.username
    * @param {string} options.phone_number
    * @param {string} options.country_code
    * @param {string} options.masterkey
@@ -912,14 +988,20 @@ const BlobClient = {
 
   requestPhoneToken(options) {
     return new Promise((resolve, reject) => {
+      const phone = {
+        countryCode: options.country_code,
+        phoneNumber: options.phone_number,
+      };
+      const hashedPhone = Utils.createHashedPhone(phone);
+
       const config = {
         method : 'POST',
-        url    : `${options.url}/v1/blob/${options.blob_id}/phone/request`,
+        url    : `${options.url}/v1/user/${options.username}/phone/changeRequest`,
         data   : {
           via          : 'sms',
           phone_number : options.phone_number,
           country_code : options.country_code,
-          notify_change: options.notify_change,
+          hashed_phone : hashedPhone,
         },
       };
 
@@ -955,7 +1037,7 @@ const BlobClient = {
     return new Promise((resolve, reject) => {
       const config = {
         method : 'POST',
-        url    : `${opts.url}/v1/blob/${opts.blob.id}/phone/verify`,
+        url    : `${opts.url}/v1/user/${opts.username}/phone/verify`,
         data   : {
           country_code      : opts.phone.countryCode,
           phone_number      : opts.phone.phoneNumber,

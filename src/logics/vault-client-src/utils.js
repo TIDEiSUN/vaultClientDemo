@@ -1,3 +1,5 @@
+import { sjcl } from 'ripple-lib';
+
 export default {
   createRecoveryKey(email, phone = null) {
     let recoveryKey = `@@@RecoveR!!!!!${email}!!`;
@@ -5,6 +7,12 @@ export default {
       recoveryKey += `(${phone.countryCode})${phone.phoneNumber}!`;
     }
     return recoveryKey;
+  },
+
+  createHashedPhone(phone) {
+    const phoneStr = `(${phone.countryCode})${phone.phoneNumber}`;
+    const hashedBitArray = sjcl.hash.sha256.hash(phoneStr);
+    return sjcl.codec.hex.fromBits(hashedBitArray);
   },
 
   maskphone(phone) {

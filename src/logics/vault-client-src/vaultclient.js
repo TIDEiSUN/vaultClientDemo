@@ -687,5 +687,9 @@ VaultClient.prototype.getAttestationSummary = blobClient.getAttestationSummary;
 
 VaultClient.prototype.requestPhoneToken = blobClient.requestPhoneToken;
 
+VaultClient.prototype.requestPhoneTokenForRecovery = blobClient.requestPhoneTokenForRecovery;
+
+VaultClient.prototype.requestEmailTokenForRecovery = blobClient.requestEmailTokenForRecovery;
+
 // export by name
 export { AuthInfo, Blob, RippleTxt, Utils };

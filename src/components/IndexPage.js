@@ -53,7 +53,7 @@ export default class IndexPage extends React.Component {
     if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
       alert('Email has been verified.');
     } else {
-      VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo, emailChanged)
+      VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo)
         .then((result) => {
           alert('Verification email has been sent to ' + newEmail);
         }).catch((err) => {

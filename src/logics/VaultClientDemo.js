@@ -20,16 +20,25 @@ class VaultClientDemoClass {
       });
   }
 
-  resendVerificationEmail(username, password, email, activateLink, loginInfo, notifyChange) {
+  requestEmailTokenForRecovery(url, username, email, activateLink) {
+    const options = {
+      url: url,
+      username: username,
+      email: email,
+      activateLink: activateLink,
+    };
+    return this.client.requestEmailTokenForRecovery(options);
+  }
+
+  resendVerificationEmail(username, password, email, activateLink, loginInfo) {
     const options = {
       url: loginInfo.blob.url,
-      id: loginInfo.blob.id,
+      blob_id: loginInfo.blob.id,
       username: username,
       account_id: loginInfo.blob.data.account_id,
       email: email,
       activateLink: activateLink,
       masterkey: loginInfo.secret,
-      notify_change: notifyChange,
     };
     return this.client.resendEmail(options);
   }
@@ -122,25 +131,34 @@ class VaultClientDemoClass {
     return loginInfo.blob.set2FA(options);
   }
 
-  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, notifyChange = false) {
+  requestPhoneTokenForRecovery(url, username, countryCode, phoneNumber) {
+    const options = {
+      url: url,
+      username: username,
+      country_code: countryCode,
+      phone_number: phoneNumber,
+    };
+    return this.client.requestPhoneTokenForRecovery(options);
+  }
+
+  sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, username) {
     const options = {
       url: loginInfo.blob.url,
       blob_id: loginInfo.blob.id,
+      username: username,
       account_id: loginInfo.blob.data.account_id,
       masterkey: loginInfo.secret,
       phone_number: phoneNumber,
       country_code: countryCode,
-      notify_change: notifyChange,
     };
     return this.client.requestPhoneToken(options);
   }
 
-  verifyPhone(loginInfo, phoneToken, username, phone) {
+  verifyPhone(phoneToken, username, phone) {
     const options = {
       username: username,
       phone: phone,
       token: phoneToken,
-      blob: loginInfo.blob,
     };
     return this.client.verifyPhoneToken(options);
   }
@@ -173,6 +191,10 @@ class VaultClientDemoClass {
           phoneVerified: authInfo.phoneVerified,
         });
       });
+  }
+
+  getAuthInfoByEmail(email) {
+    return AuthInfo.getByEmail(this.domain, email);
   }
 
   serializeLoginInfo(loginInfo) {
