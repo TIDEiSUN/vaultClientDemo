@@ -1,4 +1,4 @@
-import sjcl from 'sjcl-all'; 
+import sjcl from './sjcl'; 
 import { Base as base, Seed } from 'ripple-lib';
 import request from 'superagent';
 import querystring from 'querystring';

@@ -1,4 +1,4 @@
-import { sjcl } from 'sjcl-all';
+import sjcl from './sjcl';
 // import { UInt256 } from 'ripple-lib';
 import assert from 'assert';
 import VaultClient, { RippleTxt, AuthInfo, Blob } from '../src/logics/vault-client-src';

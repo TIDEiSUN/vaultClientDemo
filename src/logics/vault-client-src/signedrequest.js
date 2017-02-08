@@ -1,5 +1,5 @@
-import sjcl from 'sjcl-all'; 
-import Seed from 'ripple-lib';
+import sjcl from './sjcl'; 
+import { Seed } from './ripple-npm/seed';
 import parser from 'url';
 import extend from 'extend';
 import querystring from 'querystring';
