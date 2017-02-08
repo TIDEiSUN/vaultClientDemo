@@ -20,13 +20,14 @@ export default class LoginPage extends React.Component {
 
   handleSubmit(event) {
     return VaultClientDemo.loginAccount(this.state.username, this.state.password)
-      .then(result => {
+      .then((result) => {
         CurrentLogin.username = result.username;
         CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
         //browserHistory.push('/main');
       }).catch(err => {
+        console.error('Failed to login:', err);
         alert('Failed to login: ' + err.message);
         throw err;
       });

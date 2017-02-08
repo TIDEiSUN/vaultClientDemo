@@ -62,7 +62,7 @@ export default class VerifyPhonePage extends React.Component {
             console.log('request phone token', result);
             alert('Success!');
           }).catch((err) => {
-            console.error(err);
+            console.error('Failed to send verification code by sms:', err);
             alert(`Failed to send verification code by sms: ${err.message}`);
           });
       }
@@ -96,8 +96,8 @@ export default class VerifyPhonePage extends React.Component {
           });
           alert('Success!');
         }).catch((err) => {
-          alert(`Failed to verify phone: ${err.message}`);
           console.error('Failed to verify phone:', err);
+          alert(`Failed to verify phone: ${err.message}`);
         });
     } else {
       alert('Missing country code / phone number');

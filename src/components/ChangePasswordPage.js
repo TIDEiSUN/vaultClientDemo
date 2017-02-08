@@ -25,6 +25,7 @@ export default class ChangePasswordPage extends React.Component {
         console.log(result);
         alert('Success!');
       }).catch(err => {
+        console.error('Failed to change password:', err);
         alert('Failed to change password: ' + err.message);
         throw err;
       });

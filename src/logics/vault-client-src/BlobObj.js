@@ -51,6 +51,39 @@ export default class BlobObj {
     });
   }
 
+  // deserialize
+  static deserialize(obj) {
+    const {
+      device_id,
+      url,
+      id,
+      key,
+      identity,
+      data,
+      ...blobRest
+    } = obj;
+
+    const params = {
+      device_id,
+      url,
+      blob_id: id,
+      key,
+    };
+
+    const blobObj = new BlobObj(params);
+    Object.keys(identity).forEach((identityKey) => {
+      blobObj.identity[identityKey] = identity[identityKey];
+    });
+
+    blobObj.data = data;
+
+    Object.keys(blobRest).forEach((blobRestKey) => {
+      blobObj[blobRestKey] = blobRest[blobRestKey];
+    });
+
+    return blobObj;
+  }
+
   /**
    * Initialize a new blob object
    *

@@ -37,6 +37,7 @@ export default class ChangeEmailPage extends React.Component {
         .then(result => {
           alert('Verification email has been sent to ' + newEmail);
         }).catch(err => {
+          console.error('Verication email cannot be sent:', err);
           alert('Verication email cannot be sent: ' + err.message);
           throw err;
         });

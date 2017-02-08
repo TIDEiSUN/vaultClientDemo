@@ -25,6 +25,7 @@ export default class RenamePage extends React.Component {
         console.log(result);
         alert('Success!');
       }).catch(err => {
+        console.error('Failed to rename account:', err);
         alert('Failed to rename account: ' + err.message);
         throw err;
       });

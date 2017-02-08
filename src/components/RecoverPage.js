@@ -46,6 +46,7 @@ export default class RecoverPage extends React.Component {
         delete CurrentLogin.username;
         delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
+        console.error('Failed to recover account:', err);
         alert('Failed to recover account: ' + err.message);
         throw err;
       });

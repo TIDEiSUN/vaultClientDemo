@@ -27,6 +27,7 @@ export default class RenameAndChangePasswordPage extends React.Component {
         console.log(result);
         alert('Success!');
       }).catch(err => {
+        console.error('Failed to rename and change password:', err);
         alert('Failed to rename and change password: ' + err.message);
         throw err;
       });

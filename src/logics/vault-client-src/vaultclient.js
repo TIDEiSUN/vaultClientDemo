@@ -4,30 +4,87 @@ import RippleTxt from './rippletxt';
 import crypt from './crypt';
 import Utils from './utils';
 
-class DeriveHelper {
+class CustomKeys {
+  constructor(authInfo, password) {
+    this.authInfo = authInfo;
+    this.username = authInfo.username;
+    this.password = password;
+    this.id = null;
+    this.crypt = null;      // login
+    this.unlock = null;     // unlock
+  }
+
+  static deserialize(obj) {
+    const customKeys = new CustomKeys(obj.authInfo, obj.password);
+    customKeys.id = obj.id;
+    customKeys.crypt = obj.crypt;
+    customKeys.unlock = obj.unlock;
+    return customKeys;
+  }
+
+  setPassword(password) {
+    if (this.password !== password) {
+      this.id = null;
+      this.crypt = null;
+      this.unlock = null;
+      this.password = password;
+    }
+  }
+
+  setUsername(username) {
+    if (this.username !== username) {
+      this.id = null;
+      this.crypt = null;
+      this.unlock = null;
+      this.username = username;
+      this.authInfo.username = username;
+    }
+  }
+
   /**
    * deriveLoginKeys
    */
-  static deriveLoginKeys(authInfo, password) {
-    const normalizedUsername = authInfo.username.toLowerCase().replace(/-/g, '');
+  deriveLoginKeys() {
+    const normalizedUsername = this.authInfo.username.toLowerCase().replace(/-/g, '');
+
+    if (this.id && this.crypt) {
+      console.log('deriveLoginKeys: use existing');
+      return Promise.resolve(this);
+    }
 
     // derive login keys
-    return crypt.derive(authInfo.pakdf, 'login', normalizedUsername, password)
-      .then(keys => Promise.resolve({ authInfo, password, keys }));
+    return crypt.derive(this.authInfo.pakdf, 'login', normalizedUsername, this.password)
+      .then((keys) => {
+        console.log('deriveLoginKeys: derived new');
+        this.id = keys.id;
+        this.crypt = keys.crypt;
+        return Promise.resolve(this);
+      });
   }
 
   /**
    * deriveUnlockKey
    */
-  static deriveUnlockKey(authInfo, password, keys = {}) {
-    const normalizedUsername = authInfo.username.toLowerCase().replace(/-/g, '');
+  deriveUnlockKey() {
+    const normalizedUsername = this.authInfo.username.toLowerCase().replace(/-/g, '');
+
+    if (this.unlock) {
+      console.log('deriveUnlockKey: use existing');
+      return Promise.resolve(this);
+    }
 
     // derive unlock key
-    return crypt.derive(authInfo.pakdf, 'unlock', normalizedUsername, password)
-      .then((unlock) => {
-        const mergedKeys = { ...keys, unlock: unlock.unlock };
-        return Promise.resolve({ authInfo, keys: mergedKeys });
+    return crypt.derive(this.authInfo.pakdf, 'unlock', normalizedUsername, this.password)
+      .then((keys) => {
+        console.log('deriveUnlockKey: derived new');
+        this.unlock = keys.unlock;
+        return Promise.resolve(this);
       });
+  }
+
+  deriveKeys() {
+    return this.deriveLoginKeys()
+      .then(() => this.deriveUnlockKey());
   }
 }
 
@@ -117,35 +174,35 @@ export default class VaultClient {
       return Promise.resolve({ authInfo, password });
     };
 
-    const getBlob = (authInfo, password, keys) => {
+    const getBlob = (customKeys) => {
       const options = {
-        url: authInfo.blobvault,
-        blob_id: keys.id,
-        key: keys.crypt,
+        url: customKeys.authInfo.blobvault,
+        blob_id: customKeys.id,
+        key: customKeys.crypt,
         device_id: device_id,
       };
       return blobClient.get(options);
     };
 
-    const updateKeys = (authInfo, keys, blob) => {
-      if (!keys.unlock) {
+    const updateKeys = (customKeys, blob) => {
+      if (!customKeys.unlock) {
         // unable to unlock
         return;
       }
 
       let secret;
       try {
-        secret = crypt.decrypt(keys.unlock, blob.encrypted_secret);
+        secret = crypt.decrypt(customKeys.unlock, blob.encrypted_secret);
       } catch (error) {
         console.log('error:', 'decrypt:', error);
         return;
       }
 
       const options = {
-        username: authInfo.username,
+        username: customKeys.username,
         blob: blob,
         masterkey: secret,
-        keys: keys,
+        keys: customKeys,
       };
 
       blobClient.updateKeys(options)
@@ -156,18 +213,20 @@ export default class VaultClient {
         });
     };
 
-    const processBlob = (authInfo, password, keys, blob) => {
+    const processBlob = (customKeys, blob) => {
+      const authInfo = customKeys.authInfo;
+
       // save for relogin
-      this.infos[keys.id] = authInfo;
+      this.infos[customKeys.id] = authInfo;
 
       // migrate missing fields
       if (blob.missing_fields) {
         if (blob.missing_fields.encrypted_blobdecrypt_key || blob.missing_fields.encrypted_secretdecrypt_key) {
           console.log('migration: saving encrypted blob / secret decrypt key');
           // get the key to unlock the secret, then update the blob keys
-          DeriveHelper.deriveUnlockKey(authInfo, password, keys)
-            .then((result) => {
-              updateKeys(result.authInfo, result.keys, blob);
+          customKeys.deriveUnlockKey()
+            .then(() => {
+              updateKeys(customKeys, blob);
             })
             .catch((err) => {
               // unable to unlock
@@ -177,6 +236,7 @@ export default class VaultClient {
 
       return Promise.resolve({
         blob: blob,
+        customKeys: customKeys,
         username: authInfo.username,
         emailVerified: authInfo.emailVerified,
         phoneVerified: authInfo.phoneVerified,
@@ -185,13 +245,16 @@ export default class VaultClient {
 
     const loginKeysPromise = this.getAuthInfo(username)
       .then(checkExists)
-      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password));
+      .then((result) => {
+        const customKeys = new CustomKeys(result.authInfo, result.password);
+        return customKeys.deriveLoginKeys();
+      });
 
     const blobPromise = loginKeysPromise
-      .then(result => getBlob(result.authInfo, result.password, result.keys));
+      .then(customKeys => getBlob(customKeys));
 
     return Promise.all([loginKeysPromise, blobPromise])
-      .then(results => processBlob(results[0].authInfo, results[0].password, results[0].keys, results[1]));
+      .then(results => processBlob(results[0], results[1]));
   }
 
   /**
@@ -230,34 +293,22 @@ export default class VaultClient {
    * @param {string}    username
    * @param {string}    password
    * @param {string}    encryptSecret
-   * @param {function}  fn - Callback function
    */
 
-  unlock(username, password, encryptSecret) {
-    const checkExists = (authInfo) => {
-      if (authInfo && !authInfo.exists) {
-        return Promise.reject(new Error('User does not exists.'));
-      }
-      return Promise.resolve({ authInfo, password });
-    };
+  unlock(encryptSecret, customKeys) {
+    if (!customKeys.authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
 
-    const unlockSecret = (authInfo, keys) => {
-      var secret;
-      try {
-        secret = crypt.decrypt(keys.unlock, encryptSecret);
-      } catch (error) {
-        return Promise.reject(error);
-      }
-      return Promise.resolve({
-        keys,
-        secret,
+    return customKeys.deriveUnlockKey()
+      .then(() => {
+        try {
+          const secret = crypt.decrypt(customKeys.unlock, encryptSecret);
+          return Promise.resolve({ customKeys, secret });
+        } catch (error) {
+          return Promise.reject(error);
+        }
       });
-    };
-
-    return this.getAuthInfo(username)
-      .then(checkExists)
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password))
-      .then(result => unlockSecret(result.authInfo, result.keys));
   }
 
   /**
@@ -271,35 +322,36 @@ export default class VaultClient {
 
   loginAndUnlock(username, password, device_id) {
     const postLogin = (resp) => {
-        if (!resp.blob || !resp.blob.encrypted_secret) {
-          return Promise.reject(new Error('Unable to retrieve blob and secret.'));
-        }
+      if (!resp.blob || !resp.blob.encrypted_secret) {
+        return Promise.reject(new Error('Unable to retrieve blob and secret.'));
+      }
 
-        if (!resp.blob.id || !resp.blob.key) {
-          return Promise.reject(new Error('Unable to retrieve keys.'));
-        }
+      if (!resp.blob.id || !resp.blob.key) {
+        return Promise.reject(new Error('Unable to retrieve keys.'));
+      }
 
-        // get authInfo via id - would have been saved from login
-        var authInfo = this.infos[resp.blob.id];
+      // get authInfo via id - would have been saved from login
+      var authInfo = this.infos[resp.blob.id];
 
-        if (!authInfo) {
-          return Promise.reject(new Error('Unable to find authInfo'));
-        }
+      if (!authInfo) {
+        return Promise.reject(new Error('Unable to find authInfo'));
+      }
 
-        return Promise.resolve({ authInfo, password, blob: resp.blob });
+      return Promise.resolve({ authInfo, password, blob: resp.blob, customKeys: resp.customKeys });
     };
 
-    let unlockSecret = (unlock, authInfo, blob) => {
+    const unlockSecret = (customKeys, authInfo, blob) => {
       var secret;
       try {
-        secret = crypt.decrypt(unlock, blob.encrypted_secret);
+        secret = crypt.decrypt(customKeys.unlock, blob.encrypted_secret);
       } catch (error) {
         return Promise.reject(error);
       }
 
       return Promise.resolve({
         blob: blob,
-        unlock: unlock,
+        customKeys: customKeys,
+        unlock: customKeys.unlock,
         secret: secret,
         username: authInfo.username,
         emailVerified: authInfo.emailVerified,
@@ -311,10 +363,10 @@ export default class VaultClient {
       .then(postLogin);
 
     let unlockKeyPromise = loginPromise
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password));
+      .then(result => result.customKeys.deriveUnlockKey());
 
     return Promise.all([loginPromise, unlockKeyPromise])
-      .then(results => unlockSecret(results[1].keys.unlock, results[0].authInfo, results[0].blob));
+      .then(results => unlockSecret(results[1], results[0].authInfo, results[0].blob));
   }
 
   /**
@@ -365,28 +417,25 @@ export default class VaultClient {
    */
 
   changePassword(options) {
-    var password = String(options.password).trim();
+    const password = String(options.password).trim();
 
-    const checkAccountVerified = (authInfo) => {
-      if (!authInfo.exists) {
-        return Promise.reject(new Error('User does not exists.'));
-      }
-      if (!authInfo.emailVerified) {
-        return Promise.reject(new Error('Account has not been verified.'));
-      }
-      return Promise.resolve(authInfo);
-    };
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
 
-    const changePassword = (authInfo, keys) => {
-      options.keys = keys;
-      return blobClient.updateKeys(options);
-    };
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
+    if (!authInfo.emailVerified) {
+      return Promise.reject(new Error('Account has not been verified.'));
+    }
 
-    return this.getAuthInfo(options.username)
-      .then(checkAccountVerified)
-      .then(authInfo => DeriveHelper.deriveLoginKeys(authInfo, password))
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => changePassword(result.authInfo, result.keys));
+    customKeys.setPassword(password);
+
+    return customKeys.deriveKeys()
+      .then(() => {
+        options.keys = customKeys;
+        return blobClient.updateKeys(options);
+      });
   }
 
   /**
@@ -403,40 +452,40 @@ export default class VaultClient {
     var new_username = String(options.new_username).trim();
     var password     = String(options.password).trim();
 
-    const checkNewUsernameExists = (authInfo) => {
-      if (authInfo && authInfo.exists) {
-        return Promise.reject(new Error('username already taken.'));
-      }
-      // user name is replaced because of case
-      // FIXME another way to change user name
-      authInfo.username = new_username;
-      return Promise.resolve({ authInfo, password });
-    };
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
 
-    const checkAccountExists = this.getAuthInfo(options.username)
-      .then((authInfo) => {
-        if (!authInfo.exists) {
-          return Promise.reject(new Error('User does not exists.'));
-        }
-        if (options.username === new_username) {
-          return Promise.resolve({ authInfo, password });
-        } else {
-          console.log(`Username changes from ${options.username} to ${new_username}`);
-          return this.getAuthInfo(new_username)
-            .then(checkNewUsernameExists);
-        }
-      });
-
-    function blobUpdateEmail(authInfo, keys) {
-      options.keys = keys;
-      options.blob.data.email = options.email;
-      return blobClient.updateEmail(options);
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
     }
 
-    return checkAccountExists
-      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => blobUpdateEmail(result.authInfo, result.keys));
+    const checkNewUsernameExists = () => {
+      if (options.username === new_username) {
+        return Promise.resolve({ authInfo, password });
+      } else {
+        console.log(`Username changes from ${options.username} to ${new_username}`);
+        return this.getAuthInfo(new_username)
+          .then((newUsernameAuthInfo) => {
+            if (newUsernameAuthInfo && newUsernameAuthInfo.exists) {
+              return Promise.reject(new Error('username already taken.'));
+            }
+            return Promise.resolve();
+          });
+      }
+    };
+
+    return checkNewUsernameExists()
+      .then(() => {
+        // FIXME another way to change user name
+        customKeys.setUsername(new_username);
+        customKeys.setPassword(password);
+        return customKeys.deriveKeys();
+      })
+      .then((customKeys) => {
+        options.keys = customKeys;
+        options.blob.data.email = options.email;
+        return blobClient.updateEmail(options);
+      });
   }
 
   /**
@@ -453,43 +502,43 @@ export default class VaultClient {
     var new_username = String(options.new_username).trim();
     var password     = String(options.password).trim();
 
-    const checkNewUsernameExists = (authInfo) => {
-      if (authInfo && authInfo.exists) {
-        return Promise.reject(new Error('username already taken.'));
-      }
-      // user name is replaced because of case
-      // FIXME another way to change user name
-      authInfo.username = new_username;
-      return Promise.resolve({ authInfo, password });
-    };
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
 
-    const checkAccountExists = this.getAuthInfo(options.username)
-      .then((authInfo) => {
-        if (!authInfo.exists) {
-          return Promise.reject(new Error('User does not exists.'));
-        }
-        if (!authInfo.emailVerified) {
-          return Promise.reject(new Error('Email has not been verified.'));          
-        }
-        if (options.username === new_username) {
-          return Promise.resolve({ authInfo, password });
-        } else {
-          console.log(`Username changes from ${options.username} to ${new_username}`);
-          return this.getAuthInfo(new_username)
-            .then(checkNewUsernameExists);
-        }
-      });
-
-    function blobUpdatePhone(authInfo, keys) {
-      options.keys = keys;
-      options.blob.data.phone = options.phone;
-      return blobClient.updatePhone(options);
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
+    if (!authInfo.emailVerified) {
+      return Promise.reject(new Error('Email has not been verified.'));
     }
 
-    return checkAccountExists
-      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => blobUpdatePhone(result.authInfo, result.keys));
+    const checkNewUsernameExists = () => {
+      if (options.username === new_username) {
+        return Promise.resolve();
+      } else {
+        console.log(`Username changes from ${options.username} to ${new_username}`);
+        return this.getAuthInfo(new_username)
+          .then((newUsernameAuthInfo) => {
+            if (newUsernameAuthInfo && newUsernameAuthInfo.exists) {
+              return Promise.reject(new Error('username already taken.'));
+            }
+            return Promise.resolve();
+          });
+      }
+    };
+
+    return checkNewUsernameExists()
+      .then(() => {
+        // FIXME another way to change user name
+        customKeys.setUsername(new_username);
+        customKeys.setPassword(password);
+        return customKeys.deriveKeys();
+      })
+      .then((customKeys) => {
+        options.keys = customKeys;
+        options.blob.data.phone = options.phone;
+        return blobClient.updatePhone(options);
+      });
   }
 
   /**
@@ -504,41 +553,38 @@ export default class VaultClient {
    */
 
   rename(options) {
-    var new_username = String(options.new_username).trim();
-    var password     = String(options.password).trim();
+    const new_username = String(options.new_username).trim();
+    const password     = String(options.password).trim();
 
-    const checkAccountVerified = this.getAuthInfo(options.username)
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
+
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
+    if (!authInfo.emailVerified) {
+      return Promise.reject(new Error('Account has not been verified.'));
+    }
+
+    const checkNewUsernameExists = this.getAuthInfo(new_username)
       .then((authInfo) => {
-        if (!authInfo.exists) {
-          return Promise.reject(new Error('User does not exists.'));
-        }
-        if (!authInfo.emailVerified) {
-          return Promise.reject(new Error('Account has not been verified.'));
+        if (authInfo && authInfo.exists) {
+          return Promise.reject(new Error('username already taken.'));
         }
         return Promise.resolve();
       });
 
-    const checkNewUsernameExists = (authInfo) => {
-      if (authInfo && authInfo.exists) {
-        return Promise.reject(new Error('username already taken.'));
-      }
-      // user name is replaced because of case
-      // FIXME another way to change user name
-      authInfo.username = new_username;
-      return Promise.resolve({ authInfo, password });
-    };
-
-    function renameBlob (authInfo, keys) {
-      options.keys = keys;
-      return blobClient.rename(options);
-    };
-
-    return checkAccountVerified
-      .then(() => this.getAuthInfo(new_username))
-      .then(checkNewUsernameExists)
-      .then(result => DeriveHelper.deriveLoginKeys(result.authInfo, result.password))
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => renameBlob(result.authInfo, result.keys));
+    return checkNewUsernameExists
+      .then(() => {
+        // FIXME another way to change user name
+        customKeys.setPassword(password);
+        customKeys.setUsername(new_username);
+        return customKeys.deriveKeys();
+      })
+      .then((customKeys) => {
+        options.keys = customKeys;
+        return blobClient.rename(options);
+      });
   }
 
   /**
@@ -574,12 +620,12 @@ export default class VaultClient {
       }
     }
 
-    const create = (authInfo, keys) => {
+    const create = (authInfo, customKeys) => {
       var params = {
         url: authInfo.blobvault,
-        id: keys.id,
-        crypt: keys.crypt,
-        unlock: keys.unlock,
+        id: customKeys.id,
+        crypt: customKeys.crypt,
+        unlock: customKeys.unlock,
         username: username,
         email: options.email,
         masterkey: options.masterkey || crypt.createMaster(),
@@ -592,15 +638,18 @@ export default class VaultClient {
         .then((blob) => {
           return Promise.resolve({
             blob: blob,
+            customKeys: customKeys,
             username: username,
           });
         });
     };
 
     return this.getAuthInfo(username)
-      .then(authInfo => DeriveHelper.deriveLoginKeys(authInfo, password))
-      .then(result => DeriveHelper.deriveUnlockKey(result.authInfo, result.password, result.keys))
-      .then(result => create(result.authInfo, result.keys));
+      .then((authInfo) => {
+        const customKeys = new CustomKeys(authInfo, password);
+        return customKeys.deriveKeys();
+      })
+      .then(customKeys => create(customKeys.authInfo, customKeys));
   }
 
   /**
@@ -692,4 +741,4 @@ VaultClient.prototype.requestPhoneTokenForRecovery = blobClient.requestPhoneToke
 VaultClient.prototype.requestEmailTokenForRecovery = blobClient.requestEmailTokenForRecovery;
 
 // export by name
-export { AuthInfo, Blob, RippleTxt, Utils };
+export { AuthInfo, Blob, RippleTxt, Utils, CustomKeys };

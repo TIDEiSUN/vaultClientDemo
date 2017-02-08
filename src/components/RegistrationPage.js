@@ -30,8 +30,8 @@ export default class RegistrationPage extends React.Component {
         console.log('Register sucessfully', result);
         alert('Account created. Verification email has been sent to ' + email);
       }).catch(err => {
+        console.error('Failed to register:', err);
         alert('Failed to register: ' + err.message);
-        console.log(err);
         throw err;
       });
     //event.preventDefault();

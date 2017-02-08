@@ -1,4 +1,4 @@
-import VaultClient, { AuthInfo, Utils, Blob as BlobObj } from './vault-client-src/';
+import VaultClient, { AuthInfo, Utils, Blob as BlobObj, CustomKeys } from './vault-client-src/';
 import Config from '../../config';
 
 class VaultClientDemoClass {
@@ -9,6 +9,24 @@ class VaultClientDemoClass {
   }
 
   loginAccount(username, password) {
+    return this.client.login(username, password)
+      .then((res) => {
+        return Promise.resolve(res);
+      });
+  }
+
+  unlockAccount(loginInfo) {
+    if (loginInfo.secret) {
+      return Promise.resolve(loginInfo.secret);
+    }
+    return this.client.unlock(loginInfo.blob.encrypted_secret, loginInfo.customKeys)
+      .then((result) => {
+        loginInfo.secret = result.secret;
+        return Promise.resolve(result.secret);
+      });
+  }
+
+  loginAndUnlockAccount(username, password) {
     return this.client.loginAndUnlock(username, password)
       .then((res) => {
         // exclude property unlock in the resolve result
@@ -31,16 +49,19 @@ class VaultClientDemoClass {
   }
 
   resendVerificationEmail(username, password, email, activateLink, loginInfo) {
-    const options = {
-      url: loginInfo.blob.url,
-      blob_id: loginInfo.blob.id,
-      username: username,
-      account_id: loginInfo.blob.data.account_id,
-      email: email,
-      activateLink: activateLink,
-      masterkey: loginInfo.secret,
-    };
-    return this.client.resendEmail(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          url: loginInfo.blob.url,
+          blob_id: loginInfo.blob.id,
+          username: username,
+          account_id: loginInfo.blob.data.account_id,
+          email: email,
+          activateLink: activateLink,
+          masterkey: loginInfo.secret,
+        };
+        return this.client.resendEmail(options);
+      });
   }
 
   verifyEmailToken(username, emailToken, email) {
@@ -53,59 +74,79 @@ class VaultClientDemoClass {
   }
 
   renameAccount(username, newUsername, password, loginInfo) {
-    const options = {
-      username: username,
-      new_username: newUsername,
-      password: password,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
-    };
-    return this.client.rename(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          username: username,
+          new_username: newUsername,
+          password: password,
+          masterkey: loginInfo.secret,
+          blob: loginInfo.blob,
+          customKeys: loginInfo.customKeys,
+        };
+        return this.client.rename(options);
+      });
   }
 
   changePassword(username, newPassword, loginInfo) {
-    const options = {
-      username: username,
-      password: newPassword,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
-    };
-    return this.client.changePassword(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          username: username,
+          password: newPassword,
+          masterkey: loginInfo.secret,
+          blob: loginInfo.blob,
+          customKeys: loginInfo.customKeys,
+        };
+        return this.client.changePassword(options);
+      });
   }
 
   renameAndChangePassword(username, newUsername, newPassword, loginInfo) {
-    const options = {
-      username: username,
-      new_username: newUsername,
-      password: newPassword,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
-    };
-    return this.client.rename(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          username: username,
+          new_username: newUsername,
+          password: newPassword,
+          masterkey: loginInfo.secret,
+          blob: loginInfo.blob,
+          customKeys: loginInfo.customKeys,
+        };
+        return this.client.rename(options);
+      });
   }
 
   updateEmail(username, newUsername, newPassword, loginInfo, email) {
-    const options = {
-      username: username,
-      new_username: newUsername,
-      password: newPassword,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
-      email: email,
-    };
-    return this.client.updateEmail(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          username: username,
+          new_username: newUsername,
+          password: newPassword,
+          masterkey: loginInfo.secret,
+          blob: loginInfo.blob,
+          customKeys: loginInfo.customKeys,
+          email: email,
+        };
+        return this.client.updateEmail(options);
+      });
   }
 
   updatePhone(username, newUsername, newPassword, loginInfo, phone) {
-    const options = {
-      username: username,
-      new_username: newUsername,
-      password: newPassword,
-      masterkey: loginInfo.secret,
-      blob: loginInfo.blob,
-      phone: phone,
-    };
-    return this.client.updatePhone(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          username: username,
+          new_username: newUsername,
+          password: newPassword,
+          masterkey: loginInfo.secret,
+          blob: loginInfo.blob,
+          customKeys: loginInfo.customKeys,
+          phone: phone,
+        };
+        return this.client.updatePhone(options);
+      });
   }
 
   registerAccount(username, password, email, activateLink) {
@@ -124,11 +165,14 @@ class VaultClientDemoClass {
   }
 
   set2FAInfo(loginInfo, enable) {
-    const options = {
-      masterkey: loginInfo.secret,
-      enabled: enable,
-    };
-    return loginInfo.blob.set2FA(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          masterkey: loginInfo.secret,
+          enabled: enable,
+        };
+        return loginInfo.blob.set2FA(options);
+      });
   }
 
   requestPhoneTokenForRecovery(url, username, countryCode, phoneNumber) {
@@ -142,16 +186,19 @@ class VaultClientDemoClass {
   }
 
   sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, username) {
-    const options = {
-      url: loginInfo.blob.url,
-      blob_id: loginInfo.blob.id,
-      username: username,
-      account_id: loginInfo.blob.data.account_id,
-      masterkey: loginInfo.secret,
-      phone_number: phoneNumber,
-      country_code: countryCode,
-    };
-    return this.client.requestPhoneToken(options);
+    return this.unlockAccount(loginInfo)
+      .then(() => {
+        const options = {
+          url: loginInfo.blob.url,
+          blob_id: loginInfo.blob.id,
+          username: username,
+          account_id: loginInfo.blob.data.account_id,
+          masterkey: loginInfo.secret,
+          phone_number: phoneNumber,
+          country_code: countryCode,
+        };
+        return this.client.requestPhoneToken(options);
+      });
   }
 
   verifyPhone(phoneToken, username, phone) {
@@ -183,8 +230,10 @@ class VaultClientDemoClass {
     return Promise.all([recoverBlobPromise, authInfoPromise])
       .then((results) => {
         const [recovered, authInfo] = results;
+
         return Promise.resolve({
           blob: recovered.blob,
+          customKeys: new CustomKeys(authInfo, null),
           secret: recovered.secret,
           username: authInfo.username,
           emailVerified: authInfo.emailVerified,
@@ -209,35 +258,14 @@ class VaultClientDemoClass {
 
     const {
       blob,
+      customKeys,
       ...strDataRest
     } = strData;
 
-    const {
-      device_id,
-      url,
-      id,
-      key,
-      identity,
-      data,
-      ...blobRest
-    } = blob;
+    const blobObj = BlobObj.deserialize(blob);
+    const customKeysObj = CustomKeys.deserialize(customKeys);
 
-    const params = {
-      device_id,
-      url,
-      blob_id: id,
-      key,
-    };
-
-    const blobObj = new BlobObj(params);
-    Object.keys(identity).forEach((identityKey) => {
-      blobObj.identity[identityKey] = identity[identityKey];
-    });
-    blobObj.data = data;
-    Object.keys(blobRest).forEach((blobRestKey) => {
-      blobObj[blobRestKey] = blobRest[blobRestKey];
-    });
-    return { blob: blobObj, ...strDataRest };
+    return { blob: blobObj, customKeys: customKeysObj, ...strDataRest };
   }
 }
 

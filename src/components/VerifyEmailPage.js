@@ -95,6 +95,7 @@ export default class VerifyEmailPage extends React.Component {
           loggedIn: true,
         });
       }).catch(err => {
+        console.error('Failed to login:', err);
         alert('Failed to login: ' + err.message);
         throw err;
       });

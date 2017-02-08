@@ -91,6 +91,7 @@ export default class ActivatePage extends React.Component {
         });
         alert('Verified!');
       }).catch(err => {
+        console.error('Failed to verify token:', err);
         alert('Failed to verify token: ' + err.message);
         throw err;
       });
@@ -114,8 +115,8 @@ export default class ActivatePage extends React.Component {
         CurrentLogin.password = newPassword;
         alert('Activated!');
       }).catch(err => {
-        alert('Failed to activate account: ' + err.message);
         console.error('Failed to update email:', err);
+        alert('Failed to activate account: ' + err.message);
         throw err;
       });
   }
