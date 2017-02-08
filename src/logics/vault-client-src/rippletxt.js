@@ -1,5 +1,4 @@
 import request from 'superagent';
-import { Currency } from 'ripple-lib';
 
 class RippleTxtClass {
   constructor() {
@@ -126,7 +125,7 @@ class RippleTxtClass {
           txt.currencies.forEach((currency) => {
             currencies.push({
               issuer   : issuer,
-              currency : Currency.from_json(currency),
+              // currency : Currency.from_json(currency),  // comment this as this is not actively called
               domain   : domain,
             });
           });

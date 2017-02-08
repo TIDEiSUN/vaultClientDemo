@@ -1,5 +1,6 @@
-import sjcl from 'sjcl-all'; 
-import { Base as base, Seed, UInt160, UInt256 } from 'ripple-lib';
+import sjcl from './sjcl'; 
+import { Base as base } from './ripple-npm/base';
+import { Seed } from './ripple-npm/seed';
 import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
@@ -213,17 +214,6 @@ const Crypt = {
     return sjcl.decrypt(key, JSON.stringify(encrypted));
   },
 
-
-/**
- * Validate a ripple address
- *
- * @param {string} address
- */
-
-  isValidAddress(address) {
-    return UInt160.is_valid(address);
-  },
-
 /**
  * Create an encryption key
  *
@@ -264,17 +254,6 @@ const Crypt = {
     // XXX Should return a UInt512
     return sjcl.codec.hex.fromBits(sjcl.hash.sha512.hash(data)); 
   },
-
-/**
- * Hash data using SHA-512 and return the first 256 bits.
- *
- * @param {string|bitArray} data
- * @return {UInt256} Hash of the data
- */
-  hashSha512Half(data) {
-    return UInt256.from_hex(Crypt.hashSha512(data).substr(0, 64));
-  },
-
 
 /**
  * Sign a data string with a secret key

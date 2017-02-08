@@ -1,4 +1,5 @@
-import { Message } from 'ripple-lib';
+import sjcl from './sjcl'; 
+import { Seed } from './ripple-npm/seed';
 import parser from 'url';
 import extend from 'extend';
 import querystring from 'querystring';
@@ -63,6 +64,47 @@ const dateAsIso8601 = (function () {
       pad(date.getUTCSeconds())  + ".000Z";
   };
 }());
+
+/**
+ *  Produce a Base64-encoded signature on the given hex-encoded hash.
+ *
+ *  Note that this signature uses the signing function that includes
+ *  a recovery_factor to be able to extract the public key from the signature
+ *  without having to pass the public key along with the signature.
+ *
+ *  @static
+ *
+ *  @param {bitArray|Hex-encoded String} hash
+ *  @param {sjcl.ecc.ecdsa.secretKey|Any format accepted by Seed.from_json} secret_key
+ *  @param {RippleAddress} [The first key] account Field to specify the signing account. 
+ *    If this is omitted the first account produced by the secret generator will be used.
+ *  @returns {Base64-encoded String} signature
+ */
+function signHash(hash, secret_key, account) {
+
+  if (typeof hash === 'string' && /^[0-9a-fA-F]+$/.test(hash)) {
+    hash = sjcl.codec.hex.toBits(hash);
+  }
+
+  if (typeof hash !== 'object' || hash.length <= 0 || typeof hash[0] !== 'number') {
+    throw new Error('Hash must be a bitArray or hex-encoded string');
+  }
+
+  if (!(secret_key instanceof sjcl.ecc.ecdsa.secretKey)) {
+    secret_key = Seed.from_json(secret_key).get_key(account)._secret;
+  }
+
+  var signature_bits = secret_key.signWithRecoverablePublicKey(hash);
+  var signature_base64 = sjcl.codec.base64.fromBits(signature_bits);
+
+  return signature_base64;
+};
+
+const MAGIC_BYTES = 'Ripple Signed Message:\n';
+
+function signMessage(message, secret_key, account) {
+  return signHash(sjcl.hash.sha512.hash(MAGIC_BYTES + message), secret_key, account);
+};
 
 export default class SignedRequest {
   constructor(config) {
@@ -153,7 +195,7 @@ export default class SignedRequest {
     const date          = dateAsIso8601();
     const signatureType = 'RIPPLE1-ECDSA-SHA512';
     const stringToSign  = this.getStringToSign(parsed, date, signatureType);
-    const signature     = Message.signMessage(stringToSign, secretKey);
+    const signature     = signMessage(stringToSign, secretKey);
 
     const query = querystring.stringify({
       signature: Crypt.base64ToBase64Url(signature),
@@ -182,7 +224,7 @@ export default class SignedRequest {
     const date          = dateAsIso8601();
     const signatureType = 'RIPPLE1-ECDSA-SHA512';
     const stringToSign  = this.getStringToSign(parsed, date, signatureType);
-    const signature     = Message.signMessage(stringToSign, secretKey);
+    const signature     = signMessage(stringToSign, secretKey);
 
     const query = querystring.stringify({
       signature: Crypt.base64ToBase64Url(signature),
