@@ -1,4 +1,4 @@
-import { sjcl } from 'ripple-lib';
+import { sjcl } from './sjcl';
 
 export default {
   createRecoveryKey(email, phone = null) {

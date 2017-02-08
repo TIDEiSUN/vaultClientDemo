@@ -1,5 +1,6 @@
 import sjcl from './sjcl'; 
-import { Base as base, Seed } from 'ripple-lib';
+import { Base as base } from './ripple-npm/base';
+import { Seed } from './ripple-npm/seed';
 import request from 'superagent';
 import querystring from 'querystring';
 import extend from 'extend';
