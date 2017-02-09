@@ -11,7 +11,6 @@ import NotFoundPage from './components/NotFoundPage';
 import ActivatePage from './components/ActivatePage';
 import VerifyPhonePage from './components/VerifyPhonePage';
 import RecoverPage from './components/RecoverPage';
-import RenameAndChangePasswordPage from './components/RenameAndChangePasswordPage';
 import ChangeEmailPage from './components/ChangeEmailPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 
@@ -27,7 +26,6 @@ const routes = (
     <Route path="/verifyEmail" component={VerifyEmailPage} />
     <Route path="/phone" component={VerifyPhonePage} />
     <Route path="/recover" component={RecoverPage} />
-    <Route path="/renameandchangepw" component={RenameAndChangePasswordPage} />
     <Route path="/changeemail" component={ChangeEmailPage} />
   <Route path="*" component={NotFoundPage} />
 </Route>

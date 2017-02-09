@@ -102,21 +102,6 @@ class VaultClientDemoClass {
       });
   }
 
-  renameAndChangePassword(username, newUsername, newPassword, loginInfo) {
-    return this.unlockAccount(loginInfo)
-      .then(() => {
-        const options = {
-          username: username,
-          new_username: newUsername,
-          password: newPassword,
-          masterkey: loginInfo.secret,
-          blob: loginInfo.blob,
-          customKeys: loginInfo.customKeys,
-        };
-        return this.client.rename(options);
-      });
-  }
-
   updateEmail(username, newUsername, newPassword, loginInfo, email) {
     return this.unlockAccount(loginInfo)
       .then(() => {

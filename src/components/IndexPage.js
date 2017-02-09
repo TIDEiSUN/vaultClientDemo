@@ -4,6 +4,17 @@ import { CurrentLogin } from './Data';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import Config from '../../config';
 
+function LastPasswordChangeDate(props) {
+  if (!props.date) {
+    return null;
+  }
+  return (
+    <div>
+      Login password: Last updated at {props.date}
+    </div>
+  );
+}
+
 function ResendVerificationButton(props) {
   if (props.verified) {
     return null;
@@ -30,6 +41,7 @@ export default class IndexPage extends React.Component {
     super(props);
     this.state = {
       resendEmail: CurrentLogin.loginInfo.blob.data.email,
+      lastPasswordChangeDate: CurrentLogin.loginInfo.blob.last_password_change_date,
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
@@ -75,6 +87,7 @@ export default class IndexPage extends React.Component {
     return (
       <div className="home">
         <div>Welcome {CurrentLogin.username}!</div>
+        <LastPasswordChangeDate date={this.state.lastPasswordChangeDate} />
         <div>Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}</div>
         <div>
           Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
@@ -85,8 +98,6 @@ export default class IndexPage extends React.Component {
           <Link to="/rename">Change Username</Link>
           <br />
           <Link to="/changepw">Change Password</Link>
-          <br />
-          <Link to="/renameandchangepw">Change Username and Password</Link>
           <br />
           <Link to="/changeemail">Change Email</Link>
           <br />
