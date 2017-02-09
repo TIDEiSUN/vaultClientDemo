@@ -39,10 +39,10 @@ export default class VerifyPhonePage extends React.Component {
   handleSubmitSend(event) {
     console.log('Handle send verification code by sms');
 
-    const oldPhoneNumber = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.phoneNumber : null;
+    const oldPhoneNumber = this.state.oldPhoneInfo ? this.state.oldPhoneInfo.phoneNumber : null;
     const phoneNumber = this.state.phoneNumber ? this.state.phoneNumber : oldPhoneNumber;
 
-    const oldCountryCode = this.state.oldPhoneInfo !== null ? this.state.oldPhoneInfo.countryCode : null;
+    const oldCountryCode = this.state.oldPhoneInfo ? this.state.oldPhoneInfo.countryCode : null;
     const countryCode = this.state.countryCode ? this.state.countryCode : oldCountryCode;
 
     const phoneChanged = oldPhoneNumber !== phoneNumber || oldCountryCode !== countryCode;
