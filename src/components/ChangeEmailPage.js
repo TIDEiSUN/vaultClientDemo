@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 import AsyncButton from './AsyncButton';
-import Config from '../../config';
+import Config from '../logics/config';
 
 export default class ChangeEmailPage extends React.Component {
   constructor(props) {

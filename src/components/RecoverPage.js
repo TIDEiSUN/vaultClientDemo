@@ -29,6 +29,10 @@ export default class RecoverPage extends React.Component {
     // VaultClientDemo.getAuthInfoByEmail(email)
     //   .then((authInfo) => {
     //     console.log(authInfo);
+    //     authInfo.exists;
+    //     authInfo.username;
+    //     authInfo.emailVerified;
+    //     authInfo.phoneVerified;
     //   });
     // VaultClientDemo.requestEmailTokenForRecovery(authInfo.blobvault, authInfo.username, email, activateLink);
     // VaultClientDemo.requestPhoneTokenForRecovery(authInfo.blobvault, authInfo.username, phone.countryCode, phone.phoneNumber);

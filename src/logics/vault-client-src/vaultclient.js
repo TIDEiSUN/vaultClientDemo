@@ -484,7 +484,11 @@ export default class VaultClient {
       .then((customKeys) => {
         options.keys = customKeys;
         options.blob.data.email = options.email;
-        return blobClient.updateEmail(options);
+        return blobClient.updateEmail(options)
+        .then((result) => {
+          authInfo.emailVerified = true;
+          return Promise.resolve(result);
+        });
       });
   }
 
@@ -537,7 +541,11 @@ export default class VaultClient {
       .then((customKeys) => {
         options.keys = customKeys;
         options.blob.data.phone = options.phone;
-        return blobClient.updatePhone(options);
+        return blobClient.updatePhone(options)
+          .then((result) => {
+            authInfo.phoneVerified = true;
+            return Promise.resolve(result);
+          });
       });
   }
 

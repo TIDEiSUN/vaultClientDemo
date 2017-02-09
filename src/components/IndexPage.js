@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
 import VaultClientDemo from '../logics/VaultClientDemo';
-import Config from '../../config';
+import Config from '../logics/config';
 
 function LastPasswordChangeDate(props) {
   if (!props.date) {

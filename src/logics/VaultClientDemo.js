@@ -1,5 +1,5 @@
 import VaultClient, { AuthInfo, Utils, Blob as BlobObj, CustomKeys } from './vault-client-src/';
-import Config from '../../config';
+import Config from './config';
 
 class VaultClientDemoClass {
   constructor() {
