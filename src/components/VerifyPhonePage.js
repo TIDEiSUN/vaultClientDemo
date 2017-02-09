@@ -60,6 +60,7 @@ export default class VerifyPhonePage extends React.Component {
                                                   CurrentLogin.username)
           .then((result) => {
             console.log('request phone token', result);
+            CurrentLogin.loginInfo = result.loginInfo;
             alert('Success!');
           }).catch((err) => {
             console.error('Failed to send verification code by sms:', err);
@@ -89,7 +90,7 @@ export default class VerifyPhonePage extends React.Component {
         })
         .then((result) => {
           console.log('update phone:', result);
-          CurrentLogin.loginInfo.phoneVerified = true;
+          CurrentLogin.loginInfo = result.loginInfo;
           this.setState({
             oldPhoneInfo: CurrentLogin.loginInfo.blob.data.phone,
             verified: CurrentLogin.loginInfo.phoneVerified,

@@ -22,7 +22,8 @@ export default class RenamePage extends React.Component {
     return VaultClientDemo.renameAccount(CurrentLogin.username, this.state.newUsername, CurrentLogin.password, CurrentLogin.loginInfo)
       .then(result => {
         CurrentLogin.username = this.state.newUsername;
-        console.log(result);
+        console.log('rename', result);
+        CurrentLogin.loginInfo = result.loginInfo;
         alert('Success!');
       }).catch(err => {
         console.error('Failed to rename account:', err);

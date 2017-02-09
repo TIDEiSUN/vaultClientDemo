@@ -110,9 +110,11 @@ export default class ActivatePage extends React.Component {
     blob.data.lastName = this.state.lastName;
     
     return VaultClientDemo.updateEmail(username, newUsername, newPassword, CurrentLogin.loginInfo, email)
-      .then(result => {
+      .then((result) => {
+        console.log('update email:', result);
         CurrentLogin.username = newUsername;
         CurrentLogin.password = newPassword;
+        CurrentLogin.loginInfo = result.loginInfo;
         alert('Activated!');
       }).catch(err => {
         console.error('Failed to update email:', err);

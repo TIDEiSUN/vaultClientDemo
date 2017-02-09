@@ -67,6 +67,8 @@ export default class IndexPage extends React.Component {
     } else {
       VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo)
         .then((result) => {
+          console.log('request update email', result);
+          CurrentLogin.loginInfo = result.loginInfo;
           alert('Verification email has been sent to ' + newEmail);
         }).catch((err) => {
           console.error('Verication email cannot be sent:', err);

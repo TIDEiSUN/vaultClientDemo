@@ -17,12 +17,14 @@ class VaultClientDemoClass {
 
   unlockAccount(loginInfo) {
     if (loginInfo.secret) {
-      return Promise.resolve(loginInfo.secret);
+      return Promise.resolve(loginInfo);
     }
-    return this.client.unlock(loginInfo.blob.encrypted_secret, loginInfo.customKeys)
+    console.log('unlock: new login info');
+    const newLoginInfo = this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo));
+    return this.client.unlock(newLoginInfo.blob.encrypted_secret, newLoginInfo.customKeys)
       .then((result) => {
-        loginInfo.secret = result.secret;
-        return Promise.resolve(result.secret);
+        newLoginInfo.secret = result.secret;
+        return Promise.resolve(newLoginInfo);
       });
   }
 
@@ -50,17 +52,20 @@ class VaultClientDemoClass {
 
   resendVerificationEmail(username, password, email, activateLink, loginInfo) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
         const options = {
-          url: loginInfo.blob.url,
-          blob_id: loginInfo.blob.id,
+          url: unlockedLoginInfo.blob.url,
+          blob_id: unlockedLoginInfo.blob.id,
           username: username,
-          account_id: loginInfo.blob.data.account_id,
+          account_id: unlockedLoginInfo.blob.data.account_id,
           email: email,
           activateLink: activateLink,
-          masterkey: loginInfo.secret,
+          masterkey: unlockedLoginInfo.secret,
         };
-        return this.client.resendEmail(options);
+        return this.client.resendEmail(options)
+          .then((result) => {
+            return Promise.resolve({ ...result, loginInfo: unlockedLoginInfo });
+          });
       });
   }
 
@@ -75,62 +80,95 @@ class VaultClientDemoClass {
 
   renameAccount(username, newUsername, password, loginInfo) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('rename: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
         const options = {
           username: username,
           new_username: newUsername,
           password: password,
-          masterkey: loginInfo.secret,
-          blob: loginInfo.blob,
-          customKeys: loginInfo.customKeys,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
         };
-        return this.client.rename(options);
+        return this.client.rename(options)
+          .then((resolved) => {
+            newLoginInfo.username = newUsername;
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
       });
   }
 
   changePassword(username, newPassword, loginInfo) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('change password: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
         const options = {
           username: username,
           password: newPassword,
-          masterkey: loginInfo.secret,
-          blob: loginInfo.blob,
-          customKeys: loginInfo.customKeys,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
         };
-        return this.client.changePassword(options);
+        return this.client.changePassword(options)
+          .then((resolved) => {
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
       });
   }
 
   updateEmail(username, newUsername, newPassword, loginInfo, email) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('update email: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
         const options = {
           username: username,
           new_username: newUsername,
           password: newPassword,
-          masterkey: loginInfo.secret,
-          blob: loginInfo.blob,
-          customKeys: loginInfo.customKeys,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
           email: email,
         };
-        return this.client.updateEmail(options);
+        return this.client.updateEmail(options)
+          .then((resolved) => {
+            newLoginInfo.username = newUsername;
+            newLoginInfo.emailVerified = true;
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
       });
   }
 
   updatePhone(username, newUsername, newPassword, loginInfo, phone) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('update phone: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
         const options = {
           username: username,
           new_username: newUsername,
           password: newPassword,
-          masterkey: loginInfo.secret,
-          blob: loginInfo.blob,
-          customKeys: loginInfo.customKeys,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
           phone: phone,
         };
-        return this.client.updatePhone(options);
+        return this.client.updatePhone(options)
+          .then((resolved) => {
+            newLoginInfo.username = newUsername;
+            newLoginInfo.phoneVerified = true;
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
       });
   }
 
@@ -151,12 +189,15 @@ class VaultClientDemoClass {
 
   set2FAInfo(loginInfo, enable) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
         const options = {
-          masterkey: loginInfo.secret,
+          masterkey: unlockedLoginInfo.secret,
           enabled: enable,
         };
-        return loginInfo.blob.set2FA(options);
+        return unlockedLoginInfo.blob.set2FA(options)
+          .then((result) => {
+            return Promise.resolve({ ...result, loginInfo: unlockedLoginInfo });
+          });
       });
   }
 
@@ -172,17 +213,20 @@ class VaultClientDemoClass {
 
   sendPhoneVerificationCode(loginInfo, countryCode, phoneNumber, username) {
     return this.unlockAccount(loginInfo)
-      .then(() => {
+      .then((unlockedLoginInfo) => {
         const options = {
-          url: loginInfo.blob.url,
-          blob_id: loginInfo.blob.id,
+          url: unlockedLoginInfo.blob.url,
+          blob_id: unlockedLoginInfo.blob.id,
           username: username,
-          account_id: loginInfo.blob.data.account_id,
-          masterkey: loginInfo.secret,
+          account_id: unlockedLoginInfo.blob.data.account_id,
+          masterkey: unlockedLoginInfo.secret,
           phone_number: phoneNumber,
           country_code: countryCode,
         };
-        return this.client.requestPhoneToken(options);
+        return this.client.requestPhoneToken(options)
+          .then((result) => {
+            return Promise.resolve({ ...result, loginInfo: unlockedLoginInfo });
+          });
       });
   }
 

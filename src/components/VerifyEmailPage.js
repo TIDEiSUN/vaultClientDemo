@@ -71,7 +71,7 @@ export default class VerifyEmailPage extends React.Component {
       })
       .then((result) => {
         console.log('update email:', result);
-        CurrentLogin.loginInfo.emailVerified = true;
+        CurrentLogin.loginInfo = result.loginInfo;
         alert('Success!');
       }).catch(err => {
         alert('Failed to verify email: ' + err.message);

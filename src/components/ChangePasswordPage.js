@@ -20,9 +20,10 @@ export default class ChangePasswordPage extends React.Component {
   handleSubmit(event) {
     console.log('Handle change password');
     return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo)
-      .then(result => {
+      .then((result) => {
         CurrentLogin.password = this.state.newPassword;
-        console.log(result);
+        console.log('change password', result);
+        CurrentLogin.loginInfo = result.loginInfo;
         alert('Success!');
       }).catch(err => {
         console.error('Failed to change password:', err);

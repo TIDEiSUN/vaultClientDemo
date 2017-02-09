@@ -41,7 +41,8 @@ export default class RecoverPage extends React.Component {
         return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
       }).then((result) => {
         CurrentLogin.password = this.state.newPassword;
-        console.log(result);
+        console.log('change password', result);
+        CurrentLogin.loginInfo = result.loginInfo;
       }).catch((err) => {
         delete CurrentLogin.username;
         delete CurrentLogin.password;

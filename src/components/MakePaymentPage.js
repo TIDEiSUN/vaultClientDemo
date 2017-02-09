@@ -42,11 +42,12 @@ export default class MakePaymentPage extends React.Component {
   handleUnlock() {
     console.log('Handle unlock');
     return VaultClientDemo.unlockAccount(CurrentLogin.loginInfo)
-      .then((result) => {
+      .then((loginInfo) => {
+        console.log('unlock', loginInfo);
+        CurrentLogin.loginInfo = loginInfo;
         this.setState({
-          secret: result.secret,
+          secret: loginInfo.secret,
         });
-        console.log(result);
         alert('Success!');
       }).catch(err => {
         console.error('Failed to unlock:', err);

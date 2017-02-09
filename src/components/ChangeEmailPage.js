@@ -34,7 +34,9 @@ export default class ChangeEmailPage extends React.Component {
       return Promise.reject(new Error('Email has been verified.'));
     } else {
       return VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo)
-        .then(result => {
+        .then((result) => {
+          console.log('request update email', result);
+          CurrentLogin.loginInfo = result.loginInfo;
           alert('Verification email has been sent to ' + newEmail);
         }).catch(err => {
           console.error('Verication email cannot be sent:', err);
