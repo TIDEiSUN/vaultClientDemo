@@ -24,7 +24,7 @@ export default class RecoverPage extends React.Component {
     console.log('Recover account');
 
     const email = this.state.email;
-    const phone = (this.state.countryCode && this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
+    const phone = (this.state.countryCode || this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
 
     // VaultClientDemo.getAuthInfoByEmail(email)
     //   .then((authInfo) => {

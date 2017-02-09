@@ -239,7 +239,7 @@ class VaultClientDemoClass {
     return this.client.verifyPhoneToken(options);
   }
 
-  recoverBlob(email, phone) {
+  recoverBlob(email, phone = null) {
     const dummyUsername = 'dummy';
     const recoverBlobPromise = AuthInfo.get(this.domain, dummyUsername)
       .then((authInfo) => {

@@ -280,10 +280,19 @@ const BlobClient = {
 
     function handleRecovery(resp) {
       return new Promise((resolve, reject) => {
+        let blobdecrypt_key, secretdecrypt_key;
+        try {
+          blobdecrypt_key = BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_blobdecrypt_key);
+          secretdecrypt_key = BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_secretdecrypt_key);
+        } catch (err) {
+          console.error('Cannot decrypt by recover key', err);
+          reject(new Error('Incorrect recover key'));
+          return;
+        }
         const params = {
           url     : opts.url,
           blob_id : resp.body.blob_id,
-          key     : BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_blobdecrypt_key),
+          key     : blobdecrypt_key,
         };
 
         const username = resp.body.username;
@@ -298,7 +307,7 @@ const BlobClient = {
           return;
         }
 
-        const unlock = BlobObj.decryptBlobCrypt(recoveryKey, resp.body.encrypted_secretdecrypt_key);
+        const unlock = secretdecrypt_key;
         const secret = crypt.decrypt(unlock, resp.body.encrypted_secret);
 
         // Apply patches
