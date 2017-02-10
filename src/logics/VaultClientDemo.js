@@ -96,6 +96,10 @@ class VaultClientDemoClass {
         return this.client.rename(options)
           .then((resolved) => {
             newLoginInfo.username = newUsername;
+            if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
+              newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
+              newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;
+            }
             return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
           });
       });
@@ -117,6 +121,10 @@ class VaultClientDemoClass {
         };
         return this.client.changePassword(options)
           .then((resolved) => {
+            if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
+              newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
+              newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;
+            }
             return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
           });
       });
@@ -141,7 +149,11 @@ class VaultClientDemoClass {
         return this.client.updateEmail(options)
           .then((resolved) => {
             newLoginInfo.username = newUsername;
-            newLoginInfo.emailVerified = true;
+            newLoginInfo.emailVerified = resolved.email_verified;
+            if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
+              newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
+              newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;
+            }
             return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
           });
       });
@@ -166,7 +178,11 @@ class VaultClientDemoClass {
         return this.client.updatePhone(options)
           .then((resolved) => {
             newLoginInfo.username = newUsername;
-            newLoginInfo.phoneVerified = true;
+            newLoginInfo.phoneVerified = resolved.phone_verified;
+            if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
+              newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
+              newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;
+            }
             return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
           });
       });

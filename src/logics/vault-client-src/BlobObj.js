@@ -122,8 +122,8 @@ export default class BlobObj {
         self.id_token         = resp.body.id_token;   // FIXME not assigned
         self.missing_fields   = resp.body.missing_fields;
         // self.attestations     = resp.body.attestation_summary;
-        self.last_password_change_date = resp.body.last_password_change_date;
-        self.last_password_change_timestamp = resp.body.last_password_change_timestamp;
+        self.last_id_change_date = resp.body.last_id_change_date;
+        self.last_id_change_timestamp = resp.body.last_id_change_timestamp;
 
         if (!self.decrypt(resp.body.blob)) {
           reject(new Error('Error while decrypting blob'));

@@ -4,13 +4,13 @@ import { CurrentLogin } from './Data';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import Config from '../logics/config';
 
-function LastPasswordChangeDate(props) {
+function LastBlobIDChangeDate(props) {
   if (!props.date) {
     return null;
   }
   return (
     <div>
-      Login password: Last updated at {props.date}
+      Blob ID: Last updated at {props.date}
     </div>
   );
 }
@@ -41,7 +41,7 @@ export default class IndexPage extends React.Component {
     super(props);
     this.state = {
       resendEmail: CurrentLogin.loginInfo.blob.data.email,
-      lastPasswordChangeDate: CurrentLogin.loginInfo.blob.last_password_change_date,
+      lastBlobIDChangeDate: CurrentLogin.loginInfo.blob.last_id_change_date,
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
@@ -89,7 +89,7 @@ export default class IndexPage extends React.Component {
     return (
       <div className="home">
         <div>Welcome {CurrentLogin.username}!</div>
-        <LastPasswordChangeDate date={this.state.lastPasswordChangeDate} />
+        <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
         <div>Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}</div>
         <div>
           Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
