@@ -955,6 +955,12 @@ const BlobClient = {
 
   requestPhoneTokenForRecovery(options) {
     return new Promise((resolve, reject) => {
+      const phone = {
+        countryCode: options.country_code,
+        phoneNumber: options.phone_number,
+      };
+      const hashedPhone = Utils.createHashedPhone(phone);
+
       const config = {
         method : 'POST',
         url    : `${options.url}/v1/user/${options.username}/phone/recoverRequest`,
@@ -962,6 +968,7 @@ const BlobClient = {
           via          : 'sms',
           phone_number : options.phone_number,
           country_code : options.country_code,
+          hashed_phone : hashedPhone,
         },
       };
 
