@@ -1,4 +1,5 @@
 import blobClient, { Blob } from './blob';
+import RippleClient from '../RippleClient'
 import AuthInfo from './authinfo';
 import RippleTxt from './rippletxt';
 import crypt from './crypt';
@@ -604,7 +605,6 @@ export default class VaultClient {
    * @param {string} options.masterkey   //optional, will create if absent
    * @param {string} options.email
    * @param {string} options.activateLink
-   * @param {object} options.oldUserBlob //optional
    * @param {function} fn
    */
 
@@ -629,16 +629,17 @@ export default class VaultClient {
     }
 
     const create = (authInfo, customKeys) => {
-      var params = {
+      let newAddress = RippleClient.api.generateAddress();
+      let params = {
         url: authInfo.blobvault,
         id: customKeys.id,
         crypt: customKeys.crypt,
         unlock: customKeys.unlock,
         username: username,
         email: options.email,
-        masterkey: options.masterkey || crypt.createMaster(),
+        masterkey: newAddress.secret,
+        address: newAddress.address,
         activateLink: options.activateLink,
-        oldUserBlob: options.oldUserBlob,
         domain: options.domain,
       };
 

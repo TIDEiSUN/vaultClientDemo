@@ -559,7 +559,6 @@ const BlobClient = {
    * @param {string} options.unlock
    * @param {string} options.username
    * @param {string} options.masterkey
-   * @param {object} options.oldUserBlob
    * @param {object} options.domain
    */
 
@@ -576,7 +575,7 @@ const BlobClient = {
 
       blob.data = {
         auth_secret : crypt.createSecret(8),
-        account_id  : crypt.getAddress(options.masterkey),
+        account_id  : options.address,
         email       : options.email,
         contacts    : [],
         created     : (new Date()).toJSON(),
@@ -584,11 +583,6 @@ const BlobClient = {
       };
 
       blob.encrypted_secret = blob.encryptSecret(options.unlock, options.masterkey);
-
-      // Migration
-      if (options.oldUserBlob) {
-        blob.data.contacts = options.oldUserBlob.data.contacts;
-      }
 
       const recoveryKey = Utils.createRecoveryKey(options.email);
 

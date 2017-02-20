@@ -1,5 +1,4 @@
 import sjcl from './sjcl'; 
-import { Base as base } from './ripple-npm/base';
 import { Seed } from './ripple-npm/seed';
 import request from 'superagent';
 import querystring from 'querystring';
@@ -222,25 +221,6 @@ const Crypt = {
 
   createSecret(nWords) {
     return sjcl.codec.hex.fromBits(randomWords(nWords));
-  },
-
-/**
- * Create a new master key
- */
-
-  createMaster() {
-    return base.encode_check(33, sjcl.codec.bytes.fromBits(randomWords(4)));
-  },
-
-
-/**
- * Create a ripple address from a master key
- *
- * @param {string} masterkey
- */
-
-  getAddress(masterkey) {
-    return Seed.from_json(masterkey).get_key().get_address().to_json();
   },
 
 /**
