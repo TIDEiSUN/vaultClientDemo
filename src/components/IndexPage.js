@@ -95,11 +95,17 @@ export default class IndexPage extends React.Component {
           Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
           <ResendVerificationButton verified={CurrentLogin.loginInfo.emailVerified} target={this} />
         </div>
+        <div>
+          First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />
+          Last Name: {CurrentLogin.loginInfo.blob.data.lastName}
+        </div>
         <br />
         <div>
           <Link to="/rename">Change Username</Link>
           <br />
           <Link to="/changepw">Change Password</Link>
+          <br />
+          <Link to="/changepersonaldata">Change Personal Data</Link>
           <br />
           <Link to="/changeemail">Change Email</Link>
           <br />

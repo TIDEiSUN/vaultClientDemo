@@ -409,6 +409,32 @@ export default class VaultClient {
   }
 
   /**
+   * updateBlob
+   * @param {object} options
+   * @param {string} options.username
+   * @param {string} options.masterkey
+   * @param {object} options.blob
+   */
+
+  updateBlob(options) {
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
+
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
+    if (!authInfo.emailVerified) {
+      return Promise.reject(new Error('Account has not been verified.'));
+    }
+
+    return customKeys.deriveKeys()
+      .then(() => {
+        options.keys = customKeys;
+        return blobClient.updateKeys(options);
+      });
+  }
+
+  /**
    * changePassword
    * @param {object} options
    * @param {string} options.username
@@ -436,6 +462,66 @@ export default class VaultClient {
       .then(() => {
         options.keys = customKeys;
         return blobClient.updateKeys(options);
+      });
+  }
+
+  /**
+   * Activate a ripple account
+   * @param {object} options
+   * @param {string} options.username
+   * @param {string} options.new_username
+   * @param {string} options.password
+   * @param {string} options.masterkey
+   * @param {object} options.blob
+   */
+
+  activateAccount(options) {
+    var new_username = String(options.new_username).trim();
+    var password     = String(options.password).trim();
+
+    const customKeys = options.customKeys;
+    const authInfo = customKeys.authInfo;
+
+    if (!authInfo.exists) {
+      return Promise.reject(new Error('User does not exists.'));
+    }
+
+    const checkNewUsernameExists = () => {
+      if (options.username === new_username) {
+        return Promise.resolve({ authInfo, password });
+      } else {
+        console.log(`Username changes from ${options.username} to ${new_username}`);
+        return this.getAuthInfo(new_username)
+          .then((newUsernameAuthInfo) => {
+            if (newUsernameAuthInfo && newUsernameAuthInfo.exists) {
+              return Promise.reject(new Error('username already taken.'));
+            }
+            return Promise.resolve();
+          });
+      }
+    };
+
+    const hasPhone = Object.prototype.hasOwnProperty.call(options, 'phone');
+
+    return checkNewUsernameExists()
+      .then(() => {
+        // FIXME another way to change user name
+        customKeys.setUsername(new_username);
+        customKeys.setPassword(password);
+        return customKeys.deriveKeys();
+      })
+      .then((customKeys) => {
+        options.keys = customKeys;
+        options.blob.data.email = options.email;
+        if (hasPhone) {
+          options.blob.data.phone = options.phone;
+        }
+        return blobClient.activateAccount(options)
+        .then((result) => {
+          authInfo.emailVerified = true;
+          authInfo.phoneVerified = hasPhone;
+          return Promise.resolve(result);
+        });
       });
   }
 

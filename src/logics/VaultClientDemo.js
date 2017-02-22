@@ -105,6 +105,26 @@ class VaultClientDemoClass {
       });
   }
 
+  updateBlob(username, loginInfo) {
+    return this.unlockAccount(loginInfo)
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('change password: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
+        const options = {
+          username: username,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
+        };
+        return this.client.updateBlob(options)
+          .then((resolved) => {
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
+      });
+  }
+
   changePassword(username, newPassword, loginInfo) {
     return this.unlockAccount(loginInfo)
       .then((unlockedLoginInfo) => {
@@ -121,6 +141,39 @@ class VaultClientDemoClass {
         };
         return this.client.changePassword(options)
           .then((resolved) => {
+            if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
+              newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
+              newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;
+            }
+            return Promise.resolve({ ...resolved, loginInfo: newLoginInfo });
+          });
+      });
+  }
+
+  activateAccount(username, newUsername, newPassword, loginInfo, email, phone = null) {
+    return this.unlockAccount(loginInfo)
+      .then((unlockedLoginInfo) => {
+        if (unlockedLoginInfo === loginInfo) {
+            console.log('activate account: new login info');
+        }
+        const newLoginInfo = unlockedLoginInfo === loginInfo ? this.deserializeLoginInfo(this.serializeLoginInfo(loginInfo)) : unlockedLoginInfo;
+        const options = {
+          username: username,
+          new_username: newUsername,
+          password: newPassword,
+          masterkey: newLoginInfo.secret,
+          blob: newLoginInfo.blob,
+          customKeys: newLoginInfo.customKeys,
+          email: email,
+        };
+        if (phone) {
+          options.phone = phone;
+        }
+        return this.client.activateAccount(options)
+          .then((resolved) => {
+            newLoginInfo.username = newUsername;
+            newLoginInfo.emailVerified = resolved.email_verified;
+            newLoginInfo.phoneVerified = resolved.phone_verified;
             if (Object.prototype.hasOwnProperty.call(resolved, 'last_id_change_date')) {
               newLoginInfo.blob.last_id_change_date = resolved.last_id_change_date;
               newLoginInfo.blob.last_id_change_timestamp = resolved.last_id_change_timestamp;

@@ -333,6 +333,46 @@ const BlobClient = {
 
 
   /**
+   * updateBlob
+   * Change the blob data
+   * @param {object} opts
+   * @param {string} opts.username
+   * @param {object} opts.keys
+   * @param {object} opts.blob
+   * @param {string} masterkey
+   */
+
+  updateBlob(opts) {
+    return new Promise((resolve, reject) => {
+      const config = {
+        method : 'POST',
+        url    : `${opts.blob.url}/v1/user/${opts.username}/updateBlob`,
+        data   : {
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+        },
+      };
+
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, opts.blob.id);
+
+      request.post(signed.url)
+        .send(signed.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'updateBlob:', err);
+            reject(new Error('Failed to update blob - XHR error'));
+          } else if (!resp.body || resp.body.result !== 'success') {
+            console.log('error:', 'updateBlob:', resp.body ? resp.body.message : null);
+            reject(new Error('Failed to update blob - bad result'));
+          } else {
+            resolve(resp.body);
+          }
+        });
+    });
+  },
+
+  /**
    * updateKeys
    * Change the blob encryption keys
    * @param {object} opts
@@ -384,6 +424,65 @@ const BlobClient = {
   },
 
   /**
+   * Activate an account
+   * @param {object} opts
+   * @param {string} opts.username
+   * @param {string} opts.new_username
+   * @param {object} opts.keys
+   * @param {object} opts.blob
+   * @param {string} masterkey
+   */
+
+  activateAccount(opts) {
+    return new Promise((resolve, reject) => {
+      const old_id  = opts.blob.id;
+      opts.blob.id  = opts.keys.id;
+      opts.blob.key = opts.keys.crypt;
+      opts.blob.encryptedSecret = opts.blob.encryptSecret(opts.keys.unlock, opts.masterkey);
+
+      const recoveryKey = Utils.createRecoveryKey(opts.blob.data.email, opts.blob.data.phone);
+
+      const config = {
+        method: 'POST',
+        url: `${opts.blob.url}/v1/user/${opts.username}/activate`,
+        data: {
+          blob_id  : opts.blob.id,
+          username : opts.new_username,
+          data     : opts.blob.encrypt(),
+          revision : opts.blob.revision,
+          encrypted_secret : opts.blob.encryptedSecret,
+          encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
+          encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
+          email: opts.blob.data.email,
+        },
+      };
+
+      if (opts.blob.data.phone) {
+        config.data.hashed_phone = Utils.createHashedPhone(opts.blob.data.phone);
+      }
+
+      const signedRequest = new SignedRequest(config);
+      const signed = signedRequest.signAsymmetric(opts.masterkey, opts.blob.data.account_id, old_id);
+
+      request.post(signed.url)
+        .send(signed.data)
+        .end((err, resp) => {
+          if (err) {
+            console.log('error:', 'activate account:', err);
+            reject(new Error(`Failed to activate account: ${err.message}`));
+          } else if (resp.body && resp.body.result === 'success') {
+            resolve(resp.body);
+          } else if (resp.body && resp.body.result === 'error') {
+            console.log('error:', 'activate account:', resp.body.message);
+            reject(new Error(`Failed to activate account: ${resp.body.message}`));
+          } else {
+            reject(new Error('Failed to activate account'));
+          }
+        });
+    });
+  },
+
+  /**
    * Update email of an account
    * @param {object} opts
    * @param {string} opts.username
@@ -413,7 +512,7 @@ const BlobClient = {
           encrypted_secret : opts.blob.encryptedSecret,
           encrypted_blobdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.crypt),
           encrypted_secretdecrypt_key : BlobObj.encryptBlobCrypt(recoveryKey, opts.keys.unlock),
-          email: opts.email,
+          email: opts.blob.data.email,
         },
       };
 
