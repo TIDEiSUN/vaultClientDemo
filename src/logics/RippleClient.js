@@ -1,9 +1,11 @@
 import { RippleAPI } from 'ripple-lib';
 import Config from './config';
+import RippleTxt from './vault-client-src/rippletxt';
 
 class RippleClientClass {
   constructor() {
-    console.log('RippleClientClass constructor');
+    this.domain = Config.rippleTxtDomain;
+
     this.api = new RippleAPI({ server: Config.rippleRPC });
 
     this.api.on('error', (errorCode, errorMessage) => {
@@ -25,6 +27,14 @@ class RippleClientClass {
 
   disconnectToServer() {
     return this.api.disconnect();
+  }
+
+  getGatewayAddresses() {
+    return RippleTxt.getAccounts(this.domain);
+  }
+
+  getCurrencies() {
+    return RippleTxt.getCurrencies(this.domain);
   }
 }
 

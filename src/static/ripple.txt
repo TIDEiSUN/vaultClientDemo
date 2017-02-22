@@ -1,6 +1,8 @@
 [authinfo_url]
-http://192.168.100.91:27182/v1/authinfo
+http://14.136.246.164:27182/v1/authinfo
 [accounts]
-raVUps4RghLYkVBcpMaRbVKRTTzhesPXd
+rPwNTfuGgAujf3wftNPR7Qjj5vZGUHcsN5
 [currencies]
-USD
+BTC
+ETH
+ISD

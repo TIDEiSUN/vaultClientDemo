@@ -16,7 +16,6 @@ class RippleTxtClass {
   /**
    * Gets the ripple.txt file for the given domain
    * @param {string}    domain - Domain to retrieve file from
-   * @param {function}  fn - Callback function
    */
 
   get(domain) {
@@ -37,7 +36,7 @@ class RippleTxtClass {
         }
 
         url = url.replace('{{domain}}', domain);
-        console.log(url);
+        // console.log(url);
 
         request.get(url, (err, resp) => {
           if (err || !resp.text) {
@@ -98,12 +97,43 @@ class RippleTxtClass {
     return match && match[0] ? match[0] : url;
   }
 
+
+  /**
+   * getAccounts
+   * returns issuer account
+   * for each accounts found in the domain's ripple.txt file
+   * @param {Object} domain
+   */
+
+  getAccounts(domain) {
+    const extracted = this.extractDomain(domain);
+    const self      = this;
+
+    function getAccounts(domain) {
+      return self.get(domain)
+        .then((txt) => {
+          if (!txt.accounts) {
+            return Promise.resolve([]);
+          }
+          return Promise.resolve(txt.accounts);
+        });
+    }
+
+    // try with extracted domain
+    return getAccounts(extracted)
+      .then((resp) => {
+        return Promise.resolve(resp);
+      }).catch((err) => {
+        // try with original domain
+        return getAccounts(domain);
+      });
+  }
+  
   /**
    * getCurrencies
-   * returns domain, issuer account and currency object
+   * returns currency
    * for each currency found in the domain's ripple.txt file
    * @param {Object} domain
-   * @param {Object} fn
    */
 
   getCurrencies(domain) {
@@ -113,24 +143,10 @@ class RippleTxtClass {
     function getCurrencies(domain) {
       return self.get(domain)
         .then((txt) => {
-          if (!txt.currencies || !txt.accounts) {
+          if (!txt.currencies) {
             return Promise.resolve([]);
           }
-          // NOTE: this won't be accurate if there are
-          // multiple issuer accounts with different
-          // currencies associated with each.
-          const issuer     = txt.accounts[0];
-          const currencies = [];
-
-          txt.currencies.forEach((currency) => {
-            currencies.push({
-              issuer   : issuer,
-              // currency : Currency.from_json(currency),  // comment this as this is not actively called
-              domain   : domain,
-            });
-          });
-
-          return Promise.resolve(currencies);
+          return Promise.resolve(txt.currencies);
         });
     }
 

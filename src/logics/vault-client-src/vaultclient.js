@@ -1,7 +1,6 @@
 import blobClient, { Blob } from './blob';
 import RippleClient from '../RippleClient'
 import AuthInfo from './authinfo';
-import RippleTxt from './rippletxt';
 import crypt from './crypt';
 import Utils from './utils';
 
@@ -836,4 +835,4 @@ VaultClient.prototype.requestPhoneTokenForRecovery = blobClient.requestPhoneToke
 VaultClient.prototype.requestEmailTokenForRecovery = blobClient.requestEmailTokenForRecovery;
 
 // export by name
-export { AuthInfo, Blob, RippleTxt, Utils, CustomKeys };
+export { AuthInfo, Blob, Utils, CustomKeys };
