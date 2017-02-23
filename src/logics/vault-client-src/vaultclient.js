@@ -429,7 +429,7 @@ export default class VaultClient {
     return customKeys.deriveKeys()
       .then(() => {
         options.keys = customKeys;
-        return blobClient.updateKeys(options);
+        return blobClient.updateBlob(options);
       });
   }
 
