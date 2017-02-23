@@ -117,6 +117,90 @@ class RippleClientClass {
     };
     return sendPayment(this.api, sourceAccount, payment);
   }
+
+  getPockets(address) {
+    return this.api.getTrustlines(address)
+      .then((trustlines) => {
+        const pocketPromises = trustlines.map((trustline) => {
+          const {
+            currency,
+          } = trustline.specification;
+          console.log(`Get pocket for ${currency}`);
+          return this.getPocket(address, currency);
+        });
+        return Promise.all(pocketPromises);
+      })
+      .then((pockets) => {
+        const resp = {};
+        pockets.forEach((pocket) => {
+          resp[pocket.currency] = pocket.coinAddress;
+        });
+        return resp;
+      });
+  }
+
+  getPocket(address, currency) {
+    const config = {
+      method : 'GET',
+      url    : `${Config.isunpayrpcURL}/pocket`,
+      qs     : {
+        currency,
+        rippleAddress: address,
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      request.get(config.url)
+        .query(config.qs)
+        .send(config.data)
+        .end((err, resp) => {
+          if (err) {
+            reject(err);
+          } else if (!resp.ok) {
+            console.log(resp);
+            reject(new Error(resp.body.message));
+          } else {
+            resolve(resp.body);
+          }
+        });
+    });
+  }
+
+  addPocket(gatewayAddress, sourceAccount, currency, limit = '999999999') {
+    const trustline = {
+      currency,
+      counterparty: gatewayAddress,
+      limit,
+    };
+    return this.api.prepareTrustline(sourceAccount.address, trustline)
+      .then((prepared) => {
+        const signedData = this.api.sign(prepared.txJSON, sourceAccount.secret);
+
+        const config = {
+          method : 'POST',
+          url    : `${Config.isunpayrpcURL}/pocket`,
+          data   : {
+            signed: signedData,
+            maxLedgerVersion: prepared.instructions.maxLedgerVersion,
+          },
+        };
+
+        return new Promise((resolve, reject) => {
+          request.post(config.url)
+            .send(config.data)
+            .end((err, resp) => {
+              if (err) {
+                reject(err);
+              } else if (!resp.ok) {
+                console.log(resp);
+                reject(new Error(resp.body.message));
+              } else {
+                resolve(resp.body);
+              }
+            });
+        });
+      });
+  }
 }
 
 const RippleClient = new RippleClientClass();

@@ -1,5 +1,5 @@
 let rippleTxtDomain = 'localhost:3000';
-let emailVerify_host = 'localhost:3000';
+let emailVerify_host = 'http://localhost:3000';
 let isunpayrpc_host = 'localhost';
 let isunpayrpc_port = 27184;
 

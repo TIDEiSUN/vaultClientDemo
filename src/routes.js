@@ -14,6 +14,7 @@ import RecoverPage from './components/RecoverPage';
 import ChangeEmailPage from './components/ChangeEmailPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import ChangePersonalDataPage from './components/ChangePersonalDataPage';
+import WalletPage from './components/WalletPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -29,6 +30,7 @@ const routes = (
     <Route path="/recover" component={RecoverPage} />
     <Route path="/changeemail" component={ChangeEmailPage} />
     <Route path="/changepersonaldata" component={ChangePersonalDataPage} />
+    <Route path="/wallet" component={WalletPage} />
   <Route path="*" component={NotFoundPage} />
 </Route>
 );

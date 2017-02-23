@@ -112,6 +112,8 @@ export default class IndexPage extends React.Component {
           <Link to="/phone">Verify Phone</Link>
           <br />
           <Link to="/payment">Make Payment</Link>
+          <br />
+          <Link to="/wallet">Show Wallet</Link>
         </div>
         <div>
           <LogoutButton target={this} />
