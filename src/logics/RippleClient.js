@@ -34,6 +34,33 @@ function sendPayment(api, sourceAccount, payment) {
     });
 }
 
+function getTrustlinePocket(address, currency) {
+  const config = {
+    method : 'GET',
+    url    : `${Config.isunpayrpcURL}/pocket`,
+    qs     : {
+      currency,
+      rippleAddress: address,
+    },
+  };
+
+  return new Promise((resolve, reject) => {
+    request.get(config.url)
+      .query(config.qs)
+      .send(config.data)
+      .end((err, resp) => {
+        if (err) {
+          reject(err);
+        } else if (!resp.ok) {
+          console.log(resp);
+          reject(new Error(resp.body.message));
+        } else {
+          resolve(resp.body);
+        }
+      });
+  });
+}
+
 class RippleClientClass {
   constructor() {
     this.domain = Config.rippleTxtDomain;
@@ -119,6 +146,7 @@ class RippleClientClass {
   }
 
   getPockets(address) {
+    // FIXME counterparty must be gateway
     return this.api.getTrustlines(address)
       .then((trustlines) => {
         const pocketPromises = trustlines.map((trustline) => {
@@ -126,8 +154,9 @@ class RippleClientClass {
             currency,
           } = trustline.specification;
           console.log(`Get pocket for ${currency}`);
-          return this.getPocket(address, currency);
+          return getTrustlinePocket(address, currency);
         });
+        // FIXME it fails if getting any one of pockets failed
         return Promise.all(pocketPromises);
       })
       .then((pockets) => {
@@ -140,30 +169,23 @@ class RippleClientClass {
   }
 
   getPocket(address, currency) {
-    const config = {
-      method : 'GET',
-      url    : `${Config.isunpayrpcURL}/pocket`,
-      qs     : {
-        currency,
-        rippleAddress: address,
-      },
+    // FIXME counterparty must be gateway
+    const options = {
+      currency,
     };
-
-    return new Promise((resolve, reject) => {
-      request.get(config.url)
-        .query(config.qs)
-        .send(config.data)
-        .end((err, resp) => {
-          if (err) {
-            reject(err);
-          } else if (!resp.ok) {
-            console.log(resp);
-            reject(new Error(resp.body.message));
-          } else {
-            resolve(resp.body);
-          }
-        });
-    });
+    return this.api.getTrustlines(address, options)
+      .then((trustlines) => {
+        if (trustlines.length === 0) {
+          return Promise.reject(`Trustline for ${currency} not found`);
+        }
+        return getTrustlinePocket(address, currency);
+      })
+      .then((pocket) => {
+        const resp = {
+          [pocket.currency]: pocket.coinAddress,
+        };
+        return resp;
+      });
   }
 
   addPocket(gatewayAddress, sourceAccount, currency, limit = '999999999') {

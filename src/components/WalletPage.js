@@ -91,6 +91,16 @@ export default class WalletPage extends React.Component {
       .catch((err) => {
         console.error('Get pockets', err);
       });
+
+    // get ETH pocket
+    const currency = 'ETH';
+    RippleClient.getPocket(address, currency)
+      .then((pocket) => {
+        console.log('get ETH pocket', pocket);
+      })
+      .catch((err) => {
+        console.error('Get ETH pockets', err);
+      });
   }
 
   handleChange(name, event) {
