@@ -1,6 +1,38 @@
 import { RippleAPI } from 'ripple-lib';
+import request from 'superagent';
 import Config from './config';
 import RippleTxt from './vault-client-src/rippletxt';
+
+function sendPayment(api, sourceAccount, payment) {
+  return api.preparePayment(sourceAccount.address, payment)
+    .then((prepared) => {
+      const signedData = api.sign(prepared.txJSON, sourceAccount.secret);
+
+      const config = {
+        method : 'POST',
+        url    : `${Config.isunpayrpcURL}/signedTransaction`,
+        data   : {
+          signed: signedData,
+          maxLedgerVersion: prepared.instructions.maxLedgerVersion,
+        },
+      };
+
+      return new Promise((resolve, reject) => {
+        request.post(config.url)
+          .send(config.data)
+          .end((err, resp) => {
+            if (err) {
+              reject(err);
+            } else if (!resp.ok) {
+              console.log(resp);
+              reject(new Error(resp.body.message));
+            } else {
+              resolve(resp.body);
+            }
+          });
+      });
+    });
+}
 
 class RippleClientClass {
   constructor() {
@@ -35,6 +67,55 @@ class RippleClientClass {
 
   getCurrencies() {
     return RippleTxt.getCurrencies(this.domain);
+  }
+
+  getBalances(address) {
+    return this.api.getBalances(address).catch(console.error);
+  }
+
+  sendInternalPayment(gatewayAddress, sourceAccount, destinationRippleAddress, currency, value) {
+    const amount = {
+      currency,
+      value,
+      counterparty: gatewayAddress,
+    };
+    const payment = {
+      source: {
+        address: sourceAccount.address,
+        maxAmount: amount,
+      },
+      destination: {
+        address: destinationRippleAddress,
+        amount: amount,
+      },
+    };
+    return sendPayment(this.api, sourceAccount, payment);
+  }
+
+  sendExternalPayment(gatewayAddress, sourceAccount, destinationCoinAddress, currency, value) {
+    const amount = {
+      currency,
+      value,
+      counterparty: gatewayAddress,
+    };
+    const memo = {
+      coinAddress: destinationCoinAddress,
+    };
+    const payment = {
+      source: {
+        address: sourceAccount.address,
+        maxAmount: amount,
+      },
+      destination: {
+        address: gatewayAddress,
+        amount: amount,
+      },
+      memos: [{
+        data: JSON.stringify(memo),
+        format: 'application/JSON',
+      }],
+    };
+    return sendPayment(this.api, sourceAccount, payment);
   }
 }
 

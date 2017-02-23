@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 import AsyncButton from './AsyncButton';
+import RippleClient from '../logics/RippleClient';
 
 export default class LoginPage extends React.Component {
   constructor(props) {
@@ -25,6 +26,7 @@ export default class LoginPage extends React.Component {
         CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
+        RippleClient.connectToServer();
         //browserHistory.push('/main');
       }).catch(err => {
         console.error('Failed to login:', err);

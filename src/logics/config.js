@@ -1,20 +1,22 @@
+let rippleTxtDomain = 'localhost:3000';
+let emailVerify_host = 'localhost:3000';
+let isunpayrpc_host = 'localhost';
+let isunpayrpc_port = 27184;
+
+if (process.env.NODE_ENV === 'production') {
+  rippleTxtDomain = '14.136.246.165:3000';
+  emailVerify_host = 'http://14.136.246.165:3000';
+}
+
+exports.rippleRPC = 'wss://s.altnet.rippletest.net:51233';
+
 // Domain to request ripple.txt
-if(process.env.NODE_ENV==='production'){
-  exports.rippleRPC = 'wss://s.altnet.rippletest.net:51233';
+exports.rippleTxtDomain = rippleTxtDomain;
 
-  exports.rippleTxtDomain = '14.136.246.165:3000';
 // URL to activate account
-  exports.accountActivationURL = 'http://14.136.246.165:3000/activate';
-// URL to verify email token
-  exports.emailVerificationURL = 'http://14.136.246.165:3000/verifyEmail';
-}
-else{
-  exports.rippleRPC = 'wss://s.altnet.rippletest.net:51233';
+exports.accountActivationURL = emailVerify_host + '/activate';
 
-  exports.rippleTxtDomain = 'localhost:3000';  
-// URL to activate account
-  exports.accountActivationURL = 'http://localhost:3000/activate';
 // URL to verify email token
-  exports.emailVerificationURL = 'http://localhost:3000/verifyEmail';
-}
+exports.emailVerificationURL = emailVerify_host + '/verifyEmail';
 
+exports.isunpayrpcURL = 'http://' + isunpayrpc_host + ':' + isunpayrpc_port;
