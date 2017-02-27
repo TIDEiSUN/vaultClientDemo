@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
+  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
   entry: path.join(__dirname, 'src', 'app-client.js'),
   output: {
     path: path.join(__dirname, 'src', 'static', 'js'),
@@ -38,7 +39,7 @@ module.exports = {
     new webpack.optimize.UglifyJsPlugin({
       compress: { warnings: false },
       mangle: true,
-      sourceMap: false,
+      sourceMap: process.env.NODE_ENV === 'production',
       beautify: true
     }),
     new webpack.NormalModuleReplacementPlugin(/^ws$/, './wswrapper'),
