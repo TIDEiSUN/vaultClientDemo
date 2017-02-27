@@ -8,7 +8,7 @@ import ChangePasswordPage from './components/ChangePasswordPage';
 import RegistrationPage from './components/RegistrationPage';
 import RenamePage from './components/RenamePage';
 import NotFoundPage from './components/NotFoundPage';
-import ActivatePage from './components/ActivatePage';
+import ActivateAccountPage from './components/ActivateAccountPage';
 import VerifyPhonePage from './components/VerifyPhonePage';
 import RecoverPage from './components/RecoverPage';
 import ChangeEmailPage from './components/ChangeEmailPage';
@@ -24,8 +24,8 @@ const routes = (
     <Route path="/changepw" component={ChangePasswordPage} />
     <Route path="/reg" component={RegistrationPage} />
     <Route path="/rename" component={RenamePage} />
-    <Route path="/activate" component={ActivatePage} />
-    <Route path="/verifyEmail" component={VerifyEmailPage} />
+    <Route path="/activateAccount" component={ActivateAccountPage} />
+    <Route path="/activate" component={VerifyEmailPage} />
     <Route path="/phone" component={VerifyPhonePage} />
     <Route path="/recover" component={RecoverPage} />
     <Route path="/changeemail" component={ChangeEmailPage} />

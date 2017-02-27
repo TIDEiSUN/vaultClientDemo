@@ -1,0 +1,4 @@
+[submodule "isunpayweb"]
+	path = isunpayweb
+	url = ssh://git@phabgit.isuntv.com/diffusion/ISPWEB/isunpayweb.git
+	branch = logics_changes

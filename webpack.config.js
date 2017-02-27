@@ -11,10 +11,7 @@ module.exports = {
   module: {
     loaders: [
     {
-      test: /https-proxy-agent/,
-      loader: 'null-loader'
-    }, {
-      test: /jayson/,
+      test: /https-proxy-agent|jayson/,
       loader: 'null-loader'
     }, {
       test:  /\.js$/,

@@ -88,7 +88,7 @@ function VerifyPhoneForm(props) {
   );
 }
 
-export default class ActivatePage extends React.Component {
+export default class ActivateAccountPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
