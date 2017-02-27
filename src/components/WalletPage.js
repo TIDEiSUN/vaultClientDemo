@@ -1,9 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
 import AsyncButton from './AsyncButton';
-import Config from '../logics/config';
 import RippleClient from '../logics/RippleClient';
 import UnlockButton from './button/UnlockButton';
 
@@ -23,7 +21,7 @@ function WalletTable(props) {
   if (rows.length === 0) {
     return (
       <div>
-        No pockets!
+        No pocket!
       </div>
     );
   }
@@ -151,9 +149,10 @@ export default class WalletPage extends React.Component {
         <h1>Wallet</h1>
         <UnlockButton public={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
         <br />
+        <WalletTable pockets={this.state.pockets} />
+        <br />
         <AddWalletForm secret={this.state.secret} self={this} />
         <br />
-        <WalletTable pockets={this.state.pockets} />
         <Link to="/main">Back to main page</Link>
       </div>
     );

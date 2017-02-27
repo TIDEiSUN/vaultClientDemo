@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './AsyncButton';
-import VaultClientDemo from '../logics/VaultClientDemo';
 import RippleClient from '../logics/RippleClient';
+import UnlockButton from './button/UnlockButton';
 
 function SendTransactionForm(props) {
   const self = props.self;
@@ -37,33 +37,7 @@ function SendTransactionForm(props) {
   );
 }
 
-function SecretKeyDiv(props) {
-  const self = props.self;
-  if (props.secret) {
-    return (
-      <div>
-        <p>Public address: {props.public}</p>
-        <p>Secret key: {props.secret}</p>
-        <SendTransactionForm self={self} />
-      </div>
-    );
-  } else {
-    return (
-      <div>
-        <AsyncButton
-          type="button"
-          onClick={self.handleUnlock}
-          pendingText="Unlocking..."
-          fulFilledText="Unlocked"
-          rejectedText="Failed! Try Again"
-          text="Unlock"
-        />
-      </div>
-    );
-  }
-}
-
-function AccountBalanceDiv(props) {
+function AccountBalanceTable(props) {
   const rows = [];
   props.balances.forEach((balance) => {
     rows.push(
@@ -73,19 +47,25 @@ function AccountBalanceDiv(props) {
       </tr>
     );
   });
+
+  if (rows.length === 0) {
+    return (
+      <div>
+        No currency!
+      </div>
+    );
+  }
+
   return (
-    <div>
-      Balance
-      <table>
-        <thead>
-          <tr>
-            <td>Currency</td>
-            <td>Value</td>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <td>Currency</td>
+          <td>Value</td>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
   );
 }
 
@@ -101,8 +81,8 @@ export default class MakePaymentPage extends React.Component {
       currency: '',
       value: '',
     };
-    this.handleUnlock = this.handleUnlock.bind(this);
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
+    this.onUpdate = this.onUpdate.bind(this);
 
     RippleClient.getBalances(this.state.public)
       .then((balances) => {
@@ -112,21 +92,8 @@ export default class MakePaymentPage extends React.Component {
       });
   }
 
-  handleUnlock() {
-    console.log('Handle unlock');
-    return VaultClientDemo.unlockAccount(CurrentLogin.loginInfo)
-      .then((loginInfo) => {
-        console.log('unlock', loginInfo);
-        CurrentLogin.loginInfo = loginInfo;
-        this.setState({
-          secret: loginInfo.secret,
-        });
-        alert('Success!');
-      }).catch(err => {
-        console.error('Failed to unlock:', err);
-        alert('Failed to unlock: ' + err.message);
-        throw err;
-      });
+  onUpdate(data) {
+    this.setState(data);
   }
 
   handleSubmitPaymentForm() {
@@ -171,8 +138,12 @@ export default class MakePaymentPage extends React.Component {
     return (
       <div className="home">
         <h1>Ripple Account Info</h1>
-        <AccountBalanceDiv balances={this.state.balances} />
-        <SecretKeyDiv self={this} public={this.state.public} secret={this.state.secret} />
+        <UnlockButton public={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+        <br />
+        <AccountBalanceTable balances={this.state.balances} />
+        <br />
+        <SendTransactionForm self={this} />
+        <br />
         <Link to="/main">Back to main page</Link>
       </div>
     );
