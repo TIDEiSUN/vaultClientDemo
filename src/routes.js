@@ -25,7 +25,7 @@ const routes = (
     <Route path="/reg" component={RegistrationPage} />
     <Route path="/rename" component={RenamePage} />
     <Route path="/activateAccount" component={ActivateAccountPage} />
-    <Route path="/activate" component={VerifyEmailPage} />
+    <Route path="/verifyEmail" component={VerifyEmailPage} />
     <Route path="/phone" component={VerifyPhonePage} />
     <Route path="/recover" component={RecoverPage} />
     <Route path="/changeemail" component={ChangeEmailPage} />

@@ -8,7 +8,8 @@ export default class ChangePasswordPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      newPassword: ''
+      oldPassword: '',
+      newPassword: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -19,7 +20,13 @@ export default class ChangePasswordPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Handle change password');
-    return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo)
+    return CurrentLogin.loginInfo.customKeys.isPasswordCorrect(this.state.oldPassword)
+      .then((result) => {
+        if (!result.correct) {
+          return Promise.reject(new Error('Incorrect old password'));
+        }
+        return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
+      })
       .then((result) => {
         CurrentLogin.password = this.state.newPassword;
         console.log('change password', result);
@@ -38,6 +45,12 @@ export default class ChangePasswordPage extends React.Component {
       <div className="home">
         <h1>Change Password</h1>
         <form>
+          <div>
+            <label>
+              Old password: 
+              <input type="password" value={this.state.oldPassword} onChange={this.handleChange.bind(this, 'oldPassword')} />
+            </label>
+          </div>
           <div>
             <label>
               New password: 
