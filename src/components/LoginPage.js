@@ -63,8 +63,8 @@ export default class LoginPage extends React.Component {
           />
         </form>
         <Link to="/reg">Register</Link>
-        <br/>
-        <Link to="/recover">Recover</Link>
+        <br />
+        <Link to="/recover">Recover / Unblock Account</Link>
       </div>
     );
   }

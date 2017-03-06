@@ -15,6 +15,7 @@ import ChangeEmailPage from './components/ChangeEmailPage';
 import VerifyEmailPage from './components/VerifyEmailPage';
 import ChangePersonalDataPage from './components/ChangePersonalDataPage';
 import WalletPage from './components/WalletPage';
+import BlockAccountPage from './components/BlockAccountPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -31,6 +32,7 @@ const routes = (
     <Route path="/changeemail" component={ChangeEmailPage} />
     <Route path="/changepersonaldata" component={ChangePersonalDataPage} />
     <Route path="/wallet" component={WalletPage} />
+    <Route path="/block" component={BlockAccountPage} />
   <Route path="*" component={NotFoundPage} />
 </Route>
 );
