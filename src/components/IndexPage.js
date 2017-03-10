@@ -40,7 +40,7 @@ export default class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      resendEmail: CurrentLogin.loginInfo.blob.data.email,
+      resendEmail: CurrentLogin.loginInfo.blob.email,
       lastBlobIDChangeDate: CurrentLogin.loginInfo.blob.last_id_change_date,
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
@@ -55,7 +55,7 @@ export default class IndexPage extends React.Component {
     console.log('Resend verification email');
     const activateLink = Config.accountActivationURL;
 
-    const oldEmail = CurrentLogin.loginInfo.blob.data.email ? CurrentLogin.loginInfo.blob.data.email : '';
+    const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
     const newEmail = this.state.resendEmail ? this.state.resendEmail : oldEmail;
     const emailChanged = oldEmail !== newEmail;
     console.log(`old email: ${oldEmail}`);
@@ -92,7 +92,7 @@ export default class IndexPage extends React.Component {
         <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
         <div>Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}</div>
         <div>
-          Email: {CurrentLogin.loginInfo.blob.data.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
+          Email: {CurrentLogin.loginInfo.blob.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
           <ResendVerificationButton verified={CurrentLogin.loginInfo.emailVerified} target={this} />
         </div>
         <div>

@@ -22,7 +22,7 @@ export default class ChangeEmailPage extends React.Component {
     console.log('Handle rename account');
     const activateLink = Config.emailVerificationURL;
 
-    const oldEmail = CurrentLogin.loginInfo.blob.data.email ? CurrentLogin.loginInfo.blob.data.email : '';
+    const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
     const newEmail = this.state.newEmail ? this.state.newEmail : oldEmail;
     const emailChanged = oldEmail !== newEmail;
     console.log(`old email: ${oldEmail}`);
