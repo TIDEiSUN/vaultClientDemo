@@ -99,6 +99,9 @@ export default class IndexPage extends React.Component {
           First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />
           Last Name: {CurrentLogin.loginInfo.blob.data.lastName}
         </div>
+        <div>
+          Account Level: {CurrentLogin.loginInfo.blob.account_level}
+        </div>
         <br />
         <div>
           <Link to="/rename">Change Username</Link>

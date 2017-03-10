@@ -4,7 +4,7 @@ import VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
 import AsyncButton from './AsyncButton'
 
-export default class RecoverPage extends React.Component {
+export default class UnblockAccountPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -21,7 +21,7 @@ export default class RecoverPage extends React.Component {
   }
 
   handleSubmit(event) {
-    console.log('Recover account');
+    console.log('Unblock account');
 
     const email = this.state.email;
     const phone = (this.state.countryCode || this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
@@ -38,22 +38,22 @@ export default class RecoverPage extends React.Component {
     //       return Promise.resolve('not verified');
     //     }
     //     const activateLink = '123';
-    //     return VaultClientDemo.requestEmailTokenForRecovery(userAuthInfo.blobvault, userAuthInfo.username, email, activateLink);
+    //     return VaultClientDemo.requestEmailTokenForUnblockAccount(userAuthInfo.blobvault, userAuthInfo.username, email, activateLink);
     //   })
     //   .then((result) => {
     //     console.log('email:', result);
-    //     return VaultClientDemo.requestPhoneTokenForRecovery(userAuthInfo.blobvault, userAuthInfo.username, phone.countryCode, phone.phoneNumber);
+    //     // return VaultClientDemo.requestPhoneTokenForUnblockAccount(userAuthInfo.blobvault, userAuthInfo.username, phone.countryCode, phone.phoneNumber);
     //   })
-    //   .then((result) => {
-    //     console.log('phone:', result);
-    //   })
+    // //   .then((result) => {
+    // //     console.log('phone:', result);
+    // //   })
     //   .catch((err) => {
     //     console.error(err);
     //   });
 
-    return VaultClientDemo.recoverBlob(email, phone)
+    return VaultClientDemo.unblockAccount(email, phone)
       .then((result) => {
-        console.log('Recover blob successfully', result);
+        console.log('Unblock account successfully', result);
         CurrentLogin.username = result.username;
         CurrentLogin.loginInfo = result;
         return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
@@ -65,8 +65,8 @@ export default class RecoverPage extends React.Component {
         delete CurrentLogin.username;
         delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
-        console.error('Failed to recover account:', err);
-        alert('Failed to recover account: ' + err.message);
+        console.error('Failed to unblock account:', err);
+        alert('Failed to unblock account: ' + err.message);
         throw err;
       });
     //event.preventDefault();
@@ -104,10 +104,10 @@ export default class RecoverPage extends React.Component {
           <AsyncButton
            type="button"
            onClick={this.handleSubmit}
-           pendingText="Recovering..."
-           fulFilledText="Recovered"
+           pendingText="Unblocking..."
+           fulFilledText="Unblocked"
            rejectedText="Failed! Try Again"
-           text="Recover"
+           text="Unblock"
            fullFilledRedirect="/main"
           />
         </form>
