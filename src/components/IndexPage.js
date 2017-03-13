@@ -15,6 +15,21 @@ function LastBlobIDChangeDate(props) {
   );
 }
 
+function IDPhotosStatus(props) {
+  if (!props.id_photos.uploaded_date) {
+    return (
+      <div>
+        ID Photos: {props.id_photos.status}
+      </div>
+    );
+  }
+  return (
+    <div>
+      ID Photos: {props.id_photos.status} (Last updated at {props.id_photos.uploaded_date})
+    </div>
+  );
+}
+
 function ResendVerificationButton(props) {
   if (props.verified) {
     return null;
@@ -102,6 +117,7 @@ export default class IndexPage extends React.Component {
         <div>
           Account Level: {CurrentLogin.loginInfo.blob.account_level}
         </div>
+        <IDPhotosStatus id_photos={CurrentLogin.loginInfo.blob.id_photos} />
         <br />
         <div>
           <Link to="/rename">Change Username</Link>
@@ -113,6 +129,8 @@ export default class IndexPage extends React.Component {
           <Link to="/changeemail">Change Email</Link>
           <br />
           <Link to="/phone">Verify Phone</Link>
+          <br />
+          <Link to="/upload">Upload ID Photos</Link>
           <br />
           <Link to="/payment">Make Payment</Link>
           <br />

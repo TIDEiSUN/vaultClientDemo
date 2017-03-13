@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo'
 import { CurrentLogin } from './Data'
-import AsyncButton from './AsyncButton'
+import AsyncButton from './common/AsyncButton'
 
 export default class RenamePage extends React.Component {
   constructor(props) {

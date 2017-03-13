@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import VaultClientDemo from '../logics/VaultClientDemo';
 import { CurrentLogin } from './Data';
-import AsyncButton from './AsyncButton';
+import AsyncButton from './common/AsyncButton';
 import RippleClient from '../logics/RippleClient';
 
 export default class LoginPage extends React.Component {

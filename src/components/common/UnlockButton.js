@@ -1,5 +1,5 @@
 import React from 'react';
-import AsyncButton from '../AsyncButton';
+import AsyncButton from '../common/AsyncButton';
 import { CurrentLogin } from '../Data';
 import VaultClientDemo from '../../logics/VaultClientDemo';
 

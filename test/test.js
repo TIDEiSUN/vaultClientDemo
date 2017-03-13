@@ -280,7 +280,7 @@ describe('Ripple Txt', function () {
 
 describe('AuthInfo', function() {  
   it('should get auth info', function(done) {
-    AuthInfo.get(exampleData.domain, exampleData.username).then((resp) => {
+    AuthInfo.getByUsername(exampleData.domain, exampleData.username).then((resp) => {
       Object.keys(authInfoRes.body).forEach(function(prop) {
         assert(resp.hasOwnProperty(prop));
       });
