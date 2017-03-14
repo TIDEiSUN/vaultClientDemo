@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo';
+import { VaultClientDemo, Config } from '../logics';
 import AsyncButton from './common/AsyncButton';
-import Config from '../logics/config';
 
 export default class RegistrationPage extends React.Component {
   constructor(props) {

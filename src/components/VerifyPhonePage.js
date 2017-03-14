@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo, { Utils } from '../logics/VaultClientDemo';
+import { VaultClientDemo, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 
 function PhoneInfoDiv(props) {

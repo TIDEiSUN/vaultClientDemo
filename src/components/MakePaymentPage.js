@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import RippleClient from '../logics/RippleClient';
+import { RippleClient } from '../logics';
 import UnlockButton from './common/UnlockButton';
 
 function SendTransactionForm(props) {

@@ -1,8 +1,0 @@
-[authinfo_url]
-http://14.136.246.164:27182/v1/authinfo
-[accounts]
-rPwNTfuGgAujf3wftNPR7Qjj5vZGUHcsN5
-[currencies]
-BTC
-ETH
-ISD

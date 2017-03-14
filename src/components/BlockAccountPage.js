@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router';
-import VaultClientDemo from '../logics/VaultClientDemo';
+import { VaultClientDemo, Config } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import Config from '../logics/config';
 
 export default class BlockAccountPage extends React.Component {
   constructor(props) {

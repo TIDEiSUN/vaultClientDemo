@@ -1,7 +1,7 @@
 import React from 'react';
 import AsyncButton from '../common/AsyncButton';
 import { CurrentLogin } from '../Data';
-import VaultClientDemo from '../../logics/VaultClientDemo';
+import { VaultClientDemo } from '../../logics';
 
 export default class UnlockButton extends React.Component {
   constructor(props) {

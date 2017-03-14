@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
-import VaultClientDemo from '../logics/VaultClientDemo';
-import Config from '../logics/config';
+import { VaultClientDemo, Config } from '../logics';
 
 function LastBlobIDChangeDate(props) {
   if (!props.date) {
