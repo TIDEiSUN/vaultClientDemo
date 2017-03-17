@@ -4,6 +4,7 @@ import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import { RippleClient } from '../logics';
 import UnlockButton from './common/UnlockButton';
+import DropdownMenu from './common/DropdownMenu';
 
 function WalletTable(props) {
   const { secret, pockets, self } = props;
@@ -12,7 +13,7 @@ function WalletTable(props) {
   const rows = [];
   Object.keys(pockets).forEach((currency) => {
     rows.push(
-      <tr>
+      <tr key={currency}>
         <td>{currency}</td>
         <td>{pockets[currency]}</td>
         <td>
@@ -67,7 +68,7 @@ function AddWalletForm(props) {
     <form>
       <div>
         Activate pocket:
-        <input type="text" value={self.state.newPocketCurrency} onChange={self.handleChange.bind(self, 'newPocketCurrency')} />
+        <DropdownMenu items={self.state.supportedCurrencies} onChange={self.handleNewPocketCurrencyChange} />
         <AsyncButton
           type="button"
           onClick={self.handleActivatePocket}
@@ -89,14 +90,25 @@ export default class WalletPage extends React.Component {
       secret: CurrentLogin.loginInfo.secret,
       pockets: [],
       newPocketCurrency: '',
+      supportedCurrencies: [],
     };
     this.handleActivatePocket = this.handleActivatePocket.bind(this);
     this.handleFreezePocket = this.handleFreezePocket.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
+    this.handleNewPocketCurrencyChange = this.handleNewPocketCurrencyChange.bind(this);
+
+    // get all supported currencies
+    RippleClient.getCurrencies()
+      .then((currencies) => {
+        this.setState({ supportedCurrencies: currencies });
+      })
+      .catch((err) => {
+        console.error('Get supported currencies', err);
+        alert('Failed to get supported currencies');
+      });
 
     // get all pockets
     const address = CurrentLogin.loginInfo.blob.data.account_id;
-    // const address = 'rMYQpx1dPffj4Tw8MDwSZqPfT9urLZdn6C';
     RippleClient.getPockets(address)
       .then((pockets) => {
         console.log('get pockets', pockets);
@@ -104,21 +116,12 @@ export default class WalletPage extends React.Component {
       })
       .catch((err) => {
         console.error('Get pockets', err);
-      });
-
-    // get ETH pocket
-    const currency = 'ETH';
-    RippleClient.getPocket(address, currency)
-      .then((pocket) => {
-        console.log('get ETH pocket', pocket);
-      })
-      .catch((err) => {
-        console.error('Get ETH pockets', err);
+        alert('Failed to get pockets');
       });
   }
 
-  handleChange(name, event) {
-    this.setState({ [name]: event.target.value });
+  handleNewPocketCurrencyChange(currency) {
+    this.setState({ newPocketCurrency: currency });
   }
 
   handleActivatePocket(event) {
@@ -136,12 +139,13 @@ export default class WalletPage extends React.Component {
         console.log('sourceAccount', sourceAccount);
         console.log('gateway', gatewayAddress);
         console.log('currency', currency);
+        // return Promise.resolve({ currency, coinAddress: 'hahaha' });
         return RippleClient.setPocket(gatewayAddress, sourceAccount, currency);
       })
       .then((result) => {
         console.log('activate pocket', result);
         const pockets = {
-          ...this.pockets,
+          ...this.state.pockets,
           [result.currency]: result.coinAddress,
         };
         this.setState({ pockets });
@@ -175,7 +179,7 @@ export default class WalletPage extends React.Component {
       .then((result) => {
         console.log('freeze pocket', result);
         const pockets = {
-          ...this.pockets,
+          ...this.state.pockets,
         };
         delete pockets[currency];
         this.setState({ pockets });
