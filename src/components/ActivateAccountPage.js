@@ -53,6 +53,7 @@ function ActivateAccountForm(props) {
         fulFilledText="Activated"
         rejectedText="Failed! Try Again"
         text="Activate"
+        fullFilledRedirect="/main"
       />
     </form>
   );
@@ -171,6 +172,7 @@ export default class ActivateAccountPage extends React.Component {
   }
 
   handleSubmitPhone(event) {
+    event.preventDefault();
     console.log('Handle send verification code by sms');
 
     const phoneNumber = this.state.phoneNumber;
@@ -187,7 +189,6 @@ export default class ActivateAccountPage extends React.Component {
                                                 CurrentLogin.username)
         .then((result) => {
           console.log('request phone token', result);
-          CurrentLogin.loginInfo = result.loginInfo;
           alert('Success!');
         }).catch((err) => {
           console.error('Failed to send verification code by sms:', err);
@@ -196,7 +197,6 @@ export default class ActivateAccountPage extends React.Component {
     } else {
       alert('Missing country code / phone number');
     }
-    event.preventDefault();
   }
 
   handleSubmitVerifyPhone(event) {

@@ -60,7 +60,6 @@ export default class VerifyPhonePage extends React.Component {
                                                   CurrentLogin.username)
           .then((result) => {
             console.log('request phone token', result);
-            CurrentLogin.loginInfo = result.loginInfo;
             alert('Success!');
           }).catch((err) => {
             console.error('Failed to send verification code by sms:', err);
