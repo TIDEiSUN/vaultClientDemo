@@ -18,6 +18,7 @@ import WalletPage from './components/WalletPage';
 import BlockAccountPage from './components/BlockAccountPage';
 import UnblockAccountPage from './components/UnblockAccountPage';
 import UploadIDPhotosPage from './components/UploadIDPhotosPage';
+import BankAccountPage from './components/BankAccountPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -37,6 +38,7 @@ const routes = (
     <Route path="/block" component={BlockAccountPage} />
     <Route path="/unblock" component={UnblockAccountPage} />
     <Route path="/upload" component={UploadIDPhotosPage} />
+    <Route path="/bankaccount" component={BankAccountPage} />
   <Route path="*" component={NotFoundPage} />
 </Route>
 );
