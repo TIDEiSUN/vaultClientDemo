@@ -117,9 +117,9 @@ export default class MakePaymentPage extends React.Component {
             memo = {
               method: 'create_view',
               params: {
-                vid: 'v001-999',
-                vtime: '120',
-                userid: 'u1234567',
+                vid: 'sod1',
+                vtime: '1490292663',
+                userid: 'isp',
               },
               notifyURI: '',
             };
