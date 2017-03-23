@@ -109,9 +109,33 @@ export default class MakePaymentPage extends React.Component {
         const destination = this.state.destination;
         const currency = this.state.currency;
         const value = this.state.value;
-        const paymentPromise = external ?
-          RippleClient.sendExternalPayment(gatewayAddress, sourceAccount, destination, currency, value) :
-          RippleClient.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
+        let paymentPromise;
+        if (external) {
+          let memo;
+          if (currency === 'ISD') {
+            // TODO add UI to input these data
+            memo = {
+              method: 'create_view',
+              params: {
+                vid: 'v001-999',
+                vtime: '120',
+                userid: 'u1234567',
+              },
+              notifyURI: '',
+            };
+          } else {
+            memo = {
+              method: 'send_crypto',
+              params: {
+                address: destination,
+              },
+              notifyURI: '',
+            };
+          }
+          paymentPromise = RippleClient.sendExternalPayment(gatewayAddress, sourceAccount, currency, value, memo);
+        } else {
+          paymentPromise = RippleClient.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
+        }
 
         paymentPromise
           .then((result) => {
