@@ -109,7 +109,10 @@ export default class WalletPage extends React.Component {
 
     // get all pockets
     const address = CurrentLogin.loginInfo.blob.data.account_id;
-    RippleClient.getPockets(address)
+    RippleClient.getGatewayAddresses()
+      .then((addresses) => {
+        return RippleClient.getPockets(addresses[0], address)
+      })
       .then((pockets) => {
         console.log('get pockets', pockets);
         this.setState({ pockets });
