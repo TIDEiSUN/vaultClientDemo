@@ -5,6 +5,38 @@ import AsyncButton from './common/AsyncButton';
 import { RippleClient } from '../logics';
 import UnlockButton from './common/UnlockButton';
 
+function ExchangeForm(props) {
+  const { self } = props;
+  return (
+    <div>
+      <h1>Exchange</h1>
+      <form>
+        <div>
+          Rate: {self.state.exchangeRate}
+        </div>
+        <div>
+          From:
+          <input type="text" value={self.state.exchangeFromValue} onChange={self.handleChange.bind(self, 'exchangeFromValue')} />
+          {self.state.exchangeFromCurrency}
+        </div>
+        <div>
+          To:
+          {self.state.exchangeFromValue / self.state.exchangeRate}
+          {self.state.exchangeToCurrency}
+        </div>
+        <AsyncButton
+          type="button"
+          onClick={self.handleSubmitExchangeForm}
+          pendingText="Sending..."
+          fulFilledText="Sent"
+          rejectedText="Failed! Try Again"
+          text="Send"
+        />
+      </form>
+    </div>
+  );
+}
+
 function SendTransactionForm(props) {
   const self = props.self;
   return (
@@ -80,8 +112,13 @@ export default class MakePaymentPage extends React.Component {
       destination: '',
       currency: '',
       value: '',
+      exchangeFromCurrency: 'ISD',
+      exchangeFromValue: '',
+      exchangeToCurrency: 'USD',
+      exchangeRate: 200,
     };
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
+    this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
 
     RippleClient.getBalances(this.state.public)
@@ -149,6 +186,33 @@ export default class MakePaymentPage extends React.Component {
       });
   }
 
+  handleSubmitExchangeForm() {
+      console.log('Handle exchange');
+      return RippleClient.getGatewayAddresses()
+        .then((gatewayAddresses) => {
+          const [gatewayAddress] = gatewayAddresses;
+          const account = {
+            address: this.state.public,
+            secret: this.state.secret,
+          };
+          const {
+            exchangeFromCurrency: fromCurrency,
+            exchangeFromValue: fromValue,
+            exchangeToCurrency: toCurrency,
+            exchangeRate,
+          } = this.state;
+          return RippleClient.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate);
+        })
+        .then((result) => {
+          console.log('Exchange currency:', result);
+          alert('Success!');
+        })
+        .catch((err) => {
+          console.error('Exchange currency:', err);
+          alert('Failed!' + err.message);
+        });
+  }
+
   handleChange(name, event) {
     this.setState({[name]: event.target.value});
   }
@@ -167,6 +231,8 @@ export default class MakePaymentPage extends React.Component {
         <AccountBalanceTable balances={this.state.balances} />
         <br />
         <SendTransactionForm self={this} />
+        <br />
+        <ExchangeForm self={this} />
         <br />
         <Link to="/main">Back to main page</Link>
       </div>
