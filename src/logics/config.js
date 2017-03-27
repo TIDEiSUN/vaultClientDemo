@@ -1,6 +1,5 @@
 let webhost = 'localhost:3000';
-//let rippleRPC = 'wss://s.altnet.rippletest.net:51233';
-let rippleRPC = 'ws://192.168.100.92:6006';
+let rippleRPC = 'wss://s.altnet.rippletest.net:51233';
 let isunpayrpc_host = 'localhost';
 let isunpayrpc_port = 27184;
 

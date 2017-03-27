@@ -3,6 +3,33 @@ import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
 import { VaultClientDemo, Config } from '../logics';
 
+function EmailField(props) {
+  const { verified, blob, self } = props;
+  if (!verified) {
+    return (
+      <div>
+        Email: {blob.email} [Not verified]
+      </div>
+    );
+  }
+  if (blob.pendingEmail) {
+    return (
+      <div>
+        Email: {blob.email} [Verified]
+        <br />
+        Pending Email:
+        <ResendVerificationButton target={self} />
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        Email: {blob.email} [Verified]
+      </div>
+    );
+  }
+}
+
 function LastBlobIDChangeDate(props) {
   if (!props.date) {
     return null;
@@ -30,15 +57,9 @@ function IDPhotosStatus(props) {
 }
 
 function ResendVerificationButton(props) {
-  if (props.verified) {
-    return null;
-  }
-
   return (
     <form onSubmit={props.target.handleResendEmail}>
-      <div>
-        <input type="text" value={props.target.state.resendEmail} onChange={props.target.handleChange.bind(props.target, 'resendEmail')} />
-      </div>
+      <input type="text" value={props.target.state.resendEmail} onChange={props.target.handleChange.bind(props.target, 'resendEmail')} />
       <input type="submit" value="Resend verification" />
     </form>
   );
@@ -54,7 +75,7 @@ export default class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      resendEmail: CurrentLogin.loginInfo.blob.email,
+      resendEmail: CurrentLogin.loginInfo.blob.pendingEmail || '',
       lastBlobIDChangeDate: CurrentLogin.loginInfo.blob.last_id_change_date,
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
@@ -104,15 +125,17 @@ export default class IndexPage extends React.Component {
       <div className="home">
         <div>Welcome {CurrentLogin.username}!</div>
         <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
-        <div>Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}</div>
         <div>
-          Email: {CurrentLogin.loginInfo.blob.email} [{CurrentLogin.loginInfo.emailVerified ? 'Verified' : 'Not verified'}]
-          <ResendVerificationButton verified={CurrentLogin.loginInfo.emailVerified} target={this} />
+          Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}
         </div>
+        <br />
+        <EmailField verified={CurrentLogin.loginInfo.emailVerified} blob={CurrentLogin.loginInfo.blob} self={this} />
+        <br />
         <div>
           First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />
           Last Name: {CurrentLogin.loginInfo.blob.data.lastName}
         </div>
+        <br />
         <div>
           Account Level: {CurrentLogin.loginInfo.blob.account_level}
         </div>
