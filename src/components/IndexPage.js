@@ -42,6 +42,13 @@ function LastBlobIDChangeDate(props) {
 }
 
 function IDPhotosStatus(props) {
+  if (!props.id_photos) {
+    return (
+      <div>
+        ID Photos: null
+      </div>
+    );
+  }
   if (!props.id_photos.uploaded_date) {
     return (
       <div>

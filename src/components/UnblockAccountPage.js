@@ -2,7 +2,33 @@ import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { VaultClientDemo } from '../logics'
 import { CurrentLogin } from './Data'
-import AsyncButton from './common/AsyncButton'
+import AsyncButton from './common/AsyncButton';
+import AuthenticationForm from './common/AuthenticationForm';
+
+function ChangePasswordForm(props) {
+  const { auth, self } = props;
+  if (!auth || !auth.operationResult) {
+    return null;
+  }
+  return (
+    <div>
+      <h1>Change password</h1>
+      <div>
+        New Password: 
+        <input type="password" value={self.state.newPassword} onChange={self.handleChange.bind(self, 'newPassword')} />
+      </div>
+      <AsyncButton
+        type="button"
+        onClick={self.handleSubmit}
+        pendingText="Unblocking..."
+        fulFilledText="Unblocked"
+        rejectedText="Failed! Try Again"
+        text="Unblock"
+        fullFilledRedirect="/main"
+      />
+    </div>
+  );
+}
 
 export default class UnblockAccountPage extends React.Component {
   constructor(props) {
@@ -11,13 +37,49 @@ export default class UnblockAccountPage extends React.Component {
       email: '',
       countryCode: '',
       phoneNumber: '',
-      newPassword: ''
+      newPassword: '',
+      step: 'emailTokenRequest',
+      params: {
+        email: '',
+        hostlink: '',
+      },
+      auth: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
   }
 
   handleChange(name, event) {
     this.setState({[name]: event.target.value});
+  }
+
+  handleSubmitAuthenticationForm(params) {
+    const { auth } = this.state;
+    const data = auth ? { ...auth, params } : params;
+    // TODO
+    if (params.email) {
+      this.setState({ email: params.email });
+    }
+    if (params.countryCode) {
+      this.setState({ countryCode: params.countryCode });
+    }
+    if (params.phoneNumber) {
+      this.setState({ phoneNumber: params.phoneNumber });
+    }
+
+    return VaultClientDemo.authUnblockAccountVerify(data)
+      .then((resp) => {
+        alert('OK!');
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+      })
+      .catch((err) => {
+        alert(`Failed! ${err.message}`);
+      });
   }
 
   handleSubmit(event) {
@@ -26,32 +88,7 @@ export default class UnblockAccountPage extends React.Component {
     const email = this.state.email;
     const phone = (this.state.countryCode || this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
 
-    // let userAuthInfo;
-    // return VaultClientDemo.getAuthInfoByEmail(email)
-    //   .then((authInfo) => {
-    //     console.log(authInfo);
-    //     userAuthInfo = authInfo;
-    //     if (!userAuthInfo.exists) {
-    //       return Promise.reject(new Error('email is wrong'));
-    //     }
-    //     if (!userAuthInfo.emailVerified) {
-    //       return Promise.resolve('not verified');
-    //     }
-    //     const activateLink = '123';
-    //     return VaultClientDemo.requestEmailTokenForUnblockAccount(userAuthInfo.blobvault, userAuthInfo.username, email, activateLink);
-    //   })
-    //   .then((result) => {
-    //     console.log('email:', result);
-    //     // return VaultClientDemo.requestPhoneTokenForUnblockAccount(userAuthInfo.blobvault, userAuthInfo.username, phone.countryCode, phone.phoneNumber);
-    //   })
-    // //   .then((result) => {
-    // //     console.log('phone:', result);
-    // //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //   });
-
-    return VaultClientDemo.unblockAccount(email, phone)
+    return VaultClientDemo.handleRecovery(this.state.auth.operationResult, email, phone)
       .then((result) => {
         console.log('Unblock account successfully', result);
         CurrentLogin.username = result.username;
@@ -67,50 +104,16 @@ export default class UnblockAccountPage extends React.Component {
         delete CurrentLogin.loginInfo;
         console.error('Failed to unblock account:', err);
         alert('Failed to unblock account: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
         <h1>Recover Account</h1>
-        <form>
-          <div>
-            <label>
-              Email: 
-              <input type="text" value={this.state.email} onChange={this.handleChange.bind(this, 'email')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Country code: 
-              <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Phone number: 
-              <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              New Password: 
-              <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
-            </label>
-          </div>
-          <AsyncButton
-           type="button"
-           onClick={this.handleSubmit}
-           pendingText="Unblocking..."
-           fulFilledText="Unblocked"
-           rejectedText="Failed! Try Again"
-           text="Unblock"
-           fullFilledRedirect="/main"
-          />
-        </form>
+        <AuthenticationForm step={this.state.step} params={this.state.params} submitForm={this.handleSubmitAuthenticationForm} />
+        <ChangePasswordForm auth={this.state.auth} self={this} />
         <Link to="/">Back to login page</Link>
       </div>
     );
