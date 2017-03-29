@@ -19,6 +19,7 @@ import BlockAccountPage from './components/BlockAccountPage';
 import UnblockAccountPage from './components/UnblockAccountPage';
 import UploadIDPhotosPage from './components/UploadIDPhotosPage';
 import BankAccountPage from './components/BankAccountPage';
+import TwoFactorAuthPage from './components/TwoFactorAuthPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -39,6 +40,7 @@ const routes = (
     <Route path="/unblock" component={UnblockAccountPage} />
     <Route path="/upload" component={UploadIDPhotosPage} />
     <Route path="/bankaccount" component={BankAccountPage} />
+    <Route path="/2fa" component={TwoFactorAuthPage} />
   <Route path="*" component={NotFoundPage} />
 </Route>
 );

@@ -161,6 +161,8 @@ export default class IndexPage extends React.Component {
           <Link to="/bankaccount">Show Bank Account</Link>
           <br />
           <Link to="/block">Block Account</Link>
+          <br />
+          <Link to="/2fa">Two Factor Authentication</Link>
         </div>
         <div>
           <LogoutButton target={this} />

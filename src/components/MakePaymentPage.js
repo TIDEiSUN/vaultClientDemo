@@ -218,8 +218,7 @@ export default class MakePaymentPage extends React.Component {
   }
 
   handleChangeChk(name, event) {
-    const checked = this.state[name];
-    this.setState({[name]: !checked});
+    this.setState({ [name]: event.target.checked });
   }
 
   render() {
