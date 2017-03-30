@@ -1,23 +1,53 @@
 import React from 'react';
 import AsyncButton from './AsyncButton';
 
+const objHasOwnProp = Object.prototype.hasOwnProperty;
+
+function setParams(allInputParams, systemParams, params) {
+  const newParams = { ...params };
+  Object.keys(params).forEach((key) => {
+    if (objHasOwnProp.call(systemParams, key)) {
+      newParams[key] = systemParams[key];
+    } else if (objHasOwnProp.call(allInputParams, key)) {
+      newParams[key] = allInputParams[key];
+    }
+  });
+  return newParams;
+}
+
 export default class AuthenticationForm extends React.Component {
   constructor(props) {
     super(props);
-    const { step, params } = props;
+    const { auth, systemParams } = props;
+    const { step, params } = auth;
+    const newParams = setParams({}, systemParams, params);
     this.state = {
-      step: props.step,
-      params: props.params,
+      step,
+      params: newParams,
+      allInputParams: {},
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillReceiveProps(props) {
-    const { step, params } = props;
-    this.setState({ step, params });
+    const { auth, systemParams } = props;
+    const { step, params } = auth;
+    if (step) {
+      const { allInputParams } = this.state;
+      const newParams = setParams(allInputParams, systemParams, params);
+      this.setState({ step, params: newParams });
+    } else {
+      this.setState({ step, params });
+    }
   }
 
   handleSubmit() {
+    const { params, allInputParams } = this.state;
+    const updatedAllInputParams = {
+      ...allInputParams,
+      ...params,
+    };
+    this.setState({ allInputParams: updatedAllInputParams });
     return this.props.submitForm(this.state.params);
   }
 
@@ -33,7 +63,13 @@ export default class AuthenticationForm extends React.Component {
       return null;
     }
     const { params } = this.state;
+    const { systemParams } = this.props;
     const paramInputs = Object.keys(params).map((key) => {
+      if (objHasOwnProp.call(systemParams, key)) {
+        return (
+          <div>{key}:{params[key]}</div>
+        );
+      }
       return (
         <div>
           {key}:

@@ -15,3 +15,4 @@ exports.isunpayrpcURL = `http://${isunpayrpc_host}:${isunpayrpc_port}`;
 
 exports.accountActivationURL = `http://${webhost}/activateAccount`;
 exports.emailVerificationURL = `http://${webhost}/verifyEmail`;
+exports.unblockAccountURL = `http://${webhost}/unblock`;

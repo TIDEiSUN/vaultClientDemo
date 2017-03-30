@@ -1,13 +1,18 @@
 import React from 'react';
-import { Link, browserHistory } from 'react-router';
-import { VaultClientDemo } from '../logics'
-import { CurrentLogin } from './Data'
+import { Link } from 'react-router';
+import { VaultClientDemo, Config } from '../logics';
+import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import AuthenticationForm from './common/AuthenticationForm';
 
+const systemParams = {
+  hostlink: Config.unblockAccountURL,
+  via: 'sms',
+};
+
 function ChangePasswordForm(props) {
   const { auth, self } = props;
-  if (!auth || !auth.operationResult) {
+  if (!auth.operationResult) {
     return null;
   }
   return (
@@ -34,38 +39,64 @@ export default class UnblockAccountPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: '',
-      countryCode: '',
-      phoneNumber: '',
-      newPassword: '',
-      step: 'emailTokenRequest',
-      params: {
-        email: '',
-        hostlink: '',
+      auth: {
+        operationId: null,
+        step: 'emailTokenRequest',
+        params: {
+          email: '',
+          hostlink: '',
+        },
       },
-      auth: null,
+      unblock: {
+        email: '',
+        countryCode: '',
+        phoneNumber: '',
+      },
+      newPassword: '',
     };
+    const {
+      email,
+      token,
+      operationId,
+    } = props.location.query;
+
+    if (email && token && operationId) {
+      this.state.auth = {
+        operationId,
+        step: 'emailTokenVerify',
+        params: {
+          email,
+          emailToken: token,
+        },
+      };
+    }
+    console.log(`unblock - ${this.state.auth.step}`);
+
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
   handleSubmitAuthenticationForm(params) {
-    const { auth } = this.state;
+    const objHasOwnProp = Object.prototype.hasOwnProperty;
+    const { auth, unblock } = this.state;
     const data = auth ? { ...auth, params } : params;
-    // TODO
-    if (params.email) {
-      this.setState({ email: params.email });
-    }
-    if (params.countryCode) {
-      this.setState({ countryCode: params.countryCode });
-    }
-    if (params.phoneNumber) {
-      this.setState({ phoneNumber: params.phoneNumber });
-    }
+
+    console.log('@@@ params', params);
+
+    const updatedUnblock = { ...unblock };
+    Object.keys(unblock).forEach((key) => {
+      if (objHasOwnProp.call(params, key)) {
+        updatedUnblock[key] = params[key];
+      }
+    });
+    this.setState({ unblock: updatedUnblock });
+
+    console.log('@@@ data', data);
+    console.log('@@@ unblock', updatedUnblock);
 
     return VaultClientDemo.authUnblockAccountVerify(data)
       .then((resp) => {
@@ -85,8 +116,8 @@ export default class UnblockAccountPage extends React.Component {
   handleSubmit(event) {
     console.log('Unblock account');
 
-    const email = this.state.email;
-    const phone = (this.state.countryCode || this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
+    const { email, phoneNumber, countryCode } = this.state.unblock;
+    const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
 
     return VaultClientDemo.handleRecovery(this.state.auth.operationResult, email, phone)
       .then((result) => {
@@ -112,7 +143,7 @@ export default class UnblockAccountPage extends React.Component {
     return (
       <div className="home">
         <h1>Recover Account</h1>
-        <AuthenticationForm step={this.state.step} params={this.state.params} submitForm={this.handleSubmitAuthenticationForm} />
+        <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
         <ChangePasswordForm auth={this.state.auth} self={this} />
         <Link to="/">Back to login page</Link>
       </div>
