@@ -85,8 +85,6 @@ export default class UnblockAccountPage extends React.Component {
     const { auth, unblock } = this.state;
     const data = auth ? { ...auth, params } : params;
 
-    console.log('@@@ params', params);
-
     const updatedUnblock = { ...unblock };
     Object.keys(unblock).forEach((key) => {
       if (objHasOwnProp.call(params, key)) {
@@ -95,10 +93,7 @@ export default class UnblockAccountPage extends React.Component {
     });
     this.setState({ unblock: updatedUnblock });
 
-    console.log('@@@ data', data);
-    console.log('@@@ unblock', updatedUnblock);
-
-    return VaultClientDemo.authUnblockAccountVerify(data)
+    return VaultClientDemo.authUnblockAccount(data)
       .then((resp) => {
         alert('OK!');
         const { step: newStep = null, params: newParams = {} } = resp;
@@ -113,7 +108,7 @@ export default class UnblockAccountPage extends React.Component {
       });
   }
 
-  handleSubmit(event) {
+  handleSubmit() {
     console.log('Unblock account');
 
     const { email, phoneNumber, countryCode } = this.state.unblock;
@@ -142,7 +137,7 @@ export default class UnblockAccountPage extends React.Component {
   render() {
     return (
       <div className="home">
-        <h1>Recover Account</h1>
+        <h1>Unblock Account</h1>
         <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
         <ChangePasswordForm auth={this.state.auth} self={this} />
         <Link to="/">Back to login page</Link>
