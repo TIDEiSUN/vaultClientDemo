@@ -27,6 +27,7 @@ export default class VerifyPhonePage extends React.Component {
       token: '',
       oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
       verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
+      operationId: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
@@ -54,12 +55,21 @@ export default class VerifyPhonePage extends React.Component {
       if (!phoneChanged && this.state.verified) {
         alert('Phone has been verified');
       } else {
-        VaultClientDemo.sendPhoneVerificationCode(CurrentLogin.loginInfo,
-                                                  countryCode,
-                                                  phoneNumber,
-                                                  CurrentLogin.username)
+        const { operationId } = this.state;
+        const data = {
+          operationId,
+          params: {
+            phoneNumber,
+            countryCode,
+            via: 'sms',
+          },
+        };
+        VaultClientDemo.authRequestUpdatePhone(CurrentLogin.loginInfo, data)
           .then((result) => {
             console.log('request phone token', result);
+            const { loginInfo, operationId: newOperationId } = result;
+            CurrentLogin.loginInfo = loginInfo;
+            this.setState({ operationId: newOperationId });
             alert('Success!');
           }).catch((err) => {
             console.error('Failed to send verification code by sms:', err);
@@ -74,19 +84,27 @@ export default class VerifyPhonePage extends React.Component {
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
+    const { countryCode, phoneNumber, token, operationId } = this.state;
     const phone = {
       countryCode: this.state.countryCode,
       phoneNumber: this.state.phoneNumber,
     };
 
     if (phone.phoneNumber && phone.countryCode) {
-      VaultClientDemo.verifyPhone(this.state.token,
-                                  CurrentLogin.username,
-                                  phone)
-        .then((result) => {
-          console.log('verify phone token:', result);
-          return VaultClientDemo.updatePhone(CurrentLogin.username, CurrentLogin.username, CurrentLogin.password, CurrentLogin.loginInfo, phone);
-        })
+      const data = {
+        operationId,
+        params: {
+          phoneNumber,
+          countryCode,
+          phoneToken: token,
+        },
+      };
+      const newBlob = VaultClientDemo.cloneBlob(CurrentLogin.loginInfo.blob);
+      newBlob.data.phone = {
+        phoneNumber,
+        countryCode,
+      };
+      VaultClientDemo.authVerifyUpdatePhone(CurrentLogin.loginInfo, data, newBlob)
         .then((result) => {
           console.log('update phone:', result);
           CurrentLogin.loginInfo = result.loginInfo;

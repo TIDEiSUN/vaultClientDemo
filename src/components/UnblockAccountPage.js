@@ -12,7 +12,7 @@ const systemParams = {
 
 function ChangePasswordForm(props) {
   const { auth, self } = props;
-  if (!auth.operationResult) {
+  if (auth.step) {
     return null;
   }
   return (
@@ -102,9 +102,11 @@ export default class UnblockAccountPage extends React.Component {
           step: newStep,
           params: newParams,
         });
+        return Promise.resolve();
       })
       .catch((err) => {
         alert(`Failed! ${err.message}`);
+        return Promise.reject(err);
       });
   }
 
@@ -114,7 +116,7 @@ export default class UnblockAccountPage extends React.Component {
     const { email, phoneNumber, countryCode } = this.state.unblock;
     const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
 
-    return VaultClientDemo.handleRecovery(this.state.auth.operationResult, email, phone)
+    return VaultClientDemo.handleRecovery(this.state.auth.result, email, phone)
       .then((result) => {
         console.log('Unblock account successfully', result);
         CurrentLogin.username = result.username;
