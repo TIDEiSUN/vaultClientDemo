@@ -1,66 +1,117 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { VaultClientDemo, RippleClient } from '../logics';
 import { CurrentLogin } from './Data';
-import AsyncButton from './common/AsyncButton';
+import AuthenticationForm from './common/AuthenticationForm';
+
+const initAuthState = {
+  operationId: null,
+  step: 'blobIdVerify',
+  params: {
+    blobId: '',
+  },
+};
+
+const systemParams = {
+  forceSms: 'true',
+};
 
 export default class LoginPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      auth: initAuthState,
+      login: {
+        customKeys: null,
+      },
       username: '',
       password: '',
     };
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
   }
 
-  handleChange(name, event) {
-    this.setState({[name]: event.target.value});
-  }
-
-  handleSubmit(event) {
-    return VaultClientDemo.loginAccount(this.state.username, this.state.password)
+  processBlob(auth, login) {
+    const { result: blobResult } = auth;
+    const { customKeys } = login;
+    return VaultClientDemo.handleLogin(blobResult, customKeys)
       .then((result) => {
         CurrentLogin.username = result.username;
         CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
         RippleClient.connectToServer();
-        //browserHistory.push('/main');
-      }).catch(err => {
+        browserHistory.push('/main');
+        return Promise.resolve();
+      })
+      .catch((err) => {
         console.error('Failed to login:', err);
-        alert('Failed to login: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-    //event.preventDefault();
+  }
+
+  handleSubmitAuthenticationForm(inParams) {
+    const objHasOwnProp = Object.prototype.hasOwnProperty;
+    const { auth, login } = this.state;
+    const { blobId, username, password, ...params } = inParams;
+
+    let customKeysPromise;
+    if (blobId !== undefined) {
+      customKeysPromise = VaultClientDemo.createCustomKey(username, password)
+        .then((customKeys) => {
+          return customKeys.deriveLoginKeys();
+        })
+        .then((customKeys) => {
+          params.blobId = customKeys.id;
+          return Promise.resolve(customKeys);
+        });
+    } else {
+      customKeysPromise = Promise.resolve(null);
+    }
+
+    const updatedLogin = { ...login };
+    Object.keys(login).forEach((key) => {
+      if (objHasOwnProp.call(params, key)) {
+        updatedLogin[key] = params[key];
+      }
+    });
+
+    return customKeysPromise
+      .then((customKeys) => {
+        const data = auth ? { ...auth, params } : params;
+
+        if (customKeys) {
+          updatedLogin.customKeys = customKeys;
+        }
+        this.setState({ login: updatedLogin });
+
+        return VaultClientDemo.authLoginAccount(updatedLogin.customKeys.authInfo, data);
+      })
+      .then((resp) => {
+        alert('OK!');
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+        if (resp.step) {
+          return Promise.resolve();
+        }
+        return this.processBlob(resp, updatedLogin);
+      })
+      .catch((err) => {
+        if (!auth.operationId) {
+          this.setState({ auth: initAuthState });
+        }
+        alert(`Failed! ${err.message}`);
+        return Promise.reject(err);
+      });
   }
 
   render() {
     return (
       <div className="home">
-        <form>
-          <div>
-            <label>
-              Username: 
-              <input type="text" value={this.state.username} onChange={this.handleChange.bind(this, 'username')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Password: 
-              <input type="password" value={this.state.password} onChange={this.handleChange.bind(this, 'password')} />
-            </label>
-          </div>
-          <AsyncButton
-           type="button"
-           onClick={this.handleSubmit}
-           pendingText="Logging in..."
-           fulFilledText="Logged in"
-           rejectedText="Failed! Try Again"
-           text="Login"
-           fullFilledRedirect="/main"
-          />
-        </form>
+        <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
         <Link to="/reg">Register</Link>
         <br />
         <Link to="/recover">Recover Account</Link>
