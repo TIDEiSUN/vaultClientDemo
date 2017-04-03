@@ -56,7 +56,7 @@ export default class LoginPage extends React.Component {
 
     let customKeysPromise;
     if (blobId !== undefined) {
-      customKeysPromise = VaultClientDemo.createCustomKey(username, password)
+      customKeysPromise = VaultClientDemo.createCustomKeys(username, password)
         .then((customKeys) => {
           return customKeys.deriveLoginKeys();
         })
