@@ -65,9 +65,9 @@ export default class ActivateAccountPage extends React.Component {
         return Promise.all([customKeys, verifyPromise]);
       })
       .then(([customKeys, resp]) => {
-        const { operationId: newOperationId } = resp;
+        const { operationId: newOperationId, blob: blobData } = resp;
         console.log('Activate: OperationId', newOperationId);
-        const activatePromise = VaultClientDemo.authActivateAccount(customKeys, email, newOperationId);
+        const activatePromise = VaultClientDemo.authActivateAccount(customKeys, email, newOperationId, blobData);
         return Promise.all([customKeys, activatePromise]);
       })
       .then(([customKeys]) => {
