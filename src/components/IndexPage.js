@@ -4,14 +4,7 @@ import { CurrentLogin } from './Data';
 import { VaultClientDemo, Config } from '../logics';
 
 function EmailField(props) {
-  const { verified, blob, self } = props;
-  if (!verified) {
-    return (
-      <div>
-        Email: {blob.email} [Not verified]
-      </div>
-    );
-  }
+  const { blob, self } = props;
   if (blob.pendingEmail) {
     return (
       <div>
@@ -104,10 +97,10 @@ export default class IndexPage extends React.Component {
     console.log(`new email: ${newEmail}`);
     console.log(`email changed: ${emailChanged}`);
 
-    if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
-      alert('Email has been verified.');
+    if (!emailChanged) {
+      alert('Email has no change.');
     } else {
-      VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo)
+      VaultClientDemo.resendVerificationEmail(CurrentLogin.loginInfo.username, null, newEmail, activateLink, CurrentLogin.loginInfo)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;
@@ -121,8 +114,6 @@ export default class IndexPage extends React.Component {
   }
 
   handleLogout(event) {
-    delete CurrentLogin.username;
-    delete CurrentLogin.password;
     delete CurrentLogin.loginInfo;
     browserHistory.push('/');
   }
@@ -130,13 +121,13 @@ export default class IndexPage extends React.Component {
   render() {
     return (
       <div className="home">
-        <div>Welcome {CurrentLogin.username}!</div>
+        <div>Welcome {CurrentLogin.loginInfo.username}!</div>
         <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
         <div>
           Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}
         </div>
         <br />
-        <EmailField verified={CurrentLogin.loginInfo.emailVerified} blob={CurrentLogin.loginInfo.blob} self={this} />
+        <EmailField blob={CurrentLogin.loginInfo.blob} self={this} />
         <br />
         <div>
           First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />

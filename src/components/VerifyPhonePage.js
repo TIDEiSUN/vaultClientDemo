@@ -26,7 +26,7 @@ export default class VerifyPhonePage extends React.Component {
       phoneNumber: '',
       token: '',
       oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
-      verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
+      verified: CurrentLogin.loginInfo ? Utils.checkPhoneVerified(CurrentLogin.loginInfo.blob.account_level) : false,
       operationId: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
@@ -110,7 +110,7 @@ export default class VerifyPhonePage extends React.Component {
           CurrentLogin.loginInfo = result.loginInfo;
           this.setState({
             oldPhoneInfo: CurrentLogin.loginInfo.blob.data.phone,
-            verified: CurrentLogin.loginInfo.phoneVerified,
+            verified: Utils.checkPhoneVerified(CurrentLogin.loginInfo.blob.account_level),
           });
           alert('Success!');
         }).catch((err) => {

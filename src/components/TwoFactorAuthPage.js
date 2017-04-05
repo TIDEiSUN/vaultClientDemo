@@ -25,7 +25,7 @@ export default class TwoFactorAuthPage extends React.Component {
     this.state = {
       enabled: false, // TODO value from login info
       phone: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
-      verified: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.phoneVerified : false,
+      verified: CurrentLogin.loginInfo ? Utils.checkPhoneVerified(CurrentLogin.loginInfo.blob.account_level) : false,
     };
     this.handleSubmitSet = this.handleSubmitSet.bind(this);
   }

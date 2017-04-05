@@ -114,8 +114,6 @@ export default class ChangeEmailPage extends React.Component {
   handleLogin() {
     return VaultClientDemo.loginAccount(this.props.location.query.username, this.state.password)
       .then((result) => {
-        CurrentLogin.username = result.username;
-        CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
         this.setState({
@@ -166,9 +164,9 @@ export default class ChangeEmailPage extends React.Component {
     console.log(`new email: ${newEmail}`);
     console.log(`email changed: ${emailChanged}`);
 
-    if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
-      alert('Email has been verified.');
-      return Promise.reject(new Error('Email has been verified.'));
+    if (!emailChanged) {
+      alert('Email has no change.');
+      return Promise.reject(new Error('Email has no change.'));
     } else {
       const data = {
         operationId: null,

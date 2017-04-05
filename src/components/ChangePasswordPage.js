@@ -25,10 +25,9 @@ export default class ChangePasswordPage extends React.Component {
         if (!result.correct) {
           return Promise.reject(new Error('Incorrect old password'));
         }
-        return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
+        return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       })
       .then((result) => {
-        CurrentLogin.password = this.state.newPassword;
         console.log('change password', result);
         CurrentLogin.loginInfo = result.loginInfo;
         alert('Success!');

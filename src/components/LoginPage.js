@@ -35,8 +35,6 @@ export default class LoginPage extends React.Component {
     const { customKeys } = login;
     return VaultClientDemo.handleLogin(blobResult, customKeys)
       .then((result) => {
-        CurrentLogin.username = result.username;
-        CurrentLogin.password = this.state.password;
         CurrentLogin.loginInfo = result;
         console.log('Login sucessfully', result);
         RippleClient.connectToServer();

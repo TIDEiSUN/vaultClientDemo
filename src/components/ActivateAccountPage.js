@@ -24,10 +24,6 @@ function ActivateButton(props) {
       <div>
         Operation ID: {operationId}
       </div>
-      <div>
-        Password:
-        <input type="password" value={self.state.password} onChange={self.handleChange.bind(self, 'password')} />
-      </div>
       <AsyncButton
         type="button"
         onClick={self.handleActivateAccount}
@@ -44,49 +40,26 @@ function ActivateButton(props) {
 export default class ActivateAccountPage extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      password: '',
-    };
-    this.customKeys = null;
-
     this.handleActivateAccount = this.handleActivateAccount.bind(this);
   }
 
   handleActivateAccount() {
     const { username, email, token, operationId } = this.props.location.query;
-    const { password } = this.state;
-    return VaultClientDemo.createCustomKeys(username, password)
-      .then((customKeys) => {
-        return customKeys.deriveKeys();
-      })
-      .then((customKeys) => {
-        console.log('Verifiy: OperationId', operationId);
-        const verifyPromise = VaultClientDemo.authVerifyAccountEmailToken(customKeys, email, token, operationId);
-        return Promise.all([customKeys, verifyPromise]);
-      })
-      .then(([customKeys, resp]) => {
-        const { operationId: newOperationId, blob: blobData } = resp;
+    console.log('Verifiy: OperationId', operationId);
+    return VaultClientDemo.authVerifyAccountEmailToken(username, email, token, operationId)
+      .then((resp) => {
+        const { operationId: newOperationId, blob } = resp;
         console.log('Activate: OperationId', newOperationId);
-        const activatePromise = VaultClientDemo.authActivateAccount(customKeys, email, newOperationId, blobData);
-        return Promise.all([customKeys, activatePromise]);
+        const recoveryPromise = VaultClientDemo.handleRecovery(blob, email);
+        return Promise.all([newOperationId, recoveryPromise]);
       })
-      .then(([customKeys]) => {
-        const data = {
-          operationId: null,
-          step: 'blobIdVerify',
-          params: { blobId: customKeys.id },
-        };
-        const loginPromise = VaultClientDemo.authLoginAccount(customKeys.authInfo, data);
-        return Promise.all([customKeys, loginPromise]);
-      })
-      .then(([customKeys, resp]) => {
-        const { result: blobResult } = resp;
-        return VaultClientDemo.handleLogin(blobResult, customKeys);
+      .then(([newOperationId, loginInfo]) => {
+        console.log('Recover account successfully', loginInfo);
+        return VaultClientDemo.authActivateAccount(loginInfo, email, newOperationId);
       })
       .then((result) => {
-        CurrentLogin.username = result.username;
-        CurrentLogin.password = this.state.password;
-        CurrentLogin.loginInfo = result;
+        const { loginInfo } = result;
+        CurrentLogin.loginInfo = loginInfo;
         console.log('Activate sucessfully', result);
         RippleClient.connectToServer();
         browserHistory.push('/main');
