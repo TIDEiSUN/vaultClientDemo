@@ -46,7 +46,7 @@ function setParams(cachedParamValues, systemParams, params) {
   return newParams;
 }
 
-function getParamInputs(params, self) {
+function getParamInputs(objName, params, self) {
   const paramInputs = Object.keys(params).map((key) => {
     const param = params[key];
     if (!param.type) {
@@ -57,41 +57,69 @@ function getParamInputs(params, self) {
     return (
       <div>
         {key}:
-        <input type={param.type} value={param.value} onChange={self.handleParamChange.bind(self, key)} />
+        <input type={param.type} value={param.value} onChange={self.handleParamChange.bind(self, objName, key)} />
       </div>
     );
   });
   return paramInputs;
 }
 
+function InputForm(props) {
+  const { title, params, self, objName } = props;
+  if (!params) {
+    return null;
+  }
+  const paramInputs = getParamInputs(objName, params, self);
+  if (paramInputs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <h1>{title}</h1>
+      {paramInputs}
+      <AsyncButton
+        type="button"
+        onClick={self.handleSubmit.bind(self, params)}
+        pendingText="Wait..."
+        fulFilledText="Submitted"
+        rejectedText="Failed! Try Again"
+        text="Submit"
+      />
+    </div>
+  );
+}
+
 export default class AuthenticationForm extends React.Component {
   constructor(props) {
     super(props);
     const { auth, systemParams = {} } = props;
-    const { step, params } = auth;
-    const newParams = setParams({}, systemParams, params);
+    const { step, params, resendParams } = auth;
+    const newParams = params ? setParams({}, systemParams, params) : null;
+    const newResendParams = resendParams ? setParams({}, systemParams, resendParams) : null;
     this.state = {
       step,
       params: newParams,
+      resendParams: newResendParams,
       cachedParamValues: {},
     };
-    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillReceiveProps(props) {
     const { auth, systemParams = {} } = props;
-    const { step, params } = auth;
+    const { step, params, resendParams } = auth;
     if (step) {
       const { cachedParamValues } = this.state;
-      const newParams = setParams(cachedParamValues, systemParams, params);
-      this.setState({ step, params: newParams });
+      const newParams = params ? setParams(cachedParamValues, systemParams, params) : null;
+      const newResendParams = resendParams ? setParams(cachedParamValues, systemParams, resendParams) : null;
+      this.setState({ step, params: newParams, resendParams: newResendParams });
     } else {
-      this.setState({ step, params });
+      this.setState({ step, params: null, resendParams: null });
     }
   }
 
-  handleSubmit() {
-    const { params, cachedParamValues } = this.state;
+  handleSubmit(params) {
+    const { cachedParamValues } = this.state;
     const outParams = {};
     Object.keys(params).forEach((key) => {
       outParams[key] = params[key].value;
@@ -104,33 +132,24 @@ export default class AuthenticationForm extends React.Component {
     return this.props.submitForm(outParams);
   }
 
-  handleParamChange(name, event) {
-    const { params } = this.state;
+  handleParamChange(objName, name, event) {
+    const params = this.state[objName];
     const param = params[name];
     const updatedParam = { ...param };
     updatedParam.value = event.target.value;
     const newParams = { ...params, [name]: updatedParam };
-    this.setState({ params: newParams });
+    this.setState({ [objName]: newParams });
   }
 
   render() {
     if (!this.state.step) {
       return null;
     }
-    const { params } = this.state;
-    const paramInputs = getParamInputs(params, this);
     return (
       <div>
-        <h1>{this.state.step}</h1>
-        {paramInputs}
-        <AsyncButton
-          type="button"
-          onClick={this.handleSubmit}
-          pendingText="Wait..."
-          fulFilledText="Submitted"
-          rejectedText="Failed! Try Again"
-          text="Submit"
-        />
+        <InputForm title={this.state.step} params={this.state.params} self={this} objName="params" />
+        <br />
+        <InputForm title="Resend" params={this.state.resendParams} self={this} objName="resendParams" />
       </div>
     );
   }
