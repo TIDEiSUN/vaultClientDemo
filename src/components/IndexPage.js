@@ -88,7 +88,6 @@ export default class IndexPage extends React.Component {
 
   handleResendEmail(event) {
     console.log('Resend verification email');
-    const activateLink = Config.accountActivationURL;
 
     const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
     const newEmail = this.state.resendEmail ? this.state.resendEmail : oldEmail;
@@ -100,7 +99,14 @@ export default class IndexPage extends React.Component {
     if (!emailChanged) {
       alert('Email has no change.');
     } else {
-      VaultClientDemo.resendVerificationEmail(CurrentLogin.loginInfo.username, null, newEmail, activateLink, CurrentLogin.loginInfo)
+      const data = {
+        operationId: null,
+        params: {
+          email: newEmail,
+          hostlink: Config.changeEmailURL,
+        },
+      };
+      VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, data)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;

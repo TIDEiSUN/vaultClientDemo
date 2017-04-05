@@ -14,7 +14,6 @@ exports.rippleTxtDomain = `${isunpayrpc_host}:${isunpayrpc_port}`;
 exports.isunpayrpcURL = `http://${isunpayrpc_host}:${isunpayrpc_port}`;
 
 exports.accountActivationURL = `http://${webhost}/activateAccount`;
-exports.emailVerificationURL = `http://${webhost}/verifyEmail`;
 exports.changeEmailURL = `http://${webhost}/changeemail`;
 exports.unblockAccountURL = `http://${webhost}/unblock`;
 exports.recoverAccountURL = `http://${webhost}/recover`;
