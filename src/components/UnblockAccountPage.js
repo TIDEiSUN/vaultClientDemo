@@ -12,7 +12,7 @@ const systemParams = {
 
 function ChangePasswordForm(props) {
   const { auth, self } = props;
-  if (auth.step) {
+  if (!auth || auth.step) {
     return null;
   }
   return (
@@ -39,14 +39,7 @@ export default class UnblockAccountPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      auth: {
-        operationId: null,
-        step: 'emailTokenRequest',
-        params: {
-          email: '',
-          hostlink: '',
-        },
-      },
+      auth: null,
       unblock: {
         email: '',
         countryCode: '',
@@ -63,17 +56,36 @@ export default class UnblockAccountPage extends React.Component {
     if (email && token && operationId) {
       this.state.auth = {
         operationId,
-        step: 'emailTokenVerify',
+        step: 'emailToken',
         params: {
           email,
           emailToken: token,
         },
       };
+      console.log('unblock - verify');
     }
-    console.log(`unblock - ${this.state.auth.step}`);
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
+  }
+
+  componentDidMount() {
+    if (this.state.auth) {
+      return;
+    }
+    console.log('unblock - request');
+    VaultClientDemo.authUnblockAccount()
+      .then((resp) => {
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+      })
+      .catch((err) => {
+        console.log('UnblockPage - componentDidMount', err);
+      });
   }
 
   handleChange(name, event) {

@@ -4,14 +4,6 @@ import { VaultClientDemo, RippleClient } from '../logics';
 import { CurrentLogin } from './Data';
 import AuthenticationForm from './common/AuthenticationForm';
 
-const initAuthState = {
-  operationId: null,
-  step: 'blobIdVerify',
-  params: {
-    blobId: '',
-  },
-};
-
 const systemParams = {
   forceSms: 'true',
 };
@@ -20,7 +12,7 @@ export default class LoginPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      auth: initAuthState,
+      auth: null,
       login: {
         customKeys: null,
       },
@@ -28,6 +20,25 @@ export default class LoginPage extends React.Component {
       password: '',
     };
     this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
+  }
+
+  componentDidMount() {
+    VaultClientDemo.getAuthInfoByUsername('dummy')
+      .then((authInfo) => {
+        return VaultClientDemo.authLoginAccount(authInfo);
+      })
+      .then((resp) => {
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.initAuthState = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+      })
+      .catch((err) => {
+        console.log('LoginPage - componentDidMount', err);
+      });
   }
 
   processBlob(auth, login) {
@@ -99,7 +110,7 @@ export default class LoginPage extends React.Component {
       })
       .catch((err) => {
         if (!auth.operationId) {
-          this.setState({ auth: initAuthState });
+          this.setState({ auth: this.initAuthState });
         }
         alert(`Failed! ${err.message}`);
         return Promise.reject(err);

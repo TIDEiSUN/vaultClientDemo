@@ -94,15 +94,24 @@ export default class AuthenticationForm extends React.Component {
   constructor(props) {
     super(props);
     const { auth, systemParams = {} } = props;
-    const { step, params, resendParams } = auth;
-    const newParams = params ? setParams({}, systemParams, params) : null;
-    const newResendParams = resendParams ? setParams({}, systemParams, resendParams) : null;
-    this.state = {
-      step,
-      params: newParams,
-      resendParams: newResendParams,
-      cachedParamValues: {},
-    };
+    if (auth) {
+      const { step, params, resendParams } = auth;
+      const newParams = params ? setParams({}, systemParams, params) : null;
+      const newResendParams = resendParams ? setParams({}, systemParams, resendParams) : null;
+      this.state = {
+        step,
+        params: newParams,
+        resendParams: newResendParams,
+        cachedParamValues: {},
+      };
+    } else {
+      this.state = {
+        step: null,
+        params: null,
+        resendParams: null,
+        cachedParamValues: {},
+      };
+    }
   }
 
   componentWillReceiveProps(props) {
