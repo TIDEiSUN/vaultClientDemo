@@ -27,7 +27,7 @@ export default class VerifyPhonePage extends React.Component {
       token: '',
       oldPhoneInfo: CurrentLogin.loginInfo ? CurrentLogin.loginInfo.blob.data.phone : null,
       verified: CurrentLogin.loginInfo ? Utils.checkPhoneVerified(CurrentLogin.loginInfo.blob.account_level) : false,
-      operationId: null,
+      authToken: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
@@ -55,9 +55,9 @@ export default class VerifyPhonePage extends React.Component {
       if (!phoneChanged && this.state.verified) {
         alert('Phone has been verified');
       } else {
-        const { operationId } = this.state;
+        const { authToken } = this.state;
         const data = {
-          operationId,
+          authToken,
           params: {
             phoneNumber,
             countryCode,
@@ -67,9 +67,9 @@ export default class VerifyPhonePage extends React.Component {
         VaultClientDemo.authRequestUpdatePhone(CurrentLogin.loginInfo, data)
           .then((result) => {
             console.log('request phone token', result);
-            const { loginInfo, operationId: newOperationId } = result;
+            const { loginInfo, authToken: newAuthToken } = result;
             CurrentLogin.loginInfo = loginInfo;
-            this.setState({ operationId: newOperationId });
+            this.setState({ authToken: newAuthToken });
             alert('Success!');
           }).catch((err) => {
             console.error('Failed to send verification code by sms:', err);
@@ -84,7 +84,7 @@ export default class VerifyPhonePage extends React.Component {
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
-    const { countryCode, phoneNumber, token, operationId } = this.state;
+    const { countryCode, phoneNumber, token, authToken } = this.state;
     const phone = {
       countryCode: this.state.countryCode,
       phoneNumber: this.state.phoneNumber,
@@ -92,7 +92,7 @@ export default class VerifyPhonePage extends React.Component {
 
     if (phone.phoneNumber && phone.countryCode) {
       const data = {
-        operationId,
+        authToken,
         params: {
           phoneNumber,
           countryCode,

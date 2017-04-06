@@ -52,10 +52,10 @@ function UpdateEmailForm(props) {
       username,
       email,
       token,
-      operationId,
+      authToken,
     } = queryString;
 
-    const disabled = !username || !email || !token || !operationId;
+    const disabled = !username || !email || !token || !authToken;
 
     return (
       <div>
@@ -132,11 +132,11 @@ export default class ChangeEmailPage extends React.Component {
       username,
       email,
       token,
-      operationId,
+      authToken,
     } = this.props.location.query;
 
     const data = {
-      operationId,
+      authToken,
       params: {
         email,
         emailToken: token,
@@ -169,7 +169,7 @@ export default class ChangeEmailPage extends React.Component {
       return Promise.reject(new Error('Email has no change.'));
     } else {
       const data = {
-        operationId: null,
+        authToken: null,
         params: {
           email: newEmail,
           hostlink: Config.changeEmailURL,

@@ -100,7 +100,7 @@ export default class IndexPage extends React.Component {
       alert('Email has no change.');
     } else {
       const data = {
-        operationId: null,
+        authToken: null,
         params: {
           email: newEmail,
           hostlink: Config.changeEmailURL,

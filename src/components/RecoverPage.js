@@ -50,12 +50,12 @@ export default class RecoverPage extends React.Component {
     const {
       email,
       token,
-      operationId,
+      authToken,
     } = props.location.query;
 
-    if (email && token && operationId) {
+    if (email && token && authToken) {
       this.state.auth = {
-        operationId,
+        authToken,
         step: 'emailToken',
         params: {
           email,

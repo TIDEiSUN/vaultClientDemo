@@ -109,7 +109,7 @@ export default class LoginPage extends React.Component {
         return this.processBlob(resp, updatedLogin);
       })
       .catch((err) => {
-        if (!auth.operationId) {
+        if (!auth.authToken) {
           this.setState({ auth: this.initAuthState });
         }
         alert(`Failed! ${err.message}`);

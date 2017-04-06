@@ -6,9 +6,9 @@ import AsyncButton from './common/AsyncButton';
 
 function ActivateButton(props) {
   const { self } = props;
-  const { username, email, token, operationId } = self.props.location.query;
+  const { username, email, token, authToken } = self.props.location.query;
 
-  const disabled = !username || !token || !email || !operationId;
+  const disabled = !username || !token || !email || !authToken;
 
   return (
     <div>
@@ -22,7 +22,7 @@ function ActivateButton(props) {
         Token: {token}
       </div>
       <div>
-        Operation ID: {operationId}
+        Authentication Token: {authToken}
       </div>
       <AsyncButton
         type="button"
@@ -44,18 +44,18 @@ export default class ActivateAccountPage extends React.Component {
   }
 
   handleActivateAccount() {
-    const { username, email, token, operationId } = this.props.location.query;
-    console.log('Verifiy: OperationId', operationId);
-    return VaultClientDemo.authVerifyAccountEmailToken(username, email, token, operationId)
+    const { username, email, token, authToken } = this.props.location.query;
+    console.log('Verifiy: AuthToken', authToken);
+    return VaultClientDemo.authVerifyAccountEmailToken(username, email, token, authToken)
       .then((resp) => {
-        const { operationId: newOperationId, blob } = resp;
-        console.log('Activate: OperationId', newOperationId);
+        const { authToken: newAuthToken, blob } = resp;
+        console.log('Activate: AuthToken', newAuthToken);
         const recoveryPromise = VaultClientDemo.handleRecovery(blob, email);
-        return Promise.all([newOperationId, recoveryPromise]);
+        return Promise.all([newAuthToken, recoveryPromise]);
       })
-      .then(([newOperationId, loginInfo]) => {
+      .then(([newAuthToken, loginInfo]) => {
         console.log('Recover account successfully', loginInfo);
-        return VaultClientDemo.authActivateAccount(loginInfo, email, newOperationId);
+        return VaultClientDemo.authActivateAccount(loginInfo, email, newAuthToken);
       })
       .then((result) => {
         const { loginInfo } = result;
