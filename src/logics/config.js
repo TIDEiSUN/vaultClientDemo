@@ -4,11 +4,11 @@ let isunpayrpc_host = 'localhost';
 let isunpayrpc_port = 27184;
 
 if (process.env.NODE_ENV === 'production') {
-  webhost = 'http://14.136.246.165:3000';
   rippleRPC = 'ws://192.168.100.92:6006';
   isunpayrpc_host = '14.136.246.165';
 }
 
+exports.webhost = webhost;
 exports.rippleRPC = rippleRPC;
 exports.rippleTxtDomain = `${isunpayrpc_host}:${isunpayrpc_port}`;
 exports.isunpayrpcURL = `http://${isunpayrpc_host}:${isunpayrpc_port}`;

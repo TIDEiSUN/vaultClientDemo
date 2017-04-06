@@ -2,8 +2,8 @@ import VaultClientDemoClass, { Utils } from '../../isunpayweb/app/logics/VaultCl
 import RippleClientClass from '../../isunpayweb/app/logics/RippleClient';
 import Config from './config';
 
-const VaultClientDemo = new VaultClientDemoClass(Config.rippleTxtDomain, Config.isunpayrpcURL);
-const RippleClient = new RippleClientClass(Config.rippleTxtDomain, Config.rippleRPC, Config.isunpayrpcURL);
+const VaultClientDemo = new VaultClientDemoClass(Config.isunpayrpcURL);
+const RippleClient = new RippleClientClass(Config.rippleRPC, Config.isunpayrpcURL);
 
 export default {
   VaultClientDemo,

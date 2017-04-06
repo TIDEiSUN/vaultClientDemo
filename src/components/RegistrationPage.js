@@ -24,7 +24,7 @@ export default class RegistrationPage extends React.Component {
 
     const { username, password, email } = this.state;
 
-    return VaultClientDemo.authRegisterAccount(username, password, email, activateLink)
+    return VaultClientDemo.authRegisterAccount(username, password, email, activateLink, Config.webhost)
       .then(result => {
         console.log('Register sucessfully', result);
         alert('Account created. Verification email has been sent to ' + email);
