@@ -151,7 +151,7 @@ export default class AuthenticationForm extends React.Component {
   }
 
   render() {
-    if (!this.state.step) {
+    if (!this.state.step || this.state.step === 'done') {
       return null;
     }
     return (

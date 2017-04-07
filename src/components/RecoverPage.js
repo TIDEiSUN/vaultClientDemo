@@ -12,7 +12,7 @@ const systemParams = {
 
 function ChangePasswordForm(props) {
   const { auth, self } = props;
-  if (!auth || auth.step) {
+  if (!auth || auth.step !== 'done') {
     return null;
   }
   return (

@@ -103,7 +103,7 @@ export default class LoginPage extends React.Component {
           step: newStep,
           params: newParams,
         });
-        if (resp.step) {
+        if (resp.step !== 'done') {
           return Promise.resolve();
         }
         return this.processBlob(resp, updatedLogin);
