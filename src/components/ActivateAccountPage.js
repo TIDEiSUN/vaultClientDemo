@@ -48,14 +48,14 @@ export default class ActivateAccountPage extends React.Component {
     console.log('Verifiy: AuthToken', authToken);
     return VaultClientDemo.authVerifyAccountEmailToken(username, email, token, authToken)
       .then((resp) => {
-        const { authToken: newAuthToken, blob } = resp;
+        const { authToken: newAuthToken, blob, createAccountToken } = resp;
         console.log('Activate: AuthToken', newAuthToken);
         const recoveryPromise = VaultClientDemo.handleRecovery(blob, email);
-        return Promise.all([newAuthToken, recoveryPromise]);
+        return Promise.all([newAuthToken, createAccountToken, recoveryPromise]);
       })
-      .then(([newAuthToken, loginInfo]) => {
+      .then(([newAuthToken, createAccountToken, loginInfo]) => {
         console.log('Recover account successfully', loginInfo);
-        return VaultClientDemo.authActivateAccount(loginInfo, email, newAuthToken);
+        return VaultClientDemo.authActivateAccount(loginInfo, email, newAuthToken, createAccountToken);
       })
       .then((result) => {
         const { loginInfo } = result;
