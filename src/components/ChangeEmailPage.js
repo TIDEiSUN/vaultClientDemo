@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { VaultClientDemo, Config } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
+import LoginForm from './common/LoginForm';
 
 function LoginDiv(props) {
   const { loggedIn, queryString, self } = props;
@@ -22,21 +23,7 @@ function LoginDiv(props) {
   }
 
   return (
-    <form>
-      <div>Username: {username}</div>
-      <div>
-        Password:
-        <input type="password" value={self.state.password} onChange={self.handleChange.bind(self, 'password')} />
-      </div>
-      <AsyncButton
-        type="button"
-        onClick={self.handleLogin}
-        pendingText="Logging in..."
-        fulFilledText="Logged in"
-        rejectedText="Failed! Try Again"
-        text="Login"
-      />
-    </form>
+    <LoginForm username={username} loginCallback={self.handleLogin} />
   );
 }
 
@@ -111,18 +98,13 @@ export default class ChangeEmailPage extends React.Component {
     this.setState({ [name]: event.target.value });
   }
 
-  handleLogin() {
-    return VaultClientDemo.loginAccount(this.props.location.query.username, this.state.password)
-      .then((result) => {
-        CurrentLogin.loginInfo = result;
-        console.log('Login sucessfully', result);
-        this.setState({
-          loggedIn: true,
-        });
-      }).catch((err) => {
-        alert('Failed to login: ' + err.message);
-        throw Promise.reject(err);
-      });
+  handleLogin(loginInfo) {
+    CurrentLogin.loginInfo = loginInfo;
+    console.log('Login sucessfully', loginInfo);
+    this.setState({
+      loggedIn: true,
+    });
+    return Promise.resolve();
   }
 
   handleVerifyToken() {

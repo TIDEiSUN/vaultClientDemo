@@ -93,23 +93,23 @@ function InputForm(props) {
 export default class AuthenticationForm extends React.Component {
   constructor(props) {
     super(props);
-    const { auth, systemParams = {} } = props;
+    const { auth, systemParams = {}, defaultParams = {} } = props;
     if (auth) {
       const { step, params, resendParams } = auth;
-      const newParams = params ? setParams({}, systemParams, params) : null;
-      const newResendParams = resendParams ? setParams({}, systemParams, resendParams) : null;
+      const newParams = params ? setParams(defaultParams, systemParams, params) : null;
+      const newResendParams = resendParams ? setParams(defaultParams, systemParams, resendParams) : null;
       this.state = {
         step,
         params: newParams,
         resendParams: newResendParams,
-        cachedParamValues: {},
+        cachedParamValues: defaultParams,
       };
     } else {
       this.state = {
         step: null,
         params: null,
         resendParams: null,
-        cachedParamValues: {},
+        cachedParamValues: defaultParams,
       };
     }
   }
