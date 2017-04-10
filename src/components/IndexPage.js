@@ -82,6 +82,20 @@ export default class IndexPage extends React.Component {
     this.handleLogout = this.handleLogout.bind(this);
   }
 
+  // componentDidMount() {
+  //   const { loginToken } = CurrentLogin;
+  //   VaultClientDemo.getBlob(loginToken)
+  //     .then((result) => {
+  //       const { blob, loginToken: newLoginToken } = result;
+  //       console.log('@@blob', blob);
+  //       console.log('@@old token', loginToken);
+  //       console.log('@@new token', newLoginToken);
+  //     })
+  //     .catch((err) => {
+  //       console.error('Failed to get blob', err);
+  //     });
+  // }
+
   handleChange(name, event) {
     this.setState({ [name]: event.target.value });
   }

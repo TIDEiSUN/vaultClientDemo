@@ -36,7 +36,7 @@
     "ripple-keypairs": "^0.10.0",
     "ripple-lib": "^0.17.4",
     "ripple-lib-transactionparser": "^0.6.0",
-    "superagent": "^0.21.0"
+    "superagent": "^3.5.2"
   },
   "devDependencies": {
     "babel-cli": "^6.23.0",

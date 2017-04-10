@@ -11,8 +11,9 @@ export default class LoginPage extends React.Component {
     this.handleLogin = this.handleLogin.bind(this);
   }
 
-  handleLogin(loginInfo) {
+  handleLogin(loginInfo, loginToken) {
     CurrentLogin.loginInfo = loginInfo;
+    CurrentLogin.loginToken = loginToken;
     console.log('Login sucessfully', loginInfo);
     RippleClient.connectToServer();
     browserHistory.push('/main');

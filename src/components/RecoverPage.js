@@ -128,10 +128,13 @@ export default class RecoverPage extends React.Component {
     const { email, phoneNumber, countryCode } = this.state.recover;
     const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
 
-    return VaultClientDemo.handleRecovery(this.state.auth.result, email, phone)
+    const { blob, loginToken } = this.state.auth.result;
+    console.log('Recovered - token', loginToken);
+    return VaultClientDemo.handleRecovery(blob, email, phone)
       .then((result) => {
         console.log('Recover blob successfully', result);
         CurrentLogin.loginInfo = result;
+        CurrentLogin.loginToken = loginToken;
         return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       }).then((result) => {
         console.log('change password', result);

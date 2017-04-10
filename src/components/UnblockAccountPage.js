@@ -128,10 +128,13 @@ export default class UnblockAccountPage extends React.Component {
     const { email, phoneNumber, countryCode } = this.state.unblock;
     const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
 
-    return VaultClientDemo.handleRecovery(this.state.auth.result, email, phone)
+    const { blob, loginToken } = this.state.auth.result;
+    console.log('Unblocked - token', loginToken);
+    return VaultClientDemo.handleRecovery(blob, email, phone)
       .then((result) => {
         console.log('Unblock account successfully', result);
         CurrentLogin.loginInfo = result;
+        CurrentLogin.loginToken = loginToken;
         return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       }).then((result) => {
         console.log('change password', result);

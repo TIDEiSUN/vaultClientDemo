@@ -58,9 +58,11 @@ export default class ActivateAccountPage extends React.Component {
         return VaultClientDemo.authActivateAccount(loginInfo, email, newAuthToken, createAccountToken);
       })
       .then((result) => {
-        const { loginInfo } = result;
+        const { loginInfo, loginToken } = result;
         CurrentLogin.loginInfo = loginInfo;
+        CurrentLogin.loginToken = loginToken;
         console.log('Activate sucessfully', result);
+        console.log('Activated - token', loginToken);
         RippleClient.connectToServer();
         browserHistory.push('/main');
         return Promise.resolve();
