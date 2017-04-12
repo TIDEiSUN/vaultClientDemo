@@ -1,116 +1,158 @@
 import React from 'react';
-import { Link, browserHistory } from 'react-router';
-import { VaultClientDemo } from '../logics'
-import { CurrentLogin } from './Data'
-import AsyncButton from './common/AsyncButton'
+import { Link } from 'react-router';
+import { VaultClientDemo, Config } from '../logics';
+import { CurrentLogin } from './Data';
+import AsyncButton from './common/AsyncButton';
+import AuthenticationForm from './common/AuthenticationForm';
+
+const systemParams = {
+  hostlink: Config.recoverAccountURL,
+  via: 'sms',
+};
+
+function ChangePasswordForm(props) {
+  const { auth, self } = props;
+  if (!auth || auth.step !== 'done') {
+    return null;
+  }
+  return (
+    <div>
+      <h1>Change password</h1>
+      <div>
+        New Password: 
+        <input type="password" value={self.state.newPassword} onChange={self.handleChange.bind(self, 'newPassword')} />
+      </div>
+      <AsyncButton
+        type="button"
+        onClick={self.handleSubmit}
+        pendingText="Recovering..."
+        fulFilledText="Recovered"
+        rejectedText="Failed! Try Again"
+        text="Recover"
+        fullFilledRedirect="/main"
+      />
+    </div>
+  );
+}
 
 export default class RecoverPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: '',
-      countryCode: '',
-      phoneNumber: '',
-      newPassword: ''
+      auth: null,
+      recover: {
+        email: '',
+        countryCode: '',
+        phoneNumber: '',
+      },
+      newPassword: '',
     };
+    const {
+      email,
+      token,
+      authToken,
+    } = props.location.query;
+
+    if (email && token && authToken) {
+      this.state.auth = {
+        authToken,
+        step: 'emailToken',
+        params: {
+          email,
+          emailToken: token,
+        },
+      };
+      console.log('recover - verify');
+    }
+
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
+  }
+
+  componentDidMount() {
+    if (this.state.auth) {
+      return;
+    }
+    console.log('recover - request');
+    VaultClientDemo.authRecoverAccount()
+      .then((resp) => {
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+      })
+      .catch((err) => {
+        console.log('RecoverPage - componentDidMount', err);
+      });
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
-  handleSubmit(event) {
+  handleSubmitAuthenticationForm(params) {
+    const objHasOwnProp = Object.prototype.hasOwnProperty;
+    const { auth, recover } = this.state;
+    const data = auth ? { ...auth, params } : params;
+
+    const updatedRecover = { ...recover };
+    Object.keys(recover).forEach((key) => {
+      if (objHasOwnProp.call(params, key)) {
+        updatedRecover[key] = params[key];
+      }
+    });
+    this.setState({ recover: updatedRecover });
+
+    return VaultClientDemo.authRecoverAccount(data)
+      .then((resp) => {
+        alert('OK!');
+        const { step: newStep = null, params: newParams = {} } = resp;
+        this.setState({
+          auth: resp,
+          step: newStep,
+          params: newParams,
+        });
+        return Promise.resolve();
+      })
+      .catch((err) => {
+        alert(`Failed! ${err.message}`);
+        return Promise.reject(err);
+      });
+  }
+
+  handleSubmit() {
     console.log('Recover account');
 
-    const email = this.state.email;
-    const phone = (this.state.countryCode || this.state.phoneNumber) ? { phoneNumber: this.state.phoneNumber, countryCode: this.state.countryCode } : null;
+    const { email, phoneNumber, countryCode } = this.state.recover;
+    const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
 
-    // let userAuthInfo;
-    // return VaultClientDemo.getAuthInfoByEmail(email)
-    //   .then((authInfo) => {
-    //     console.log(authInfo);
-    //     userAuthInfo = authInfo;
-    //     if (!userAuthInfo.exists) {
-    //       return Promise.reject(new Error('email is wrong'));
-    //     }
-    //     if (!userAuthInfo.emailVerified) {
-    //       return Promise.resolve('not verified');
-    //     }
-    //     const activateLink = '123';
-    //     return VaultClientDemo.requestEmailTokenForRecovery(userAuthInfo.blobvault, userAuthInfo.username, email, activateLink);
-    //   })
-    //   .then((result) => {
-    //     console.log('email:', result);
-    //     return VaultClientDemo.requestPhoneTokenForRecovery(userAuthInfo.blobvault, userAuthInfo.username, phone.countryCode, phone.phoneNumber);
-    //   })
-    //   .then((result) => {
-    //     console.log('phone:', result);
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //   });
-
-    return VaultClientDemo.recoverBlob(email, phone)
+    const { blob, loginToken } = this.state.auth.result;
+    console.log('Recovered - token', loginToken);
+    return VaultClientDemo.handleRecovery(blob, email, phone)
       .then((result) => {
         console.log('Recover blob successfully', result);
-        CurrentLogin.username = result.username;
         CurrentLogin.loginInfo = result;
-        return VaultClientDemo.changePassword(CurrentLogin.username, this.state.newPassword, CurrentLogin.loginInfo);
+        CurrentLogin.loginToken = loginToken;
+        return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       }).then((result) => {
-        CurrentLogin.password = this.state.newPassword;
         console.log('change password', result);
         CurrentLogin.loginInfo = result.loginInfo;
       }).catch((err) => {
-        delete CurrentLogin.username;
-        delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
         console.error('Failed to recover account:', err);
         alert('Failed to recover account: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-    //event.preventDefault();
   }
 
   render() {
     return (
       <div className="home">
         <h1>Recover Account</h1>
-        <form>
-          <div>
-            <label>
-              Email: 
-              <input type="text" value={this.state.email} onChange={this.handleChange.bind(this, 'email')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Country code: 
-              <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              Phone number: 
-              <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
-            </label>
-          </div>
-          <div>
-            <label>
-              New Password: 
-              <input type="password" value={this.state.newPassword} onChange={this.handleChange.bind(this, 'newPassword')} />
-            </label>
-          </div>
-          <AsyncButton
-           type="button"
-           onClick={this.handleSubmit}
-           pendingText="Recovering..."
-           fulFilledText="Recovered"
-           rejectedText="Failed! Try Again"
-           text="Recover"
-           fullFilledRedirect="/main"
-          />
-        </form>
+        <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
+        <ChangePasswordForm auth={this.state.auth} self={this} />
         <Link to="/">Back to login page</Link>
       </div>
     );

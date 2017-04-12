@@ -15,10 +15,8 @@ export default class BlockAccountPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Handle block account');
-    return VaultClientDemo.blockAccount(CurrentLogin.username, CurrentLogin.loginInfo)
+    return VaultClientDemo.blockAccount(CurrentLogin.loginInfo.username, CurrentLogin.loginInfo)
       .then((result) => {
-        delete CurrentLogin.username;
-        delete CurrentLogin.password;
         delete CurrentLogin.loginInfo;
         console.log('block account', result);
         alert('Success!');

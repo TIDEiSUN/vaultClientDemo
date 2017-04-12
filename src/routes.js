@@ -12,7 +12,6 @@ import ActivateAccountPage from './components/ActivateAccountPage';
 import VerifyPhonePage from './components/VerifyPhonePage';
 import RecoverPage from './components/RecoverPage';
 import ChangeEmailPage from './components/ChangeEmailPage';
-import VerifyEmailPage from './components/VerifyEmailPage';
 import ChangePersonalDataPage from './components/ChangePersonalDataPage';
 import WalletPage from './components/WalletPage';
 import BlockAccountPage from './components/BlockAccountPage';
@@ -30,7 +29,6 @@ const routes = (
     <Route path="/reg" component={RegistrationPage} />
     <Route path="/rename" component={RenamePage} />
     <Route path="/activateAccount" component={ActivateAccountPage} />
-    <Route path="/verifyEmail" component={VerifyEmailPage} />
     <Route path="/phone" component={VerifyPhonePage} />
     <Route path="/recover" component={RecoverPage} />
     <Route path="/changeemail" component={ChangeEmailPage} />

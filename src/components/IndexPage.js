@@ -4,14 +4,7 @@ import { CurrentLogin } from './Data';
 import { VaultClientDemo, Config } from '../logics';
 
 function EmailField(props) {
-  const { verified, blob, self } = props;
-  if (!verified) {
-    return (
-      <div>
-        Email: {blob.email} [Not verified]
-      </div>
-    );
-  }
+  const { blob, self } = props;
   if (blob.pendingEmail) {
     return (
       <div>
@@ -42,6 +35,13 @@ function LastBlobIDChangeDate(props) {
 }
 
 function IDPhotosStatus(props) {
+  if (!props.id_photos) {
+    return (
+      <div>
+        ID Photos: null
+      </div>
+    );
+  }
   if (!props.id_photos.uploaded_date) {
     return (
       <div>
@@ -82,13 +82,26 @@ export default class IndexPage extends React.Component {
     this.handleLogout = this.handleLogout.bind(this);
   }
 
+  // componentDidMount() {
+  //   const { loginToken } = CurrentLogin;
+  //   VaultClientDemo.getBlob(loginToken)
+  //     .then((result) => {
+  //       const { blob, loginToken: newLoginToken } = result;
+  //       console.log('@@blob', blob);
+  //       console.log('@@old token', loginToken);
+  //       console.log('@@new token', newLoginToken);
+  //     })
+  //     .catch((err) => {
+  //       console.error('Failed to get blob', err);
+  //     });
+  // }
+
   handleChange(name, event) {
     this.setState({ [name]: event.target.value });
   }
 
   handleResendEmail(event) {
     console.log('Resend verification email');
-    const activateLink = Config.accountActivationURL;
 
     const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
     const newEmail = this.state.resendEmail ? this.state.resendEmail : oldEmail;
@@ -97,10 +110,10 @@ export default class IndexPage extends React.Component {
     console.log(`new email: ${newEmail}`);
     console.log(`email changed: ${emailChanged}`);
 
-    if (!emailChanged && CurrentLogin.loginInfo.emailVerified) {
-      alert('Email has been verified.');
+    if (!emailChanged) {
+      alert('Email has no change.');
     } else {
-      VaultClientDemo.resendVerificationEmail(CurrentLogin.username, CurrentLogin.password, newEmail, activateLink, CurrentLogin.loginInfo)
+      VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;
@@ -114,8 +127,6 @@ export default class IndexPage extends React.Component {
   }
 
   handleLogout(event) {
-    delete CurrentLogin.username;
-    delete CurrentLogin.password;
     delete CurrentLogin.loginInfo;
     browserHistory.push('/');
   }
@@ -123,13 +134,13 @@ export default class IndexPage extends React.Component {
   render() {
     return (
       <div className="home">
-        <div>Welcome {CurrentLogin.username}!</div>
+        <div>Welcome {CurrentLogin.loginInfo.username}!</div>
         <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
         <div>
           Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}
         </div>
         <br />
-        <EmailField verified={CurrentLogin.loginInfo.emailVerified} blob={CurrentLogin.loginInfo.blob} self={this} />
+        <EmailField blob={CurrentLogin.loginInfo.blob} self={this} />
         <br />
         <div>
           First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />

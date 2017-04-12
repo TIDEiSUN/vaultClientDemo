@@ -41,7 +41,7 @@ export default class ChangePersonalDataPage extends React.Component {
   }
 
   handleSubmitForm() {
-    const username = CurrentLogin.username;
+    const username = CurrentLogin.loginInfo.username;
 
     // update blob
     const blob = CurrentLogin.loginInfo.blob;
