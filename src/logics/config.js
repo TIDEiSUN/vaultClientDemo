@@ -4,8 +4,8 @@ let isunpayrpc_host = 'localhost';
 let isunpayrpc_port = 27184;
 
 if (process.env.NODE_ENV === 'production') {
-  rippleRPC = 'ws://192.168.100.92:6006';
-  isunpayrpc_host = '14.136.246.165';
+  rippleRPC = 'ws://dx.tidepay.io:6006';
+  isunpayrpc_host = 'rpc.tidepay.io';
 }
 
 exports.webhost = webhost;

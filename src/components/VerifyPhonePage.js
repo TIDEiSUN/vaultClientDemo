@@ -55,21 +55,13 @@ export default class VerifyPhonePage extends React.Component {
       if (!phoneChanged && this.state.verified) {
         alert('Phone has been verified');
       } else {
-        const { authToken } = this.state;
-        const data = {
-          authToken,
-          params: {
-            phoneNumber,
-            countryCode,
-            via: 'sms',
-          },
-        };
-        VaultClientDemo.authRequestUpdatePhone(CurrentLogin.loginInfo, data)
+        const phone = { countryCode, phoneNumber };
+        VaultClientDemo.authRequestUpdatePhone(CurrentLogin.loginInfo, phone)
           .then((result) => {
             console.log('request phone token', result);
-            const { loginInfo, authToken: newAuthToken } = result;
+            const { loginInfo, authToken } = result;
             CurrentLogin.loginInfo = loginInfo;
-            this.setState({ authToken: newAuthToken });
+            this.setState({ authToken });
             alert('Success!');
           }).catch((err) => {
             console.error('Failed to send verification code by sms:', err);
@@ -91,20 +83,9 @@ export default class VerifyPhonePage extends React.Component {
     };
 
     if (phone.phoneNumber && phone.countryCode) {
-      const data = {
-        authToken,
-        params: {
-          phoneNumber,
-          countryCode,
-          phoneToken: token,
-        },
-      };
       const newBlob = VaultClientDemo.cloneBlob(CurrentLogin.loginInfo.blob);
-      newBlob.data.phone = {
-        phoneNumber,
-        countryCode,
-      };
-      VaultClientDemo.authVerifyUpdatePhone(CurrentLogin.loginInfo, data, newBlob)
+      newBlob.data.phone = phone;
+      VaultClientDemo.authVerifyUpdatePhone(CurrentLogin.loginInfo, phone, token, authToken, newBlob)
         .then((result) => {
           console.log('update phone:', result);
           CurrentLogin.loginInfo = result.loginInfo;

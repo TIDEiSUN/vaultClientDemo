@@ -113,14 +113,7 @@ export default class IndexPage extends React.Component {
     if (!emailChanged) {
       alert('Email has no change.');
     } else {
-      const data = {
-        authToken: null,
-        params: {
-          email: newEmail,
-          hostlink: Config.changeEmailURL,
-        },
-      };
-      VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, data)
+      VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;

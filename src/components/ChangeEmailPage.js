@@ -117,14 +117,7 @@ export default class ChangeEmailPage extends React.Component {
       authToken,
     } = this.props.location.query;
 
-    const data = {
-      authToken,
-      params: {
-        email,
-        emailToken: token,
-      },
-    };
-    return VaultClientDemo.authVerifyUpdateEmail(CurrentLogin.loginInfo, data)
+    return VaultClientDemo.authVerifyUpdateEmail(CurrentLogin.loginInfo, email, token, authToken)
       .then((result) => {
         console.log('verify update email', result);
         CurrentLogin.loginInfo = result.loginInfo;
@@ -150,14 +143,7 @@ export default class ChangeEmailPage extends React.Component {
       alert('Email has no change.');
       return Promise.reject(new Error('Email has no change.'));
     } else {
-      const data = {
-        authToken: null,
-        params: {
-          email: newEmail,
-          hostlink: Config.changeEmailURL,
-        },
-      };
-      return VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, data)
+      return VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;
