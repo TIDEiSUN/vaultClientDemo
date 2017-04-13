@@ -42,8 +42,6 @@ export default class UnblockAccountPage extends React.Component {
       auth: null,
       unblock: {
         email: '',
-        countryCode: '',
-        phoneNumber: '',
       },
       newPassword: '',
     };
@@ -125,12 +123,11 @@ export default class UnblockAccountPage extends React.Component {
   handleSubmit() {
     console.log('Unblock account');
 
-    const { email, phoneNumber, countryCode } = this.state.unblock;
-    const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
+    const { email } = this.state.unblock;
 
     const { blob, loginToken } = this.state.auth.result;
     console.log('Unblocked - token', loginToken);
-    return VaultClientDemo.handleRecovery(blob, email, phone)
+    return VaultClientDemo.handleRecovery(blob, email)
       .then((result) => {
         console.log('Unblock account successfully', result);
         CurrentLogin.loginInfo = result;

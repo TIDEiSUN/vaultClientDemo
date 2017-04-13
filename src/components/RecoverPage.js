@@ -42,8 +42,6 @@ export default class RecoverPage extends React.Component {
       auth: null,
       recover: {
         email: '',
-        countryCode: '',
-        phoneNumber: '',
       },
       newPassword: '',
     };
@@ -125,12 +123,11 @@ export default class RecoverPage extends React.Component {
   handleSubmit() {
     console.log('Recover account');
 
-    const { email, phoneNumber, countryCode } = this.state.recover;
-    const phone = (countryCode || phoneNumber) ? { phoneNumber, countryCode } : null;
+    const { email } = this.state.recover;
 
     const { blob, loginToken } = this.state.auth.result;
     console.log('Recovered - token', loginToken);
-    return VaultClientDemo.handleRecovery(blob, email, phone)
+    return VaultClientDemo.handleRecovery(blob, email)
       .then((result) => {
         console.log('Recover blob successfully', result);
         CurrentLogin.loginInfo = result;
