@@ -1,5 +1,5 @@
 let webhost = 'localhost:3000';
-let rippleRPC = 'wss://s.altnet.rippletest.net:51233';
+let rippleRPC = 'ws://dx.tidepay.io:16006';
 let isunpayrpc_host = 'localhost';
 let isunpayrpc_port = 27184;
 
