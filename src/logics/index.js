@@ -3,7 +3,7 @@ import RippleClientClass from '../../isunpayweb/app/logics/RippleClient';
 import Config from './config';
 
 const VaultClientDemo = new VaultClientDemoClass(Config.isunpayrpcURL);
-const RippleClient = new RippleClientClass(Config.rippleRPC, Config.isunpayrpcURL);
+const RippleClient = new RippleClientClass(Config.isunpayrpcURL);
 
 export default {
   VaultClientDemo,
