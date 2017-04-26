@@ -63,7 +63,7 @@ function AddWalletForm(props) {
   if (!secret) {
     return null;
   }
-
+console.debug(self.state.supportedCurrencies);
   return (
     <form>
       <div>
@@ -99,8 +99,8 @@ export default class WalletPage extends React.Component {
 
     // get all supported currencies
     RippleClient.getCurrencies()
-      .then((currencies) => {
-        this.setState({ supportedCurrencies: currencies });
+      .then((value) => {
+        this.setState({ supportedCurrencies: value.currencies });
       })
       .catch((err) => {
         console.error('Get supported currencies', err);
@@ -109,9 +109,9 @@ export default class WalletPage extends React.Component {
 
     // get all pockets
     const address = CurrentLogin.loginInfo.blob.data.account_id;
-    RippleClient.getGatewayAddresses()
-      .then((addresses) => {
-        return RippleClient.getPockets(addresses[0], address)
+    RippleClient.getGatewayAddress()
+      .then((value) => {
+        return RippleClient.getPockets(value.gateway, address)
       })
       .then((pockets) => {
         console.log('get pockets', pockets);
@@ -130,9 +130,9 @@ export default class WalletPage extends React.Component {
   handleActivatePocket(event) {
     console.log('Handle activate pocket');
 
-    return RippleClient.getGatewayAddresses()
-      .then((gatewayAddresses) => {
-        const gatewayAddress = gatewayAddresses[0];
+    return RippleClient.getGatewayAddress()
+      .then((value) => {
+        const gatewayAddress = value.gateway;
         const sourceAccount = {
           address: this.state.public,
           secret: this.state.secret,
@@ -166,9 +166,9 @@ export default class WalletPage extends React.Component {
     const currency = value;
     console.log('Handle freeze pocket', currency);
 
-    return RippleClient.getGatewayAddresses()
-      .then((gatewayAddresses) => {
-        const gatewayAddress = gatewayAddresses[0];
+    return RippleClient.getGatewayAddress()
+      .then((value) => {
+        const gatewayAddress = value.gateway;
         const sourceAccount = {
           address: this.state.public,
           secret: this.state.secret,

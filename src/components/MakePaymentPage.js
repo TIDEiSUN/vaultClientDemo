@@ -135,9 +135,9 @@ export default class MakePaymentPage extends React.Component {
 
   handleSubmitPaymentForm() {
     console.log('Handle send payment');
-    RippleClient.getGatewayAddresses()
-      .then((gatewayAddresses) => {
-        const gatewayAddress = gatewayAddresses[0];
+    RippleClient.getGatewayAddress()
+      .then((v) => {
+        const gatewayAddress = v.gateway;
         const external = this.state.externalPayment;
         const sourceAccount = {
           address: this.state.public,
@@ -188,9 +188,9 @@ export default class MakePaymentPage extends React.Component {
 
   handleSubmitExchangeForm() {
       console.log('Handle exchange');
-      return RippleClient.getGatewayAddresses()
-        .then((gatewayAddresses) => {
-          const [gatewayAddress] = gatewayAddresses;
+      return RippleClient.getGatewayAddress()
+        .then((value) => {
+          const gatewayAddress = value.gateway;
           const account = {
             address: this.state.public,
             secret: this.state.secret,
