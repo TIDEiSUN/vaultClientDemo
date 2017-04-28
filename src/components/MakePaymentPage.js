@@ -121,7 +121,7 @@ export default class MakePaymentPage extends React.Component {
     this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
 
-    RippleClient.getBalances(this.state.public)
+    RippleClient.getAccountBalances(this.state.public)
       .then((balances) => {
         this.setState({
           balances,

@@ -4,7 +4,7 @@
   "description": "Vault client in ES6",
   "main": "server.js",
   "scripts": {
-    "dev": "node_modules/.bin/webpack && node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
+    "dev": "node_modules/.bin/webpack --progress && node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
     "start": "node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
     "build": "NODE_ENV=staging node_modules/.bin/webpack --progress --watch",
     "patch": "node node_patch/patch.js",
