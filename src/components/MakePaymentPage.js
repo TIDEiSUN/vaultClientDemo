@@ -75,7 +75,7 @@ function AccountBalanceTable(props) {
     rows.push(
       <tr>
         <td>{balance.currency}</td>
-        <td>{balance.value}</td>
+        <td>{balance.balance}</td>
       </tr>
     );
   });
@@ -112,7 +112,7 @@ export default class MakePaymentPage extends React.Component {
       destination: '',
       currency: '',
       value: '',
-      exchangeFromCurrency: 'ISD',
+      exchangeFromCurrency: 'RGP',
       exchangeFromValue: '',
       exchangeToCurrency: 'USD',
       exchangeRate: 200,
@@ -124,8 +124,11 @@ export default class MakePaymentPage extends React.Component {
     RippleClient.getAccountBalances(this.state.public)
       .then((balances) => {
         this.setState({
-          balances,
+          balances: balances.lines,
         });
+      })
+      .catch((err) => {
+        console.log('getAccountBalances', err)
       });
   }
 
@@ -149,7 +152,7 @@ export default class MakePaymentPage extends React.Component {
         let paymentPromise;
         if (external) {
           let memo;
-          if (currency === 'ISD') {
+          if (currency === 'RGP') {
             // TODO add UI to input these data
             memo = {
               method: 'create_view',
