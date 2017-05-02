@@ -63,7 +63,6 @@ export default class ActivateAccountPage extends React.Component {
         CurrentLogin.loginToken = loginToken;
         console.log('Activate sucessfully', result);
         console.log('Activated - token', loginToken);
-        RippleClient.connectToServer();
         browserHistory.push('/main');
         return Promise.resolve();
       })
