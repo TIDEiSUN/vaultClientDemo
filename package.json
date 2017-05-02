@@ -33,11 +33,10 @@
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-router": "^2.6.1",
-    "ripple-binary-codec": "^0.1.5",
-    "ripple-hashes": "^0.2.0",
-    "ripple-keypairs": "^0.10.0",
-    "ripple-lib": "^0.17.4",
-    "ripple-lib-transactionparser": "^0.6.0"
+    "ripple-address-codec": "^2.0.1",
+    "ripple-binary-codec": "^0.1.10",
+    "ripple-hashes": "^0.3.0",
+    "ripple-keypairs": "^0.10.0"
   },
   "devDependencies": {
     "babel-cli": "^6.23.0",
@@ -58,7 +57,7 @@
     "eslint-plugin-jsx-a11y": "^3.0.2",
     "eslint-plugin-react": "^6.9.0",
     "json-loader": "^0.5.4",
-    "mocha": "^3.2.0",
+    "mocha": "^3.3.0",
     "nock": "^0.48.2",
     "nodemon": "^1.11.0",
     "null-loader": "^0.1.1",
