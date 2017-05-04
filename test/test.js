@@ -215,13 +215,6 @@ if (!online) {
       'Content-Type': 'application/json'
     });    
 
-  mockRename = nock('http://54.191.36.127:5993/v1/user/');
-  mockRename.filteringPath(/((.+)\/rename(.+))/g, 'rename/')
-    .post('rename/')
-    .reply(200, {result:'success',message:'rename'}, {
-      'Content-Type': 'application/json'
-    });  
-
   mockUpdate = nock('http://54.191.36.127:5993/v1/user/');
   mockUpdate.filteringPath(/((.+)\/updatekeys(.+))/g, 'update/')
     .post('update/')

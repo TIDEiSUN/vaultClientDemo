@@ -153,8 +153,6 @@ export default class IndexPage extends React.Component {
         <IDPhotosStatus id_photos={CurrentLogin.loginInfo.blob.id_photos} />
         <br />
         <div>
-          <Link to="/rename">Change Username</Link>
-          <br />
           <Link to="/changepw">Change Password</Link>
           <br />
           <Link to="/changepersonaldata">Change Personal Data</Link>
