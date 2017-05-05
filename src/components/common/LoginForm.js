@@ -60,20 +60,31 @@ export default class LoginForm extends React.Component {
 
   handleSubmitAuthenticationForm(inParams) {
     const objHasOwnProp = Object.prototype.hasOwnProperty;
-    const { auth, login } = this.state;
-    const { blobId, username, password, ...params } = inParams;
+    const { auth, login, params: requiredParams } = this.state;
+    const params = {};
 
     let customKeysPromise;
-    if (blobId !== undefined) {
+    if (requiredParams.blobId !== undefined) {
+      const { username, password } = inParams;
       customKeysPromise = VaultClientDemo.createCustomKeys(username, password)
         .then((customKeys) => {
           return customKeys.deriveLoginKeys();
         })
         .then((customKeys) => {
+          Object.keys(requiredParams).forEach((key) => {
+            if (inParams[key]) {
+              params[key] = inParams[key];
+            }
+          });
           params.blobId = customKeys.id;
           return Promise.resolve(customKeys);
         });
     } else {
+      Object.keys(requiredParams).forEach((key) => {
+        if (inParams[key]) {
+          params[key] = inParams[key];
+        }
+      });
       customKeysPromise = Promise.resolve(null);
     }
 

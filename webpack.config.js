@@ -2,8 +2,11 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
-  devtool: process.env.NODE_ENV === 'eval-source-map',
-  entry: path.join(__dirname, 'src', 'app-client.js'),
+  devtool: 'eval-source-map',
+  entry: [
+    'whatwg-fetch',
+    path.join(__dirname, 'src', 'app-client.js'),
+  ],
   output: {
     path: path.join(__dirname, 'src', 'static', 'js'),
     filename: 'bundle.js'
