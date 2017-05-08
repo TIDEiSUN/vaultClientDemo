@@ -6,7 +6,15 @@ import { RippleClient } from '../logics';
 import UnlockButton from './common/UnlockButton';
 
 function ExchangeForm(props) {
-  const { self } = props;
+  const {
+    secret,
+    self,
+  } = props;
+
+  if (!secret) {
+    return null;
+  }
+
   return (
     <div>
       <h1>Exchange</h1>
@@ -38,7 +46,15 @@ function ExchangeForm(props) {
 }
 
 function SendTransactionForm(props) {
-  const self = props.self;
+  const {
+    secret,
+    self,
+  } = props;
+
+  if (!secret) {
+    return null;
+  }
+
   return (
     <form>
       <div>
@@ -232,9 +248,9 @@ export default class MakePaymentPage extends React.Component {
         <br />
         <AccountBalanceTable balances={this.state.balances} />
         <br />
-        <SendTransactionForm self={this} />
+        <SendTransactionForm secret={this.state.secret} self={this} />
         <br />
-        <ExchangeForm self={this} />
+        <ExchangeForm secret={this.state.secret} self={this} />
         <br />
         <Link to="/main">Back to main page</Link>
       </div>
