@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { RippleClient } from '../logics';
+import { TidePayAPI } from '../logics';
 import UnlockButton from './common/UnlockButton';
 import DropdownMenu from './common/DropdownMenu';
 
@@ -98,7 +98,7 @@ export default class WalletPage extends React.Component {
     this.handleNewPocketCurrencyChange = this.handleNewPocketCurrencyChange.bind(this);
 
     // get all supported currencies
-    RippleClient.getCurrencies()
+    TidePayAPI.getCurrencies()
       .then((value) => {
         this.setState({ supportedCurrencies: value.currencies });
       })
@@ -109,9 +109,9 @@ export default class WalletPage extends React.Component {
 
     // get all pockets
     const address = CurrentLogin.loginInfo.blob.data.account_id;
-    RippleClient.getGatewayAddress()
+    TidePayAPI.getGatewayAddress()
       .then((value) => {
-        return RippleClient.getAccountPockets(value.gateway, address)
+        return TidePayAPI.getAccountPockets(value.gateway, address)
       })
       .then((pockets) => {
         console.log('get pockets', pockets);
@@ -130,7 +130,7 @@ export default class WalletPage extends React.Component {
   handleActivatePocket(event) {
     console.log('Handle activate pocket');
 
-    return RippleClient.getGatewayAddress()
+    return TidePayAPI.getGatewayAddress()
       .then((value) => {
         const gatewayAddress = value.gateway;
         const sourceAccount = {
@@ -143,7 +143,7 @@ export default class WalletPage extends React.Component {
         console.log('gateway', gatewayAddress);
         console.log('currency', currency);
         // return Promise.resolve({ currency, coinAddress: 'hahaha' });
-        return RippleClient.setPocket(gatewayAddress, sourceAccount, currency);
+        return TidePayAPI.setPocket(gatewayAddress, sourceAccount, currency);
       })
       .then((result) => {
         console.log('activate pocket', result);
@@ -166,7 +166,7 @@ export default class WalletPage extends React.Component {
     const currency = value;
     console.log('Handle freeze pocket', currency);
 
-    return RippleClient.getGatewayAddress()
+    return TidePayAPI.getGatewayAddress()
       .then((value) => {
         const gatewayAddress = value.gateway;
         const sourceAccount = {
@@ -177,7 +177,7 @@ export default class WalletPage extends React.Component {
         console.log('sourceAccount', sourceAccount);
         console.log('gateway', gatewayAddress);
         console.log('currency', currency);
-        return RippleClient.setPocket(gatewayAddress, sourceAccount, currency, true);
+        return TidePayAPI.setPocket(gatewayAddress, sourceAccount, currency, true);
       })
       .then((result) => {
         console.log('freeze pocket', result);

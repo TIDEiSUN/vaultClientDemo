@@ -1,7 +1,7 @@
 import React from 'react';
 import AsyncButton from '../common/AsyncButton';
 import { CurrentLogin } from '../Data';
-import { VaultClientDemo } from '../../logics';
+import { VaultClient } from '../../logics';
 
 export default class UnlockButton extends React.Component {
   constructor(props) {
@@ -14,7 +14,7 @@ export default class UnlockButton extends React.Component {
 
   handleUnlock() {
     console.log('Handle unlock');
-    return VaultClientDemo.unlockAccount(CurrentLogin.loginInfo)
+    return VaultClient.unlockAccount(CurrentLogin.loginInfo)
       .then((loginInfo) => {
         console.log('unlock', loginInfo);
         CurrentLogin.loginInfo = loginInfo;

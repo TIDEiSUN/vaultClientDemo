@@ -1,5 +1,5 @@
 import React from 'react';
-import { VaultClientDemo, Errors } from '../../logics';
+import { VaultClient, Errors } from '../../logics';
 import AuthenticationForm from './AuthenticationForm';
 
 const systemParams = {
@@ -26,9 +26,9 @@ export default class LoginForm extends React.Component {
   }
 
   componentDidMount() {
-    VaultClientDemo.getAuthInfoByUsername('dummy')
+    VaultClient.getAuthInfoByUsername('dummy')
       .then((authInfo) => {
-        return VaultClientDemo.authLoginAccount(authInfo);
+        return VaultClient.authLoginAccount(authInfo);
       })
       .then((resp) => {
         const { step: newStep = null, params = {}, resendParams = {} } = resp;
@@ -49,7 +49,7 @@ export default class LoginForm extends React.Component {
     const { customKeys } = login;
     const { blob, loginToken } = blobResult;
     console.log('Login - token', loginToken);
-    return VaultClientDemo.handleLogin(blob, customKeys)
+    return VaultClient.handleLogin(blob, customKeys)
       .then((result) => {
         return this.props.loginCallback(result, loginToken);
       })
@@ -67,7 +67,7 @@ export default class LoginForm extends React.Component {
     let customKeysPromise;
     if (requiredParams.blobId !== undefined) {
       const { username, password } = inParams;
-      customKeysPromise = VaultClientDemo.createCustomKeys(username, password)
+      customKeysPromise = VaultClient.createCustomKeys(username, password)
         .then((customKeys) => {
           return customKeys.deriveLoginKeys();
         })
@@ -105,7 +105,7 @@ export default class LoginForm extends React.Component {
         }
         this.setState({ login: updatedLogin });
 
-        return VaultClientDemo.authLoginAccount(updatedLogin.customKeys.authInfo, data);
+        return VaultClient.authLoginAccount(updatedLogin.customKeys.authInfo, data);
       })
       .then((resp) => {
         alert('OK!');

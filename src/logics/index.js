@@ -1,21 +1,21 @@
-import VaultClientDemoClass, { Utils, Errors } from '../../isunpayweb/app/logics/VaultClientDemo';
-import RippleClientClass from '../../isunpayweb/app/logics/RippleClient';
+import VaultClientClass, { Utils, Errors } from '../../isunpayweb/app/logics/vault-client-src/VaultClient';
+import TidePayAPIClass from '../../isunpayweb/app/logics/tidepay-lib-src/TidePayAPI';
 import Config from './config';
 
-const VaultClientDemo = new VaultClientDemoClass(Config.isunpayrpcURL);
-const RippleClient = new RippleClientClass(Config.isunpayrpcURL);
+const VaultClient = new VaultClientClass(Config.isunpayrpcURL);
+const TidePayAPI = new TidePayAPIClass(Config.isunpayrpcURL);
 
 export default {
-  VaultClientDemo,
-  RippleClient,
+  VaultClient,
+  TidePayAPI,
   Config,
   Utils,
   Errors,
 };
 
 export {
-  VaultClientDemo,
-  RippleClient,
+  VaultClient,
+  TidePayAPI,
   Config,
   Utils,
   Errors,

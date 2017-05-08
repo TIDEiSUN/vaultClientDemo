@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { RippleClient } from '../logics';
+import { TidePayAPI } from '../logics';
 import UnlockButton from './common/UnlockButton';
 
 function ExchangeForm(props) {
@@ -137,7 +137,7 @@ export default class MakePaymentPage extends React.Component {
     this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
 
-    RippleClient.getAccountBalances(this.state.public)
+    TidePayAPI.getAccountBalances(this.state.public)
       .then((balances) => {
         this.setState({
           balances: balances.lines,
@@ -154,7 +154,7 @@ export default class MakePaymentPage extends React.Component {
 
   handleSubmitPaymentForm() {
     console.log('Handle send payment');
-    RippleClient.getGatewayAddress()
+    TidePayAPI.getGatewayAddress()
       .then((v) => {
         const gatewayAddress = v.gateway;
         const external = this.state.externalPayment;
@@ -188,9 +188,9 @@ export default class MakePaymentPage extends React.Component {
               notifyURI: '',
             };
           }
-          paymentPromise = RippleClient.sendExternalPayment(gatewayAddress, sourceAccount, currency, value, memo);
+          paymentPromise = TidePayAPI.sendExternalPayment(gatewayAddress, sourceAccount, currency, value, memo);
         } else {
-          paymentPromise = RippleClient.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
+          paymentPromise = TidePayAPI.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
         }
 
         paymentPromise
@@ -207,7 +207,7 @@ export default class MakePaymentPage extends React.Component {
 
   handleSubmitExchangeForm() {
       console.log('Handle exchange');
-      return RippleClient.getGatewayAddress()
+      return TidePayAPI.getGatewayAddress()
         .then((value) => {
           const gatewayAddress = value.gateway;
           const account = {
@@ -220,7 +220,7 @@ export default class MakePaymentPage extends React.Component {
             exchangeToCurrency: toCurrency,
             exchangeRate,
           } = this.state;
-          return RippleClient.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate);
+          return TidePayAPI.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate);
         })
         .then((result) => {
           console.log('Exchange currency:', result);

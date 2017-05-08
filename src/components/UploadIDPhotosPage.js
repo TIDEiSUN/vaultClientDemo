@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo } from '../logics';
+import { VaultClient } from '../logics';
 import { CurrentLogin } from './Data';
 import ImageUpload from './common/ImageUpload';
 
@@ -30,7 +30,7 @@ export default class UploadIDPhotosPage extends React.Component {
     const formData = new FormData();
     formData.append('id_photo', this.state.id_photo);
     formData.append('selfie_photo', this.state.selfie_photo);
-    return VaultClientDemo.uploadPhotos(CurrentLogin.loginInfo, formData, config)
+    return VaultClient.uploadPhotos(CurrentLogin.loginInfo, formData, config)
       .then((result) => {
         console.log('update blob:', result);
         CurrentLogin.loginInfo = result.loginInfo;

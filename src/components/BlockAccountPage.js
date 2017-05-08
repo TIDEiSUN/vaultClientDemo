@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo, Config } from '../logics';
+import { VaultClient, Config } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
@@ -15,7 +15,7 @@ export default class BlockAccountPage extends React.Component {
 
   handleSubmit(event) {
     console.log('Handle block account');
-    return VaultClientDemo.blockAccount(CurrentLogin.loginInfo.username, CurrentLogin.loginInfo)
+    return VaultClient.blockAccount(CurrentLogin.loginInfo.username, CurrentLogin.loginInfo)
       .then((result) => {
         delete CurrentLogin.loginInfo;
         console.log('block account', result);

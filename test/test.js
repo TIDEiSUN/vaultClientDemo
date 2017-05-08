@@ -1,7 +1,7 @@
 import sjcl from '../src/logics/vault-client-src/sjcl';
 import { UInt256 } from '../src/logics/vault-client-src/ripple-npm/uint256';
 import assert from 'assert';
-import VaultClient, { RippleTxt, AuthInfo, Blob } from '../src/logics/vault-client-src';
+import BlobVaultAPI, { RippleTxt, AuthInfo, Blob } from '../src/logics/vault-client-src';
 import nock from 'nock';
 
 const online      = process.argv.indexOf('--online') !== -1 ? true : false; 
@@ -286,17 +286,17 @@ describe('AuthInfo', function() {
 });
 
 
-describe('VaultClient', function () {
-  const client = new VaultClient(exampleData.domain);
+describe('BlobVaultAPI', function () {
+  const client = new BlobVaultAPI(exampleData.domain);
 
   describe('#initialization', function() {
     it('should be initialized with a domain', function() {
-      const client = new VaultClient({ domain: exampleData.domain });
+      const client = new BlobVaultAPI({ domain: exampleData.domain });
       assert.strictEqual(client.domain, exampleData.domain);
     });
 
     it('should default to ripple.com without a domain', function () {
-      const client = new VaultClient();
+      const client = new BlobVaultAPI();
       assert.strictEqual(client.domain, 'ripple.com');
     });
   });
@@ -476,7 +476,7 @@ describe('VaultClient', function () {
 
 
 describe('Blob', function () {
-  const client = new VaultClient({ domain: exampleData.domain });
+  const client = new BlobVaultAPI({ domain: exampleData.domain });
   let resp;
 
   before(function(done) {

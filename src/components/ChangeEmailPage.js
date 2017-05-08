@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo, Config } from '../logics';
+import { VaultClient, Config } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import LoginForm from './common/LoginForm';
@@ -117,7 +117,7 @@ export default class ChangeEmailPage extends React.Component {
       authToken,
     } = this.props.location.query;
 
-    return VaultClientDemo.authVerifyUpdateEmail(CurrentLogin.loginInfo, email, token, authToken)
+    return VaultClient.authVerifyUpdateEmail(CurrentLogin.loginInfo, email, token, authToken)
       .then((result) => {
         console.log('verify update email', result);
         CurrentLogin.loginInfo = result.loginInfo;
@@ -143,7 +143,7 @@ export default class ChangeEmailPage extends React.Component {
       alert('Email has no change.');
       return Promise.reject(new Error('Email has no change.'));
     } else {
-      return VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
+      return VaultClient.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;

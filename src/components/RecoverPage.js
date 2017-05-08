@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo, Config } from '../logics';
+import { VaultClient, Config } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import AuthenticationForm from './common/AuthenticationForm';
@@ -72,7 +72,7 @@ export default class RecoverPage extends React.Component {
       return;
     }
     console.log('recover - request');
-    VaultClientDemo.authRecoverAccount()
+    VaultClient.authRecoverAccount()
       .then((resp) => {
         const { step: newStep = null, params: newParams = {} } = resp;
         this.setState({
@@ -103,7 +103,7 @@ export default class RecoverPage extends React.Component {
     });
     this.setState({ recover: updatedRecover });
 
-    return VaultClientDemo.authRecoverAccount(data)
+    return VaultClient.authRecoverAccount(data)
       .then((resp) => {
         alert('OK!');
         const { step: newStep = null, params: newParams = {} } = resp;
@@ -127,12 +127,12 @@ export default class RecoverPage extends React.Component {
 
     const { blob, loginToken } = this.state.auth.result;
     console.log('Recovered - token', loginToken);
-    return VaultClientDemo.handleRecovery(blob, email)
+    return VaultClient.handleRecovery(blob, email)
       .then((result) => {
         console.log('Recover blob successfully', result);
         CurrentLogin.loginInfo = result;
         CurrentLogin.loginToken = loginToken;
-        return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
+        return VaultClient.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       }).then((result) => {
         console.log('change password', result);
         CurrentLogin.loginInfo = result.loginInfo;

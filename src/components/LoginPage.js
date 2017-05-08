@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
-import { RippleClient } from '../logics';
 import { CurrentLogin } from './Data';
 import LoginForm from './common/LoginForm';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo } from '../logics';
+import { VaultClient } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
@@ -48,7 +48,7 @@ export default class ChangePersonalDataPage extends React.Component {
     blob.data.firstName = this.state.firstName;
     blob.data.lastName = this.state.lastName;
     
-    return VaultClientDemo.updateBlob(username, CurrentLogin.loginInfo)
+    return VaultClient.updateBlob(username, CurrentLogin.loginInfo)
       .then((result) => {
         console.log('update blob:', result);
         CurrentLogin.loginInfo = result.loginInfo;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo, Utils } from '../logics';
+import { VaultClient, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 
 function PhoneInfoDiv(props) {
@@ -39,7 +39,7 @@ export default class TwoFactorAuthPage extends React.Component {
 
     const phone = this.state.phone;
     if (phone.phoneNumber && phone.countryCode) {
-      VaultClientDemo.set2FAInfo(CurrentLogin.loginInfo,
+      VaultClient.set2FAInfo(CurrentLogin.loginInfo,
                                  this.state.enabled,
                                  phone)
         .then((result) => {

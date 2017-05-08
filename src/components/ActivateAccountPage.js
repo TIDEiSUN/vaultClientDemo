@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
-import { VaultClientDemo, RippleClient } from '../logics';
+import { VaultClient } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
@@ -46,16 +46,16 @@ export default class ActivateAccountPage extends React.Component {
   handleActivateAccount() {
     const { username, email, token, authToken } = this.props.location.query;
     console.log('Verifiy: AuthToken', authToken);
-    return VaultClientDemo.authVerifyAccountEmailToken(username, email, token, authToken)
+    return VaultClient.authVerifyAccountEmailToken(username, email, token, authToken)
       .then((resp) => {
         const { authToken: newAuthToken, blob, createAccountToken } = resp;
         console.log('Activate: AuthToken', newAuthToken);
-        const recoveryPromise = VaultClientDemo.handleRecovery(blob, email);
+        const recoveryPromise = VaultClient.handleRecovery(blob, email);
         return Promise.all([newAuthToken, createAccountToken, recoveryPromise]);
       })
       .then(([newAuthToken, createAccountToken, loginInfo]) => {
         console.log('Recover account successfully', loginInfo);
-        return VaultClientDemo.authActivateAccount(loginInfo, email, newAuthToken, createAccountToken);
+        return VaultClient.authActivateAccount(loginInfo, email, newAuthToken, createAccountToken);
       })
       .then((result) => {
         const { loginInfo, loginToken } = result;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo } from '../logics'
+import { VaultClient } from '../logics'
 import { CurrentLogin } from './Data'
 import AsyncButton from './common/AsyncButton'
 
@@ -25,7 +25,7 @@ export default class ChangePasswordPage extends React.Component {
         if (!result.correct) {
           return Promise.reject(new Error('Incorrect old password'));
         }
-        return VaultClientDemo.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
+        return VaultClient.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
       })
       .then((result) => {
         console.log('change password', result);

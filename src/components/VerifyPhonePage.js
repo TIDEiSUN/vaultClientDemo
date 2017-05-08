@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClientDemo, Utils } from '../logics';
+import { VaultClient, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 
 function PhoneInfoDiv(props) {
@@ -56,7 +56,7 @@ export default class VerifyPhonePage extends React.Component {
         alert('Phone has been verified');
       } else {
         const phone = { countryCode, phoneNumber };
-        VaultClientDemo.authRequestUpdatePhone(CurrentLogin.loginInfo, phone)
+        VaultClient.authRequestUpdatePhone(CurrentLogin.loginInfo, phone)
           .then((result) => {
             console.log('request phone token', result);
             const { loginInfo, authToken } = result;
@@ -83,9 +83,9 @@ export default class VerifyPhonePage extends React.Component {
     };
 
     if (phone.phoneNumber && phone.countryCode) {
-      const newBlob = VaultClientDemo.cloneBlob(CurrentLogin.loginInfo.blob);
+      const newBlob = VaultClient.cloneBlob(CurrentLogin.loginInfo.blob);
       newBlob.data.phone = phone;
-      VaultClientDemo.authVerifyUpdatePhone(CurrentLogin.loginInfo, phone, token, authToken, newBlob)
+      VaultClient.authVerifyUpdatePhone(CurrentLogin.loginInfo, phone, token, authToken, newBlob)
         .then((result) => {
           console.log('update phone:', result);
           CurrentLogin.loginInfo = result.loginInfo;

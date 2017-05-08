@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { VaultClientDemo } from '../logics';
+import { VaultClient } from '../logics';
 
 function BankAccountTable(props) {
   const { bankAccounts, self } = props;
@@ -117,7 +117,7 @@ export default class BankAccountPage extends React.Component {
       }
     };
 
-    return VaultClientDemo.addBankAccount(CurrentLogin.loginInfo, newBankAccount, updateBlobDataCallback)
+    return VaultClient.addBankAccount(CurrentLogin.loginInfo, newBankAccount, updateBlobDataCallback)
       .then((result) => {
         console.log('add bank account', result);
         CurrentLogin.loginInfo = result.loginInfo;
@@ -143,7 +143,7 @@ export default class BankAccountPage extends React.Component {
       blobData[this.blobDataKey].splice(rowIndex, 1);
     };
 
-    return VaultClientDemo.deleteBankAccount(CurrentLogin.loginInfo, deleteBankAccount, updateBlobDataCallback)
+    return VaultClient.deleteBankAccount(CurrentLogin.loginInfo, deleteBankAccount, updateBlobDataCallback)
       .then((result) => {
         console.log('delete bank account', result);
         CurrentLogin.loginInfo = result.loginInfo;

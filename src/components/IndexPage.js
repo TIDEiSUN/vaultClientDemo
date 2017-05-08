@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
-import { VaultClientDemo, Config } from '../logics';
+import { VaultClient, Config } from '../logics';
 
 function EmailField(props) {
   const { blob, self } = props;
@@ -84,7 +84,7 @@ export default class IndexPage extends React.Component {
 
   // componentDidMount() {
   //   const { loginToken } = CurrentLogin;
-  //   VaultClientDemo.getBlob(loginToken)
+  //   VaultClient.getBlob(loginToken)
   //     .then((result) => {
   //       const { blob, loginToken: newLoginToken } = result;
   //       console.log('@@blob', blob);
@@ -113,7 +113,7 @@ export default class IndexPage extends React.Component {
     if (!emailChanged) {
       alert('Email has no change.');
     } else {
-      VaultClientDemo.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
+      VaultClient.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;
