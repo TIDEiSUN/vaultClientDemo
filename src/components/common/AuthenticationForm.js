@@ -64,6 +64,22 @@ function getParamInputs(objName, params, self) {
   return paramInputs;
 }
 
+function ErrorText(props) {
+  const { text } = props;
+  if (!text) {
+    return null;
+  }
+  const style = {
+    color: 'red',
+  };
+  return (
+    <div style={style}>
+      <p>{text}</p>
+      <br />
+    </div>
+  );
+}
+
 function InputForm(props) {
   const { title, params, self, objName } = props;
   if (!params) {
@@ -103,6 +119,7 @@ export default class AuthenticationForm extends React.Component {
         params: newParams,
         resendParams: newResendParams,
         cachedParamValues: defaultParams,
+        errorMessage: null,
       };
     } else {
       this.state = {
@@ -110,20 +127,31 @@ export default class AuthenticationForm extends React.Component {
         params: null,
         resendParams: null,
         cachedParamValues: defaultParams,
+        errorMessage: null,
       };
     }
   }
 
   componentWillReceiveProps(props) {
-    const { auth, systemParams = {} } = props;
+    const { auth, systemParams = {}, errorMessage } = props;
     const { step, params, resendParams } = auth;
     if (step) {
       const { cachedParamValues } = this.state;
       const newParams = params ? setParams(cachedParamValues, systemParams, params) : null;
       const newResendParams = resendParams ? setParams(cachedParamValues, systemParams, resendParams) : null;
-      this.setState({ step, params: newParams, resendParams: newResendParams });
+      this.setState({
+        step,
+        params: newParams,
+        resendParams: newResendParams,
+        errorMessage,
+      });
     } else {
-      this.setState({ step, params: null, resendParams: null });
+      this.setState({
+        step,
+        params: null,
+        resendParams: null,
+        errorMessage,
+      });
     }
   }
 
@@ -156,6 +184,7 @@ export default class AuthenticationForm extends React.Component {
     }
     return (
       <div>
+        <ErrorText text={this.state.errorMessage} />
         <InputForm title={this.state.step} params={this.state.params} self={this} objName="params" />
         <br />
         <InputForm title="Resend" params={this.state.resendParams} self={this} objName="resendParams" />

@@ -1,4 +1,4 @@
-import VaultClientDemoClass, { Utils } from '../../isunpayweb/app/logics/VaultClientDemo';
+import VaultClientDemoClass, { Utils, Errors } from '../../isunpayweb/app/logics/VaultClientDemo';
 import RippleClientClass from '../../isunpayweb/app/logics/RippleClient';
 import Config from './config';
 
@@ -10,6 +10,7 @@ export default {
   RippleClient,
   Config,
   Utils,
+  Errors,
 };
 
 export {
@@ -17,4 +18,5 @@ export {
   RippleClient,
   Config,
   Utils,
+  Errors,
 };

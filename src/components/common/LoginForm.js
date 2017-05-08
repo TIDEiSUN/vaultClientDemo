@@ -1,5 +1,5 @@
 import React from 'react';
-import { VaultClientDemo } from '../../logics';
+import { VaultClientDemo, Errors } from '../../logics';
 import AuthenticationForm from './AuthenticationForm';
 
 const systemParams = {
@@ -16,6 +16,7 @@ export default class LoginForm extends React.Component {
       login: {
         customKeys: null,
       },
+      errorMessage: null,
     };
     const { username } = props;
     if (username) {
@@ -30,12 +31,12 @@ export default class LoginForm extends React.Component {
         return VaultClientDemo.authLoginAccount(authInfo);
       })
       .then((resp) => {
-        const { step: newStep = null, params: newParams = {} } = resp;
+        const { step: newStep = null, params = {}, resendParams = {} } = resp;
         this.initAuthState = resp;
         this.setState({
           auth: resp,
           step: newStep,
-          params: newParams,
+          params: { ...params, ...resendParams },
         });
       })
       .catch((err) => {
@@ -108,11 +109,12 @@ export default class LoginForm extends React.Component {
       })
       .then((resp) => {
         alert('OK!');
-        const { step: newStep = null, params: newParams = {} } = resp;
+        const { step: newStep = null, params: newParams = {}, resendParams: newResendParams = {} } = resp;
         this.setState({
           auth: resp,
           step: newStep,
-          params: newParams,
+          params: { ...newParams, ...newResendParams },
+          errorMessage: null,
         });
         if (resp.step !== 'done') {
           return Promise.resolve();
@@ -124,13 +126,22 @@ export default class LoginForm extends React.Component {
           this.setState({ auth: this.initAuthState });
         }
         alert(`Failed! ${err.message}`);
+        // FIXME instanceof Errors.FetchError does not work
+        // if (err instanceof Errors.FetchError) {
+          if (err.info) {
+            const errorMessage = JSON.stringify(err.info, null, 2);
+            this.setState({ errorMessage });
+          } else {
+            this.setState({ errorMessage: null });
+          }
+        // }
         return Promise.reject(err);
       });
   }
 
   render() {
     return (
-      <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} defaultParams={defaultParams} />
+      <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} defaultParams={defaultParams} errorMessage={this.state.errorMessage} />
     );
   }
 }
