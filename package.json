@@ -7,7 +7,8 @@
     "dev": "node_modules/.bin/webpack --progress && node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
     "start": "node_modules/.bin/babel-node --presets 'react,es2015' src/server.js",
     "build": "NODE_ENV=staging node_modules/.bin/webpack --progress --watch",
-    "postinstall": "cd ./isunpayweb && npm install && cd ../",
+    "build:external": "cd ./externals/tidepay-lib && npm run build:prod && cd ../",
+    "postinstall": "cd ./externals/tidepay-lib && npm install && cd ../ && npm run build:external",
     "test": "./node_modules/.bin/mocha --require babel-polyfill --compilers js:babel-register --reporter spec test/*.js"
   },
   "repository": {

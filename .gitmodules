@@ -1,4 +1,4 @@
-[submodule "isunpayweb"]
-	path = isunpayweb
-	url = ssh://git@phabgit.isuntv.com/diffusion/ISPWEB/isunpayweb.git
-	branch = logics_changes
+[submodule "externals/tidepay-lib"]
+	path = externals/tidepay-lib
+	url = https://github.com/choiip/tidepay-lib.git
+	branch = master

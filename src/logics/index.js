@@ -1,5 +1,5 @@
-import VaultClientClass, { Utils, Errors } from '../../isunpayweb/app/logics/vault-client-src/VaultClient';
-import TidePayAPIClass from '../../isunpayweb/app/logics/tidepay-lib-src/TidePayAPI';
+import { VaultClientClass, Utils, Errors } from '../../externals/tidepay-lib/build/tidepay-lib';
+import { TidePayAPIClass } from '../../externals/tidepay-lib/build/tidepay-lib';
 import Config from './config';
 
 const VaultClient = new VaultClientClass(Config.isunpayrpcURL);
