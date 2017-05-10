@@ -153,13 +153,12 @@ export default class WalletPage extends React.Component {
         };
         this.setState({ pockets });
         alert('Pocket activated!');
+        return Promise.resolve();
       }).catch(err => {
         console.error('activate pocket:', err);
         alert('Failed to activate pocket: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-
-    //event.preventDefault();
   }
 
   handleFreezePocket(value) {
@@ -187,13 +186,12 @@ export default class WalletPage extends React.Component {
         delete pockets[currency];
         this.setState({ pockets });
         alert('Pocket frozen!');
+        return Promise.resolve();
       }).catch(err => {
         console.error('freeze pocket:', err);
         alert('Failed to freeze pocket: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-
-    //event.preventDefault();
   }
 
   onUpdate(data) {
@@ -204,7 +202,7 @@ export default class WalletPage extends React.Component {
     return (
       <div className="home">
         <h1>Wallet</h1>
-        <UnlockButton public={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+        <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
         <br />
         <WalletTable pockets={this.state.pockets} secret={this.state.secret} self={this} />
         <br />

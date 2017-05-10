@@ -53,10 +53,11 @@ export default class ChangePersonalDataPage extends React.Component {
         console.log('update blob:', result);
         CurrentLogin.loginInfo = result.loginInfo;
         alert('Updated!');
+        return Promise.resolve();
       }).catch(err => {
         console.error('Failed to update blob:', err);
         alert('Failed to update: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
   }
 

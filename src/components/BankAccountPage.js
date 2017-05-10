@@ -125,10 +125,11 @@ export default class BankAccountPage extends React.Component {
           bankAccounts: CurrentLogin.loginInfo.blob.data[this.blobDataKey],
         });
         alert('Added bank account!');
+        return Promise.resolve();
       }).catch((err) => {
         console.error('add bank account:', err);
         alert('Failed to add bank account: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
   }
 
@@ -151,10 +152,11 @@ export default class BankAccountPage extends React.Component {
           bankAccounts: CurrentLogin.loginInfo.blob.data[this.blobDataKey],
         });
         alert('Deleted bank account!');
+        return Promise.resolve();
       }).catch((err) => {
         console.error('delete bank account:', err);
         alert('Failed to delete bank account: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
   }
 

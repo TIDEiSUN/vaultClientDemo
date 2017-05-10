@@ -4,13 +4,29 @@ export default class DropdownMenu extends React.Component {
   constructor(props) {
     super(props);
     this.handleChange = this.handleChange.bind(this);
-    if (this.props.items.length > 0) {
-      this.props.onChange(this.props.items[0]);
+    this.firstItem = null;
+    this.selectedItem = null;
+    this.componentWillReceiveProps(props);
+  }
+
+  componentWillReceiveProps(props) {
+    const { items } = props;
+    if (items.length > 0) {
+      const item = items[0]
+      if (item !== this.firstItem) {
+        this.firstItem = item;
+        this.selectedItem = item;
+        this.props.onChange(item);
+      }
     }
   }
 
   handleChange(event) {
-    this.props.onChange(event.target.value);
+    const item = event.target.value;
+    if (item !== this.selectedItem) {
+      this.selectedItem = item;
+      this.props.onChange(item);
+    }
   }
 
   render() {

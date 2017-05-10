@@ -4,44 +4,45 @@ import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import { TidePayAPI } from '../logics';
 import UnlockButton from './common/UnlockButton';
+import DropdownMenu from './common/DropdownMenu';
+import AccountBalanceTable from './common/AccountBalanceTable';
 
-function ExchangeForm(props) {
+function WithdrawalFeeTable(props) {
   const {
     secret,
-    self,
+    withdrawalFeeMap,
+    currencies,
   } = props;
 
   if (!secret) {
     return null;
   }
 
+  const rows = [];
+  Object.keys(withdrawalFeeMap).forEach((currency) => {
+    if (currencies.includes(currency)) {
+      rows.push(
+        <tr>
+          <td>{currency}</td>
+          <td>{withdrawalFeeMap[currency]}</td>
+        </tr>
+      );
+    }
+  });
+
+  if (rows.length === 0) {
+    return null;
+  }
   return (
-    <div>
-      <h1>Exchange</h1>
-      <form>
-        <div>
-          Rate: {self.state.exchangeRate}
-        </div>
-        <div>
-          From:
-          <input type="text" value={self.state.exchangeFromValue} onChange={self.handleChange.bind(self, 'exchangeFromValue')} />
-          {self.state.exchangeFromCurrency}
-        </div>
-        <div>
-          To:
-          {self.state.exchangeFromValue / self.state.exchangeRate}
-          {self.state.exchangeToCurrency}
-        </div>
-        <AsyncButton
-          type="button"
-          onClick={self.handleSubmitExchangeForm}
-          pendingText="Sending..."
-          fulFilledText="Sent"
-          rejectedText="Failed! Try Again"
-          text="Send"
-        />
-      </form>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <td>Currency</td>
+          <td>Fee</td>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
   );
 }
 
@@ -49,11 +50,17 @@ function SendTransactionForm(props) {
   const {
     secret,
     self,
+    withdrawalFeeMap,
+    currencies,
   } = props;
 
   if (!secret) {
     return null;
   }
+
+  const withdrawalFee = self.state.currency ? withdrawalFeeMap[self.state.currency] : undefined;
+  const fee = self.state.externalPayment ? withdrawalFee : 0;
+  const total = self.state.value ? parseFloat(self.state.value) + fee : '';
 
   return (
     <form>
@@ -67,11 +74,14 @@ function SendTransactionForm(props) {
       </div>
       <div>
         Currency:
-        <input type="text" value={self.state.currency} onChange={self.handleChange.bind(self, 'currency')} />
+        <DropdownMenu items={currencies} onChange={self.handleCurrencyChange} />
       </div>
       <div>
         Value:
         <input type="text" value={self.state.value} onChange={self.handleChange.bind(self, 'value')} />
+      </div>
+      <div>
+        Total: {total}
       </div>
       <AsyncButton
         type="button"
@@ -85,66 +95,33 @@ function SendTransactionForm(props) {
   );
 }
 
-function AccountBalanceTable(props) {
-  const rows = [];
-  props.balances.forEach((balance) => {
-    rows.push(
-      <tr>
-        <td>{balance.currency}</td>
-        <td>{balance.balance}</td>
-      </tr>
-    );
-  });
-
-  if (rows.length === 0) {
-    return (
-      <div>
-        No currency!
-      </div>
-    );
-  }
-
-  return (
-    <table>
-      <thead>
-        <tr>
-          <td>Currency</td>
-          <td>Value</td>
-        </tr>
-      </thead>
-      <tbody>{rows}</tbody>
-    </table>
-  );
-}
-
 export default class MakePaymentPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       public: CurrentLogin.loginInfo.blob.data.account_id,
       secret: CurrentLogin.loginInfo.secret,
-      balances: [],
+      balances: {},
       externalPayment: false,
       destination: '',
       currency: '',
       value: '',
-      exchangeFromCurrency: 'RGP',
-      exchangeFromValue: '',
-      exchangeToCurrency: 'USD',
-      exchangeRate: 200,
+      withdrawalFeeMap: {},
     };
+    this.handleCurrencyChange = this.handleCurrencyChange.bind(this);
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
-    this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
+    this.onGetAccountBalances = this.onGetAccountBalances.bind(this);
 
-    TidePayAPI.getAccountBalances(this.state.public)
-      .then((balances) => {
+    TidePayAPI.getWithdrawalFee()
+      .then((map) => {
         this.setState({
-          balances: balances.lines,
+          withdrawalFeeMap: map,
         });
       })
       .catch((err) => {
-        console.log('getAccountBalances', err)
+        alert('Failed to get account balances');
+        console.log('getTransactionFee', err);
       });
   }
 
@@ -152,9 +129,13 @@ export default class MakePaymentPage extends React.Component {
     this.setState(data);
   }
 
+  onGetAccountBalances(balances) {
+    this.setState({ balances });
+  }
+
   handleSubmitPaymentForm() {
     console.log('Handle send payment');
-    TidePayAPI.getGatewayAddress()
+    return TidePayAPI.getGatewayAddress()
       .then((v) => {
         const gatewayAddress = v.gateway;
         const external = this.state.externalPayment;
@@ -165,6 +146,10 @@ export default class MakePaymentPage extends React.Component {
         const destination = this.state.destination;
         const currency = this.state.currency;
         const value = this.state.value;
+        if (!currency || !value) {
+          return Promise.reject('Invalid currency or value');
+        }
+
         let paymentPromise;
         if (external) {
           let memo;
@@ -188,48 +173,25 @@ export default class MakePaymentPage extends React.Component {
               notifyURI: '',
             };
           }
-          paymentPromise = TidePayAPI.sendExternalPayment(gatewayAddress, sourceAccount, currency, value, memo);
+          const fee = this.state.withdrawalFeeMap[currency];
+          const total = parseFloat(value) + fee;
+          paymentPromise = TidePayAPI.sendExternalPayment(gatewayAddress, sourceAccount, currency, total, memo);
         } else {
           paymentPromise = TidePayAPI.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
         }
 
-        paymentPromise
-          .then((result) => {
-            console.log('Submit payment', result);
-            alert('Success!');
-          })
-          .catch((err) => {
-            console.error('Submit payment', err);
-            alert('Failed! ' + err.message);
-          });
+        return paymentPromise;
+      })
+      .then((result) => {
+        console.log('Submit payment', result);
+        alert('Success!');
+        return Promise.resolve();
+      })
+      .catch((err) => {
+        console.error('Submit payment', err);
+        alert('Failed! ' + err.message);
+        return Promise.reject(err);
       });
-  }
-
-  handleSubmitExchangeForm() {
-      console.log('Handle exchange');
-      return TidePayAPI.getGatewayAddress()
-        .then((value) => {
-          const gatewayAddress = value.gateway;
-          const account = {
-            address: this.state.public,
-            secret: this.state.secret,
-          };
-          const {
-            exchangeFromCurrency: fromCurrency,
-            exchangeFromValue: fromValue,
-            exchangeToCurrency: toCurrency,
-            exchangeRate,
-          } = this.state;
-          return TidePayAPI.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate);
-        })
-        .then((result) => {
-          console.log('Exchange currency:', result);
-          alert('Success!');
-        })
-        .catch((err) => {
-          console.error('Exchange currency:', err);
-          alert('Failed!' + err.message);
-        });
   }
 
   handleChange(name, event) {
@@ -240,17 +202,22 @@ export default class MakePaymentPage extends React.Component {
     this.setState({ [name]: event.target.checked });
   }
 
+  handleCurrencyChange(currency) {
+    this.setState({ currency });
+  }
+
   render() {
+    const currencies = Object.keys(this.state.balances);
     return (
       <div className="home">
         <h1>Ripple Account Info</h1>
-        <UnlockButton public={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+        <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
         <br />
-        <AccountBalanceTable balances={this.state.balances} />
+        <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
         <br />
-        <SendTransactionForm secret={this.state.secret} self={this} />
+        <WithdrawalFeeTable secret={this.state.secret} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
         <br />
-        <ExchangeForm secret={this.state.secret} self={this} />
+        <SendTransactionForm secret={this.state.secret} self={this} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
         <br />
         <Link to="/main">Back to main page</Link>
       </div>

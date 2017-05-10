@@ -122,6 +122,7 @@ export default class ChangeEmailPage extends React.Component {
         console.log('verify update email', result);
         CurrentLogin.loginInfo = result.loginInfo;
         alert('OK!');
+        return Promise.resolve();
       }).catch((err) => {
         console.error('verify update email:', err);
         alert(`Failed! ${err.message}`);
@@ -148,6 +149,7 @@ export default class ChangeEmailPage extends React.Component {
           console.log('request update email', result);
           CurrentLogin.loginInfo = result.loginInfo;
           alert('Verification email has been sent to ' + newEmail);
+          return Promise.resolve();
         }).catch((err) => {
           console.error('Verication email cannot be sent:', err);
           alert('Verication email cannot be sent: ' + err.message);

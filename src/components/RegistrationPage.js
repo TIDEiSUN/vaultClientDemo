@@ -28,12 +28,12 @@ export default class RegistrationPage extends React.Component {
       .then(result => {
         console.log('Register sucessfully', result);
         alert('Account created. Verification email has been sent to ' + email);
+        return Promise.resolve();
       }).catch(err => {
         console.error('Failed to register:', err);
         alert('Failed to register: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-    //event.preventDefault();
   }
 
   render() {

@@ -31,12 +31,12 @@ export default class ChangePasswordPage extends React.Component {
         console.log('change password', result);
         CurrentLogin.loginInfo = result.loginInfo;
         alert('Success!');
+        return Promise.resolve();
       }).catch(err => {
         console.error('Failed to change password:', err);
         alert('Failed to change password: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
-    //event.preventDefault();
   }
   
   render() {

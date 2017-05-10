@@ -136,6 +136,7 @@ export default class UnblockAccountPage extends React.Component {
       }).then((result) => {
         console.log('change password', result);
         CurrentLogin.loginInfo = result.loginInfo;
+        return Promise.resolve();
       }).catch((err) => {
         delete CurrentLogin.loginInfo;
         console.error('Failed to unblock account:', err);

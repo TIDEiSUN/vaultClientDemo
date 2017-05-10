@@ -20,10 +20,11 @@ export default class BlockAccountPage extends React.Component {
         delete CurrentLogin.loginInfo;
         console.log('block account', result);
         alert('Success!');
+        return Promise.resolve();
       }).catch(err => {
         console.error('block account', err);
         alert('Failed to block account');
-        throw err;
+        return Promise.reject(err);
       });
   }
 

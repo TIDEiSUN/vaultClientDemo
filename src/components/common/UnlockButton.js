@@ -5,12 +5,9 @@ import { VaultClient } from '../../logics';
 
 export default class UnlockButton extends React.Component {
   constructor(props) {
-		super(props);
-		// this.state = {
-		// 	secret: props.secret,
-		// }
-		this.handleUnlock = this.handleUnlock.bind(this);
-	}
+    super(props);
+    this.handleUnlock = this.handleUnlock.bind(this);
+  }
 
   handleUnlock() {
     console.log('Handle unlock');
@@ -21,36 +18,38 @@ export default class UnlockButton extends React.Component {
         this.setState({
           secret: loginInfo.secret,
         });
-				this.props.onUpdate({ secret: loginInfo.secret });
+        this.props.onUpdate({ secret: loginInfo.secret });
         alert('Success!');
-      }).catch(err => {
+        return Promise.resolve();
+      }).catch((err) => {
         console.error('Failed to unlock:', err);
         alert('Failed to unlock: ' + err.message);
-        throw err;
+        return Promise.reject(err);
       });
   }
 
-	render() {
-		if (this.props.secret) {
-			return (
-				<div>
-					<p>Public address: {this.props.public}</p>
-					<p>Secret key: {this.props.secret}</p>
-				</div>
-			);
-		} else {
-			return (
-				<div>
-					<AsyncButton
-						type="button"
-						onClick={this.handleUnlock}
-						pendingText="Unlocking..."
-						fulFilledText="Unlocked"
-						rejectedText="Failed! Try Again"
-						text="Unlock"
-					/>
-				</div>
-			);
-		}
-	}
+  render() {
+    const { secret, address } = this.props;
+    if (secret) {
+      return (
+        <div>
+          <p>Public address: {address}</p>
+          <p>Secret key: {secret}</p>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <AsyncButton
+            type="button"
+            onClick={this.handleUnlock}
+            pendingText="Unlocking..."
+            fulFilledText="Unlocked"
+            rejectedText="Failed! Try Again"
+            text="Unlock"
+          />
+        </div>
+      );
+    }
+  }
 }

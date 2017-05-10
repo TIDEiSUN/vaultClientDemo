@@ -24,50 +24,54 @@ function EmailField(props) {
 }
 
 function LastBlobIDChangeDate(props) {
-  if (!props.date) {
+  const { date } = props;
+  if (!date) {
     return null;
   }
   return (
     <div>
-      Blob ID: Last updated at {props.date}
+      Blob ID: Last updated at {date}
     </div>
   );
 }
 
 function IDPhotosStatus(props) {
-  if (!props.id_photos) {
+  const { id_photos } = props;
+  if (!id_photos) {
     return (
       <div>
         ID Photos: null
       </div>
     );
   }
-  if (!props.id_photos.uploaded_date) {
+  if (!id_photos.uploaded_date) {
     return (
       <div>
-        ID Photos: {props.id_photos.status}
+        ID Photos: {id_photos.status}
       </div>
     );
   }
   return (
     <div>
-      ID Photos: {props.id_photos.status} (Last updated at {props.id_photos.uploaded_date})
+      ID Photos: {id_photos.status} (Last updated at {id_photos.uploaded_date})
     </div>
   );
 }
 
 function ResendVerificationButton(props) {
+  const { target } = props;
   return (
-    <form onSubmit={props.target.handleResendEmail}>
-      <input type="text" value={props.target.state.resendEmail} onChange={props.target.handleChange.bind(props.target, 'resendEmail')} />
+    <form onSubmit={target.handleResendEmail}>
+      <input type="text" value={target.state.resendEmail} onChange={target.handleChange.bind(target, 'resendEmail')} />
       <input type="submit" value="Resend verification" />
     </form>
   );
 }
 
 function LogoutButton(props) {
+  const { target } = props;
   return (
-    <button onClick={props.target.handleLogout}>Logout</button>
+    <button onClick={target.handleLogout}>Logout</button>
   );
 }
 
@@ -164,6 +168,8 @@ export default class IndexPage extends React.Component {
           <Link to="/upload">Upload ID Photos</Link>
           <br />
           <Link to="/payment">Make Payment</Link>
+          <br />
+          <Link to="/exchange">Exchange Currency</Link>
           <br />
           <Link to="/wallet">Show Wallet</Link>
           <br />

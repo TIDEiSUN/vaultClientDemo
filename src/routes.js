@@ -1,5 +1,5 @@
-import React from 'react'
-import { Route, IndexRoute } from 'react-router'
+import React from 'react';
+import { Route, IndexRoute } from 'react-router';
 import Layout from './components/Layout';
 import LoginPage from './components/LoginPage';
 import IndexPage from './components/IndexPage';
@@ -18,6 +18,7 @@ import UnblockAccountPage from './components/UnblockAccountPage';
 import UploadIDPhotosPage from './components/UploadIDPhotosPage';
 import BankAccountPage from './components/BankAccountPage';
 import TwoFactorAuthPage from './components/TwoFactorAuthPage';
+import ExchangePage from './components/ExchangePage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -37,8 +38,9 @@ const routes = (
     <Route path="/upload" component={UploadIDPhotosPage} />
     <Route path="/bankaccount" component={BankAccountPage} />
     <Route path="/2fa" component={TwoFactorAuthPage} />
-  <Route path="*" component={NotFoundPage} />
-</Route>
+    <Route path="/exchange" component={ExchangePage} />
+    <Route path="*" component={NotFoundPage} />
+  </Route>
 );
 
 export default routes;
