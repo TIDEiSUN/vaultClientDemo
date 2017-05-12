@@ -44,11 +44,11 @@ export default class ChangePersonalDataPage extends React.Component {
     const username = CurrentLogin.loginInfo.username;
 
     // update blob
-    const blob = CurrentLogin.loginInfo.blob;
-    blob.data.firstName = this.state.firstName;
-    blob.data.lastName = this.state.lastName;
-    
-    return VaultClient.updateBlob(username, CurrentLogin.loginInfo)
+    const newBlob = VaultClient.cloneBlob(CurrentLogin.loginInfo.blob);
+    newBlob.data.firstName = this.state.firstName;
+    newBlob.data.lastName = this.state.lastName;
+
+    return VaultClient.updateBlob(username, CurrentLogin.loginInfo, newBlob)
       .then((result) => {
         console.log('update blob:', result);
         CurrentLogin.loginInfo = result.loginInfo;

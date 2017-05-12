@@ -86,9 +86,6 @@ function InputForm(props) {
     return null;
   }
   const paramInputs = getParamInputs(objName, params, self);
-  if (paramInputs.length === 0) {
-    return null;
-  }
 
   return (
     <div>

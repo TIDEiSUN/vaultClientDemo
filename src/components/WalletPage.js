@@ -87,7 +87,7 @@ export default class WalletPage extends React.Component {
     super(props);
     this.state = {
       public: CurrentLogin.loginInfo.blob.data.account_id,
-      secret: CurrentLogin.loginInfo.secret,
+      secret: null,
       pockets: [],
       newPocketCurrency: '',
       supportedCurrencies: [],

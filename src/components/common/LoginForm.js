@@ -2,10 +2,6 @@ import React from 'react';
 import { VaultClient, Errors } from '../../logics';
 import AuthenticationForm from './AuthenticationForm';
 
-const systemParams = {
-  forceSms: 'true',
-};
-
 const defaultParams = {};
 
 export default class LoginForm extends React.Component {
@@ -67,10 +63,7 @@ export default class LoginForm extends React.Component {
     let customKeysPromise;
     if (requiredParams.blobId !== undefined) {
       const { username, password } = inParams;
-      customKeysPromise = VaultClient.createCustomKeys(username, password)
-        .then((customKeys) => {
-          return customKeys.deriveLoginKeys();
-        })
+      customKeysPromise = VaultClient.createAndDeriveCustomKeys(username, password)
         .then((customKeys) => {
           Object.keys(requiredParams).forEach((key) => {
             if (inParams[key]) {
@@ -138,7 +131,7 @@ export default class LoginForm extends React.Component {
 
   render() {
     return (
-      <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} defaultParams={defaultParams} errorMessage={this.state.errorMessage} />
+      <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} defaultParams={defaultParams} errorMessage={this.state.errorMessage} />
     );
   }
 }
