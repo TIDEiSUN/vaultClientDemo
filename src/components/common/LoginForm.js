@@ -126,15 +126,12 @@ export default class LoginForm extends React.Component {
           this.setState({ auth: this.initAuthState });
         }
         alert(`Failed! ${err.message}`);
-        // FIXME instanceof Errors.FetchError does not work
-        // if (err instanceof Errors.FetchError) {
-          if (err.info) {
-            const errorMessage = JSON.stringify(err.info, null, 2);
-            this.setState({ errorMessage });
-          } else {
-            this.setState({ errorMessage: null });
-          }
-        // }
+        if (err instanceof Errors.FetchError) {
+          const errorMessage = err.info ? JSON.stringify(err.info, null, 2) : null;
+          this.setState({ errorMessage });
+        } else {
+          this.setState({ errorMessage: null });
+        }
         return Promise.reject(err);
       });
   }

@@ -1,63 +1,54 @@
 import React from 'react';
 import { browserHistory } from 'react-router';
 
-export default class  AsyncButton extends React.Component {
+export default class AsyncButton extends React.Component {
   constructor(props) {
-		super(props);
-		this.state = {
-			isPending: false,
-			isFulfilled: false,
-			isRejected: false
-		}
-	}
+    super(props);
+    this.state = {
+      isPending: false,
+      isFulfilled: false,
+      isRejected: false,
+    };
+  }
 
-	// getInitialState() {
-	// 	return {
-	// 		isPending: false,
-	// 		isFulfilled: false,
-	// 		isRejected: false
-	// 	};
-	// }
+  resetState() {
+    this.setState({
+      isPending: false,
+      isFulfilled: false,
+      isRejected: false,
+    });
+  }
 
-	resetState() {
-		this.setState({
-			isPending: false,
-			isFulfilled: false,
-			isRejected: false
-		});
-	}
+  handleClick() {
+    this.setState({
+      isPending: true,
+    });
 
-	handleClick() {
-		this.setState({
-			isPending: true
-		});
+    const promise = this.props.onClick(...arguments);
+    if (promise && promise.then) {
+      promise.then(() => {
+        this.setState({
+          isPending: false,
+          isRejected: false,
+          isFulfilled: true,
+        });
+        if (this.props.hasOwnProperty('fullFilledRedirect')) {
+          // console.log('fullFilledRedirect', this.props.fullFilledRedirect);
+          browserHistory.push(this.props.fullFilledRedirect);
+        }
+      }).catch((error) => {
+        this.setState({
+          isPending: false,
+          isRejected: true,
+          isFulfilled: false,
+        });
+      });
+    } else {
+      this.resetState();
+    }
+  }
 
-		let promise = this.props.onClick(...arguments);
-		if (promise && promise.then) {
-			promise.then(() => {
-				this.setState({
-					isPending: false,
-					isRejected: false,
-					isFulfilled: true
-				});
-				if (this.props.hasOwnProperty('fullFilledRedirect')) {
-					//console.log('fullFilledRedirect', this.props.fullFilledRedirect);
-					browserHistory.push(this.props.fullFilledRedirect);
-				}
-			}).catch((error) => {
-				this.setState({
-					isPending: false,
-					isRejected: true,
-					isFulfilled: false
-				});
-				throw error;
-			});
-		} else {
-			this.resetState();
-		}
-	}
-
-	render() {
+  render() {
     const { isPending, isFulfilled, isRejected } = this.state;
     const {
       children,
@@ -69,10 +60,10 @@ export default class  AsyncButton extends React.Component {
       loadingClass,
       fulFilledClass,
       rejectedClass,
-			fullFilledRedirect,
-			disabled,
-			eventValue,
-			...restProps
+      fullFilledRedirect,
+      disabled,
+      eventValue,
+      ...restProps
     } = this.props;
     const isDisabled = this.props.disabled || isPending;
     let buttonText;
@@ -93,12 +84,12 @@ export default class  AsyncButton extends React.Component {
     // });
 
     return (
-      <button {...restProps} disabled={isDisabled} onClick={this.handleClick.bind(this,eventValue)}>
+      <button {...restProps} disabled={isDisabled} onClick={this.handleClick.bind(this, eventValue)}>
         {children || buttonText}
       </button>
     //   <button {...this.props} className={btnClasses} disabled={isDisabled} onClick={() => this.handleClick()}>
     //     {children || buttonText}
     //   </button>
-		);
-	}
+    );
+  }
 }
