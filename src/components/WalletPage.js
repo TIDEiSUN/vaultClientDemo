@@ -143,7 +143,7 @@ export default class WalletPage extends React.Component {
         console.log('gateway', gatewayAddress);
         console.log('currency', currency);
         // return Promise.resolve({ currency, coinAddress: 'hahaha' });
-        return TidePayAPI.setPocket(gatewayAddress, sourceAccount, currency);
+        return TidePayAPI.setPocket(sourceAccount, currency);
       })
       .then((result) => {
         console.log('activate pocket', result);
@@ -176,7 +176,7 @@ export default class WalletPage extends React.Component {
         console.log('sourceAccount', sourceAccount);
         console.log('gateway', gatewayAddress);
         console.log('currency', currency);
-        return TidePayAPI.setPocket(gatewayAddress, sourceAccount, currency, true);
+        return TidePayAPI.setPocket(sourceAccount, currency, true);
       })
       .then((result) => {
         console.log('freeze pocket', result);
