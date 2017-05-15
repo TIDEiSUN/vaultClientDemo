@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { TidePayAPI } from '../logics';
+import { VaultClient, TidePayAPI, Utils } from '../logics';
 import UnlockButton from './common/UnlockButton';
 import DropdownMenu from './common/DropdownMenu';
 import AccountBalanceTable from './common/AccountBalanceTable';
@@ -99,7 +99,7 @@ export default class ExchangePage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      public: CurrentLogin.loginInfo.blob.data.account_id,
+      public: null,
       secret: null,
       balances: {},
       baseCurrency: '',
@@ -114,6 +114,28 @@ export default class ExchangePage extends React.Component {
     this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.onGetAccountBalances = this.onGetAccountBalances.bind(this);
+  }
+
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          const { blob } = loginInfo;
+          const { account_id } = blob.data;
+          this.setState({ public: account_id });
+        })
+        .catch((err) => {
+          console.error('BankAccountPage - getLoginInfo', err);
+          alert('Failed to get bank accounts');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
   }
 
   onUpdate(data) {
@@ -196,18 +218,25 @@ export default class ExchangePage extends React.Component {
   }
 
   render() {
-    const currencies = Object.keys(this.state.balances);
-
+    let childComponents = null;
+    if (this.state.public) {
+      const currencies = Object.keys(this.state.balances);
+      childComponents = (
+        <div>
+          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <br />
+          <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
+          <br />
+          <ExchangeRateForm secret={this.state.secret} self={this} baseCurrency={this.state.baseCurrency} currencies={currencies} />
+          <br />
+          <ExchangeForm secret={this.state.secret} self={this} exchangeRateMap={this.state.exchangeRateMap} balances={this.state.balances} />
+        </div>
+      );
+    }
     return (
       <div className="home">
         <h1>Ripple Account Info</h1>
-        <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
-        <br />
-        <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
-        <br />
-        <ExchangeRateForm secret={this.state.secret} self={this} baseCurrency={this.state.baseCurrency} currencies={currencies} />
-        <br />
-        <ExchangeForm secret={this.state.secret} self={this} exchangeRateMap={this.state.exchangeRateMap} balances={this.state.balances} />
+        {childComponents}
         <br />
         <Link to="/main">Back to main page</Link>
       </div>

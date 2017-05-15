@@ -11,8 +11,8 @@ export default class LoginPage extends React.Component {
   }
 
   handleLogin(loginInfo, loginToken) {
-    CurrentLogin.loginInfo = loginInfo;
     CurrentLogin.loginToken = loginToken;
+    CurrentLogin.customKeys = loginInfo.customKeys;
     console.log('Login sucessfully', loginInfo);
     browserHistory.push('/main');
     return Promise.resolve();

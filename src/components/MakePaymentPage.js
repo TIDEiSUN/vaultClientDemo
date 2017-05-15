@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { TidePayAPI } from '../logics';
+import { VaultClient, TidePayAPI, Utils } from '../logics';
 import UnlockButton from './common/UnlockButton';
 import DropdownMenu from './common/DropdownMenu';
 import AccountBalanceTable from './common/AccountBalanceTable';
@@ -99,7 +99,7 @@ export default class MakePaymentPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      public: CurrentLogin.loginInfo.blob.data.account_id,
+      public: null,
       secret: null,
       balances: {},
       externalPayment: false,
@@ -112,17 +112,40 @@ export default class MakePaymentPage extends React.Component {
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.onGetAccountBalances = this.onGetAccountBalances.bind(this);
+  }
 
-    TidePayAPI.getWithdrawalFee()
-      .then((map) => {
-        this.setState({
-          withdrawalFeeMap: map,
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          const { blob } = loginInfo;
+          this.setState({ public: blob.data.account_id });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get tidepay address');
         });
-      })
-      .catch((err) => {
-        alert('Failed to get account balances');
-        console.log('getTransactionFee', err);
-      });
+    };
+    const getWithdrawalFee = () => {
+      return TidePayAPI.getWithdrawalFee()
+        .then((map) => {
+          this.setState({
+            withdrawalFeeMap: map,
+          });
+        })
+        .catch((err) => {
+          alert('Failed to get account balances');
+          console.log('getTransactionFee', err);
+        });
+    };
+    const promise = getLoginInfo()
+      .then(() => getWithdrawalFee());
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
   }
 
   onUpdate(data) {
@@ -195,7 +218,7 @@ export default class MakePaymentPage extends React.Component {
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
   handleChangeChk(name, event) {
@@ -207,17 +230,25 @@ export default class MakePaymentPage extends React.Component {
   }
 
   render() {
-    const currencies = Object.keys(this.state.balances);
+    let childComponents = null;
+    if (this.state.public) {
+      const currencies = Object.keys(this.state.balances);
+      childComponents = (
+        <div>
+          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <br />
+          <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
+          <br />
+          <WithdrawalFeeTable secret={this.state.secret} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
+          <br />
+          <SendTransactionForm secret={this.state.secret} self={this} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
+        </div>
+      );
+    }
     return (
       <div className="home">
         <h1>Ripple Account Info</h1>
-        <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
-        <br />
-        <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
-        <br />
-        <WithdrawalFeeTable secret={this.state.secret} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
-        <br />
-        <SendTransactionForm secret={this.state.secret} self={this} withdrawalFeeMap={this.state.withdrawalFeeMap} currencies={currencies} />
+        {childComponents}
         <br />
         <Link to="/main">Back to main page</Link>
       </div>

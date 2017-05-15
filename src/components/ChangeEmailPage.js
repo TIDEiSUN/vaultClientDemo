@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Config } from '../logics';
+import { VaultClient, Config, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import LoginForm from './common/LoginForm';
@@ -86,7 +86,7 @@ export default class ChangeEmailPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      loggedIn: CurrentLogin && CurrentLogin.loginInfo,
+      loggedIn: false,
       newEmail: '',
     };
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -94,14 +94,34 @@ export default class ChangeEmailPage extends React.Component {
     this.handleLogin = this.handleLogin.bind(this);
   }
 
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          this.setState({ loginInfo, loggedIn: true });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get tidepay address');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
+  }
+
   handleChange(name, event) {
     this.setState({ [name]: event.target.value });
   }
 
   handleLogin(loginInfo) {
-    CurrentLogin.loginInfo = loginInfo;
     console.log('Login sucessfully', loginInfo);
     this.setState({
+      loginInfo,
       loggedIn: true,
     });
     return Promise.resolve();
@@ -117,10 +137,11 @@ export default class ChangeEmailPage extends React.Component {
       authToken,
     } = this.props.location.query;
 
-    return VaultClient.authVerifyUpdateEmail(CurrentLogin.loginInfo, email, token, authToken)
+    const { loginInfo } = this.state;
+    return VaultClient.authVerifyUpdateEmail(loginInfo, email, token, authToken)
       .then((result) => {
         console.log('verify update email', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        this.setState({ loginInfo: result.loginInfo });
         alert('OK!');
         return Promise.resolve();
       }).catch((err) => {
@@ -133,7 +154,8 @@ export default class ChangeEmailPage extends React.Component {
   handleSubmit() {
     console.log('Handle update email');
 
-    const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
+    const { loginInfo } = this.state;
+    const oldEmail = loginInfo.blob.email ? loginInfo.blob.email : '';
     const newEmail = this.state.newEmail ? this.state.newEmail : oldEmail;
     const emailChanged = oldEmail !== newEmail;
     console.log(`old email: ${oldEmail}`);
@@ -144,10 +166,10 @@ export default class ChangeEmailPage extends React.Component {
       alert('Email has no change.');
       return Promise.reject(new Error('Email has no change.'));
     } else {
-      return VaultClient.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
+      return VaultClient.authRequestUpdateEmail(loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
-          CurrentLogin.loginInfo = result.loginInfo;
+          this.setState({ loginInfo: result.loginInfo });
           alert('Verification email has been sent to ' + newEmail);
           return Promise.resolve();
         }).catch((err) => {
@@ -161,7 +183,7 @@ export default class ChangeEmailPage extends React.Component {
   render() {
     let link = '/';
     let pageName = 'login';
-    if (CurrentLogin.loginInfo) {
+    if (this.state.loggedIn) {
       link = '/main';
       pageName = 'main';
     }

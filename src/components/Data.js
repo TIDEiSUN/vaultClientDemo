@@ -1,1 +1,4 @@
-exports.CurrentLogin = {};
+exports.CurrentLogin = {
+  loginToken: null,
+  customKeys: null,
+};

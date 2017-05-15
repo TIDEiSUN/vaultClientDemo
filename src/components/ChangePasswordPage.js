@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient } from '../logics'
-import { CurrentLogin } from './Data'
-import AsyncButton from './common/AsyncButton'
+import { VaultClient, Utils } from '../logics';
+import { CurrentLogin } from './Data';
+import AsyncButton from './common/AsyncButton';
 
 export default class ChangePasswordPage extends React.Component {
   constructor(props) {
@@ -10,29 +10,53 @@ export default class ChangePasswordPage extends React.Component {
     this.state = {
       oldPassword: '',
       newPassword: '',
+      loginInfo: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          this.setState({ loginInfo });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get login info');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
   }
 
-  handleSubmit(event) {
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
+  }
+
+  handleChange(name, event) {
+    this.setState({ [name]: event.target.value });
+  }
+
+  handleSubmit() {
     console.log('Handle change password');
-    return CurrentLogin.loginInfo.customKeys.isPasswordCorrect(this.state.oldPassword)
+    const { loginInfo } = this.state;
+    return loginInfo.customKeys.isPasswordCorrect(this.state.oldPassword)
       .then((result) => {
         if (!result.correct) {
           return Promise.reject(new Error('Incorrect old password'));
         }
-        return VaultClient.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
+        return VaultClient.changePassword(loginInfo.username, this.state.newPassword, loginInfo);
       })
       .then((result) => {
         console.log('change password', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        CurrentLogin.customKeys = result.loginInfo.customKeys;
+        this.setState({ loginInfo: result.loginInfo });
         alert('Success!');
         return Promise.resolve();
-      }).catch(err => {
+      })
+      .catch((err) => {
         console.error('Failed to change password:', err);
         alert('Failed to change password: ' + err.message);
         return Promise.reject(err);
@@ -40,9 +64,9 @@ export default class ChangePasswordPage extends React.Component {
   }
   
   render() {
-    return (
-      <div className="home">
-        <h1>Change Password</h1>
+    let childComponents = null;
+    if (this.state.loginInfo) {
+      childComponents = (
         <form>
           <div>
             <label>
@@ -57,15 +81,21 @@ export default class ChangePasswordPage extends React.Component {
             </label>
           </div>
           <AsyncButton
-           type="button"
-           onClick={this.handleSubmit}
-           pendingText="Changing..."
-           fulFilledText="Changed"
-           rejectedText="Failed! Try Again"
-           text="Change"
+            type="button"
+            onClick={this.handleSubmit}
+            pendingText="Changing..."
+            fulFilledText="Changed"
+            rejectedText="Failed! Try Again"
+            text="Change"
           />
         </form>
-        
+      );
+    }
+    return (
+      <div className="home">
+        <h1>Change Password</h1>
+        {childComponents}
+        <br />
         <Link to="/main">Back to main page</Link>
       </div>
     );

@@ -2,13 +2,13 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { TidePayAPI } from '../logics';
+import { VaultClient, TidePayAPI, Utils } from '../logics';
 import UnlockButton from './common/UnlockButton';
 import DropdownMenu from './common/DropdownMenu';
 
 function WalletTable(props) {
   const { secret, pockets, self } = props;
-  const noSecret = secret === undefined;
+  const noSecret = !secret;
 
   const rows = [];
   Object.keys(pockets).forEach((currency) => {
@@ -63,12 +63,14 @@ function AddWalletForm(props) {
   if (!secret) {
     return null;
   }
-console.debug(self.state.supportedCurrencies);
+
+  const currencies = self.state.supportedCurrencies.filter(currency => self.state.pockets[currency] === undefined);
+
   return (
     <form>
       <div>
         Activate pocket:
-        <DropdownMenu items={self.state.supportedCurrencies} onChange={self.handleNewPocketCurrencyChange} />
+        <DropdownMenu items={currencies} onChange={self.handleNewPocketCurrencyChange} />
         <AsyncButton
           type="button"
           onClick={self.handleActivatePocket}
@@ -86,7 +88,7 @@ export default class WalletPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      public: CurrentLogin.loginInfo.blob.data.account_id,
+      public: null,
       secret: null,
       pockets: [],
       newPocketCurrency: '',
@@ -96,31 +98,55 @@ export default class WalletPage extends React.Component {
     this.handleFreezePocket = this.handleFreezePocket.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.handleNewPocketCurrencyChange = this.handleNewPocketCurrencyChange.bind(this);
+  }
 
-    // get all supported currencies
-    TidePayAPI.getCurrencies()
-      .then((value) => {
-        this.setState({ supportedCurrencies: value.currencies });
-      })
-      .catch((err) => {
-        console.error('Get supported currencies', err);
-        alert('Failed to get supported currencies');
-      });
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          const { blob } = loginInfo;
+          const address = blob.data.account_id;
+          this.setState({ public: address });
+          return address;
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get tidepay address');
+        });
+    };
+    const getAllSupportedCurrencies = () => {
+      return TidePayAPI.getCurrencies()
+        .then((value) => {
+          this.setState({ supportedCurrencies: value.currencies });
+        })
+        .catch((err) => {
+          console.error('Get supported currencies', err);
+          alert('Failed to get supported currencies');
+        });
+    };
+    const getAllPockets = (address) => {
+      return TidePayAPI.getGatewayAddress()
+        .then((value) => {
+          return TidePayAPI.getAccountPockets(value.gateway, address);
+        })
+        .then((pockets) => {
+          console.log('get pockets', pockets);
+          this.setState({ pockets });
+        })
+        .catch((err) => {
+          console.error('Get pockets', err);
+          alert('Failed to get pockets');
+        });
+    };
+    const promise = getLoginInfo()
+      .then(address => getAllPockets(address))
+      .then(() => getAllSupportedCurrencies());
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
 
-    // get all pockets
-    const address = CurrentLogin.loginInfo.blob.data.account_id;
-    TidePayAPI.getGatewayAddress()
-      .then((value) => {
-        return TidePayAPI.getAccountPockets(value.gateway, address)
-      })
-      .then((pockets) => {
-        console.log('get pockets', pockets);
-        this.setState({ pockets });
-      })
-      .catch((err) => {
-        console.error('Get pockets', err);
-        alert('Failed to get pockets');
-      });
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
   }
 
   handleNewPocketCurrencyChange(currency) {
@@ -199,14 +225,22 @@ export default class WalletPage extends React.Component {
   }
 
   render() {
+    let childComponents = null;
+    if (this.state.public) {
+      childComponents = (
+        <div>
+          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <br />
+          <WalletTable pockets={this.state.pockets} secret={this.state.secret} self={this} />
+          <br />
+          <AddWalletForm secret={this.state.secret} self={this} />
+        </div>
+      );
+    }
     return (
       <div className="home">
         <h1>Wallet</h1>
-        <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
-        <br />
-        <WalletTable pockets={this.state.pockets} secret={this.state.secret} self={this} />
-        <br />
-        <AddWalletForm secret={this.state.secret} self={this} />
+        {childComponents}
         <br />
         <Link to="/main">Back to main page</Link>
       </div>

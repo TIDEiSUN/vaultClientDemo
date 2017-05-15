@@ -130,15 +130,16 @@ export default class RecoverPage extends React.Component {
     return VaultClient.handleRecovery(blob, email)
       .then((result) => {
         console.log('Recover blob successfully', result);
-        CurrentLogin.loginInfo = result;
-        CurrentLogin.loginToken = loginToken;
-        return VaultClient.changePassword(CurrentLogin.loginInfo.username, this.state.newPassword, CurrentLogin.loginInfo);
+        const loginInfo = result;
+        return VaultClient.changePassword(loginInfo.username, this.state.newPassword, loginInfo);
       }).then((result) => {
         console.log('change password', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        CurrentLogin.loginToken = loginToken;
+        CurrentLogin.customKeys = result.loginInfo.customKeys;
         return Promise.resolve();
       }).catch((err) => {
-        delete CurrentLogin.loginInfo;
+        CurrentLogin.loginToken = null;
+        CurrentLogin.customKeys = null;
         console.error('Failed to recover account:', err);
         alert('Failed to recover account: ' + err.message);
         return Promise.reject(err);

@@ -11,7 +11,11 @@ export default class UnlockButton extends React.Component {
 
   handleUnlock() {
     console.log('Handle unlock');
-    return VaultClient.unlockAccount(CurrentLogin.loginInfo)
+    const { loginToken, customKeys } = CurrentLogin;
+    return VaultClient.getLoginInfo(loginToken, customKeys)
+      .then((loginInfo) => {
+        return VaultClient.unlockAccount(loginInfo);
+      })
       .then((secret) => {
         this.setState({
           secret: secret,
@@ -28,26 +32,26 @@ export default class UnlockButton extends React.Component {
 
   render() {
     const { secret, address } = this.props;
+    let secretUI;
     if (secret) {
-      return (
-        <div>
-          <p>Public address: {address}</p>
-          <p>Secret key: {secret}</p>
-        </div>
-      );
+      secretUI = secret;
     } else {
-      return (
-        <div>
-          <AsyncButton
-            type="button"
-            onClick={this.handleUnlock}
-            pendingText="Unlocking..."
-            fulFilledText="Unlocked"
-            rejectedText="Failed! Try Again"
-            text="Unlock"
-          />
-        </div>
+      secretUI = (
+        <AsyncButton
+          type="button"
+          onClick={this.handleUnlock}
+          pendingText="Unlocking..."
+          fulFilledText="Unlocked"
+          rejectedText="Failed! Try Again"
+          text="Unlock"
+        />
       );
     }
+    return (
+      <div>
+        <p>Public address: {address}</p>
+        <p>Secret key: {secretUI}</p>
+      </div>
+    );
   }
 }

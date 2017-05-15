@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Config } from '../logics';
+import { VaultClient, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
@@ -8,20 +8,41 @@ export default class BlockAccountPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      newEmail: '',
+      loginInfo: null,
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleSubmit(event) {
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          this.setState({ loginInfo });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get bank accounts');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
+  }
+
+  handleSubmit() {
     console.log('Handle block account');
-    return VaultClient.blockAccount(CurrentLogin.loginInfo.username, CurrentLogin.loginInfo)
+    const { loginInfo } = this.state;
+    return VaultClient.blockAccount(loginInfo.username, loginInfo)
       .then((result) => {
-        delete CurrentLogin.loginInfo;
+        this.setState({ loginInfo: null });
         console.log('block account', result);
         alert('Success!');
         return Promise.resolve();
-      }).catch(err => {
+      }).catch((err) => {
         console.error('block account', err);
         alert('Failed to block account');
         return Promise.reject(err);
@@ -29,9 +50,9 @@ export default class BlockAccountPage extends React.Component {
   }
 
   render() {
-    return (
-      <div className="home">
-        <h1>Block account</h1>
+    let childComponents = null;
+    if (this.state.loginInfo) {
+      childComponents = (
         <div>
           <AsyncButton
             type="button"
@@ -43,6 +64,13 @@ export default class BlockAccountPage extends React.Component {
             fullFilledRedirect="/"
           />
         </div>
+      );
+    }
+    return (
+      <div className="home">
+        <h1>Block account</h1>
+        {childComponents}
+        <br />
         <Link to="/main">Back to main page</Link>
       </div>
     );

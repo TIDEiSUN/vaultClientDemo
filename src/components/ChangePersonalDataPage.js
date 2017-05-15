@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient } from '../logics';
+import { VaultClient, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
@@ -36,25 +36,47 @@ export default class ChangePersonalDataPage extends React.Component {
     this.state = {
       firstName: '',
       lastName: '',
+      loginInfo: null,
     };
     this.handleSubmitForm = this.handleSubmitForm.bind(this);
   }
 
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          this.setState({ loginInfo });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get bank accounts');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
+  }
+
   handleSubmitForm() {
-    const username = CurrentLogin.loginInfo.username;
+    const { loginInfo } = this.state;
+    const { username, blob } = loginInfo;
 
     // update blob
-    const newBlob = VaultClient.cloneBlob(CurrentLogin.loginInfo.blob);
+    const newBlob = VaultClient.cloneBlob(blob);
     newBlob.data.firstName = this.state.firstName;
     newBlob.data.lastName = this.state.lastName;
 
-    return VaultClient.updateBlob(username, CurrentLogin.loginInfo, newBlob)
+    return VaultClient.updateBlob(username, loginInfo, newBlob)
       .then((result) => {
         console.log('update blob:', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        this.setState({ loginInfo: result.loginInfo });
         alert('Updated!');
         return Promise.resolve();
-      }).catch(err => {
+      }).catch((err) => {
         console.error('Failed to update blob:', err);
         alert('Failed to update: ' + err.message);
         return Promise.reject(err);
@@ -62,14 +84,21 @@ export default class ChangePersonalDataPage extends React.Component {
   }
 
   handleChange(name, event) {
-    this.setState({[name]: event.target.value});
+    this.setState({ [name]: event.target.value });
   }
 
   render() {
+    let childComponents = null;
+    if (this.state.loginInfo) {
+      childComponents = (
+        <PersonalDataForm self={this} />
+      );
+    }
     return (
       <div className="home">
         <h1>Update Personal Data</h1>
-        <PersonalDataForm self={this} />
+        {childComponents}
+        <br />
         <Link to="/main">Back to main page</Link>
       </div>
     );

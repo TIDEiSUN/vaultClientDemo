@@ -59,8 +59,8 @@ export default class ActivateAccountPage extends React.Component {
       })
       .then((result) => {
         const { loginInfo, loginToken } = result;
-        CurrentLogin.loginInfo = loginInfo;
         CurrentLogin.loginToken = loginToken;
+        CurrentLogin.customKeys = loginInfo.customKeys;
         console.log('Activate sucessfully', result);
         console.log('Activated - token', loginToken);
         browserHistory.push('/main');

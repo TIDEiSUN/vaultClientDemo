@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient } from '../logics';
+import { VaultClient, Utils } from '../logics';
 import { CurrentLogin } from './Data';
 import ImageUpload from './common/ImageUpload';
 
@@ -10,9 +10,30 @@ export default class UploadIDPhotosPage extends React.Component {
     this.state = {
       id_photo: null,
       selfie_photo: null,
+      loginInfo: null,
     };
     this.onImageChange = this.onImageChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          this.setState({ loginInfo });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get login info');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
   }
 
   onImageChange(name, file) {
@@ -30,10 +51,12 @@ export default class UploadIDPhotosPage extends React.Component {
     const formData = new FormData();
     formData.append('id_photo', this.state.id_photo);
     formData.append('selfie_photo', this.state.selfie_photo);
-    return VaultClient.uploadPhotos(CurrentLogin.loginInfo, formData, config)
+
+    const { loginInfo } = this.state;
+    return VaultClient.uploadPhotos(loginInfo, formData, config)
       .then((result) => {
         console.log('update blob:', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        this.setState({ loginInfo: result.loginInfo });
         alert('Updated!');
       }).catch(err => {
         console.error('Failed to update blob:', err);
@@ -43,14 +66,21 @@ export default class UploadIDPhotosPage extends React.Component {
   }
 
   render() {
-    return (
-      <div className="home">
-        <h1>Upload ID Photos</h1>
+    let childComponents = null;
+    if (this.state.loginInfo) {
+      childComponents = (
         <form onSubmit={this.handleSubmit}>
           <ImageUpload title="ID Photo" name="id_photo" onImageChange={this.onImageChange} />
           <ImageUpload title="Selfie Photo" name="selfie_photo" onImageChange={this.onImageChange} />
           <button type="submit" onClick={this.handleSubmit}>Upload Image</button>
         </form>
+      );
+    }
+    return (
+      <div className="home">
+        <h1>Upload ID Photos</h1>
+        {childComponents}
+        <br />
         <Link to="/main">Back to main page</Link>
       </div>
     );

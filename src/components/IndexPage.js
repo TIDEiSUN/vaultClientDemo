@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { CurrentLogin } from './Data';
-import { VaultClient, Config } from '../logics';
+import { VaultClient, Config, Utils } from '../logics';
 
 function EmailField(props) {
   const { blob, self } = props;
@@ -79,26 +79,37 @@ export default class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      resendEmail: CurrentLogin.loginInfo.blob.pendingEmail || '',
-      lastBlobIDChangeDate: CurrentLogin.loginInfo.blob.last_id_change_date,
+      resendEmail: null,
+      lastBlobIDChangeDate: '',
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
   }
 
-  // componentDidMount() {
-  //   const { loginToken } = CurrentLogin;
-  //   VaultClient.getBlob(loginToken)
-  //     .then((result) => {
-  //       const { blob, loginToken: newLoginToken } = result;
-  //       console.log('@@blob', blob);
-  //       console.log('@@old token', loginToken);
-  //       console.log('@@new token', newLoginToken);
-  //     })
-  //     .catch((err) => {
-  //       console.error('Failed to get blob', err);
-  //     });
-  // }
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          const { blob } = loginInfo;
+          this.setState({
+            loginInfo,
+            resendEmail: blob.pendingEmail,
+            lastBlobIDChangeDate: blob.last_id_change_date,
+          });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get login info');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
+  }
 
   handleChange(name, event) {
     this.setState({ [name]: event.target.value });
@@ -107,7 +118,8 @@ export default class IndexPage extends React.Component {
   handleResendEmail(event) {
     console.log('Resend verification email');
 
-    const oldEmail = CurrentLogin.loginInfo.blob.email ? CurrentLogin.loginInfo.blob.email : '';
+    const { loginInfo } = this.state;
+    const oldEmail = loginInfo.blob.email ? loginInfo.blob.email : '';
     const newEmail = this.state.resendEmail ? this.state.resendEmail : oldEmail;
     const emailChanged = oldEmail !== newEmail;
     console.log(`old email: ${oldEmail}`);
@@ -117,10 +129,10 @@ export default class IndexPage extends React.Component {
     if (!emailChanged) {
       alert('Email has no change.');
     } else {
-      VaultClient.authRequestUpdateEmail(CurrentLogin.loginInfo, newEmail, Config.changeEmailURL)
+      VaultClient.authRequestUpdateEmail(loginInfo, newEmail, Config.changeEmailURL)
         .then((result) => {
           console.log('request update email', result);
-          CurrentLogin.loginInfo = result.loginInfo;
+          this.setState({ loginInfo: result.loginInfo });
           alert('Verification email has been sent to ' + newEmail);
         }).catch((err) => {
           console.error('Verication email cannot be sent:', err);
@@ -131,30 +143,36 @@ export default class IndexPage extends React.Component {
   }
 
   handleLogout(event) {
-    delete CurrentLogin.loginInfo;
+    CurrentLogin.loginToken = null;
+    CurrentLogin.customKeys = null;
     browserHistory.push('/');
   }
 
   render() {
+    if (!this.state.loginInfo) {
+      return null;
+    }
+    const { loginInfo } = this.state;
+
     return (
       <div className="home">
-        <div>Welcome {CurrentLogin.loginInfo.username}!</div>
+        <div>Welcome {loginInfo.username}!</div>
         <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
         <div>
-          Ripple address: {CurrentLogin.loginInfo.blob.data.account_id}
+          Ripple address: {loginInfo.blob.data.account_id}
         </div>
         <br />
-        <EmailField blob={CurrentLogin.loginInfo.blob} self={this} />
-        <br />
-        <div>
-          First Name: {CurrentLogin.loginInfo.blob.data.firstName}<br />
-          Last Name: {CurrentLogin.loginInfo.blob.data.lastName}
-        </div>
+        <EmailField blob={loginInfo.blob} self={this} />
         <br />
         <div>
-          Account Level: {CurrentLogin.loginInfo.blob.account_level}
+          First Name: {loginInfo.blob.data.firstName}<br />
+          Last Name: {loginInfo.blob.data.lastName}
         </div>
-        <IDPhotosStatus id_photos={CurrentLogin.loginInfo.blob.id_photos} />
+        <br />
+        <div>
+          Account Level: {loginInfo.blob.account_level}
+        </div>
+        <IDPhotosStatus id_photos={loginInfo.blob.id_photos} />
         <br />
         <div>
           <Link to="/changepw">Change Password</Link>

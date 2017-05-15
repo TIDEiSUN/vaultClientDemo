@@ -1,24 +1,5 @@
 import React from 'react';
-import { TidePayAPI } from '../../logics';
-
-const makeCancelable = (promise) => {
-  let hasCancaled = false;
-  const wrappedPromise = new Promise((resolve, reject) => {
-    promise
-    .then((val) => {
-      return hasCancaled ? reject({ isCanceled: true }) : resolve(val);
-    })
-    .catch((err) => {
-      return hasCancaled ? reject({ isCanceled: true }) : reject(err);
-    });
-  });
-  return {
-    promise: wrappedPromise,
-    cancel() {
-      hasCancaled = true;
-    },
-  };
-};
+import { TidePayAPI, Utils } from '../../logics';
 
 export default class AccountBalanceTable extends React.Component {
   constructor(props) {
@@ -31,7 +12,7 @@ export default class AccountBalanceTable extends React.Component {
   componentDidMount() {
     const { address } = this.props;
     const promise = TidePayAPI.getAccountBalances(address);
-    this.balanceCancelablePromise = makeCancelable(promise);
+    this.balanceCancelablePromise = Utils.makeCancelable(promise);
     this.balanceCancelablePromise.promise
       .then((balances) => {
         const balanceObj = balances.lines.reduce((acc, curr) => {

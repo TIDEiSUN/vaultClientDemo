@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
-import { VaultClient } from '../logics';
+import { VaultClient, Utils } from '../logics';
 
 function BankAccountTable(props) {
   const { bankAccounts, self } = props;
@@ -86,9 +86,9 @@ export default class BankAccountPage extends React.Component {
     super(props);
     this.blobDataKey = 'bankaccounts';
 
-    const bankAccounts = CurrentLogin.loginInfo.blob.data[this.blobDataKey];
     this.state = {
-      bankAccounts: bankAccounts || [],
+      loginInfo: null,
+      bankAccounts: [],
       newBankAccount: {
         bankName: '',
         bankAccountNumber: '',
@@ -97,6 +97,31 @@ export default class BankAccountPage extends React.Component {
     this.handleAddBankAccount = this.handleAddBankAccount.bind(this);
     this.handleDeleteBankAccount = this.handleDeleteBankAccount.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
+  }
+
+  componentDidMount() {
+    const getLoginInfo = () => {
+      const { loginToken, customKeys } = CurrentLogin;
+      return VaultClient.getLoginInfo(loginToken, customKeys)
+        .then((loginInfo) => {
+          const { blob } = loginInfo;
+          const bankAccounts = blob.data[this.blobDataKey] || [];
+          this.setState({
+            loginInfo,
+            bankAccounts,
+          });
+        })
+        .catch((err) => {
+          console.error('getLoginInfo', err);
+          alert('Failed to get bank accounts');
+        });
+    };
+    const promise = getLoginInfo();
+    this.cancelablePromise = Utils.makeCancelable(promise);
+  }
+
+  componentWillUnmount() {
+    this.cancelablePromise.cancel();
   }
 
   handleNewBankAccountChange(name, event) {
@@ -117,12 +142,15 @@ export default class BankAccountPage extends React.Component {
       }
     };
 
-    return VaultClient.addBankAccount(CurrentLogin.loginInfo, newBankAccount, updateBlobDataCallback)
+    return VaultClient.addBankAccount(this.state.loginInfo, newBankAccount, updateBlobDataCallback)
       .then((result) => {
         console.log('add bank account', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        const { loginInfo } = result;
+        const { blob } = loginInfo;
+        const bankAccounts = blob.data[this.blobDataKey];
         this.setState({
-          bankAccounts: CurrentLogin.loginInfo.blob.data[this.blobDataKey],
+          loginInfo,
+          bankAccounts,
         });
         alert('Added bank account!');
         return Promise.resolve();
@@ -137,19 +165,22 @@ export default class BankAccountPage extends React.Component {
     const rowIndex = value;
     console.log('Handle delete bank account', rowIndex);
 
-    const deleteBankAccount = CurrentLogin.loginInfo.blob.data[this.blobDataKey][rowIndex];
+    const deleteBankAccount = this.state.bankAccounts[rowIndex];
 
     // update blob data
     const updateBlobDataCallback = (blobData) => {
       blobData[this.blobDataKey].splice(rowIndex, 1);
     };
 
-    return VaultClient.deleteBankAccount(CurrentLogin.loginInfo, deleteBankAccount, updateBlobDataCallback)
+    return VaultClient.deleteBankAccount(this.state.loginInfo, deleteBankAccount, updateBlobDataCallback)
       .then((result) => {
         console.log('delete bank account', result);
-        CurrentLogin.loginInfo = result.loginInfo;
+        const { loginInfo } = result;
+        const { blob } = loginInfo;
+        const bankAccounts = blob.data[this.blobDataKey];
         this.setState({
-          bankAccounts: CurrentLogin.loginInfo.blob.data[this.blobDataKey],
+          loginInfo,
+          bankAccounts,
         });
         alert('Deleted bank account!');
         return Promise.resolve();
@@ -165,12 +196,20 @@ export default class BankAccountPage extends React.Component {
   }
 
   render() {
+    let childComponents = null;
+    if (this.state.loginInfo) {
+      childComponents = (
+        <div>
+          <BankAccountTable bankAccounts={this.state.bankAccounts} self={this} />
+          <br />
+          <AddBankAccountForm self={this} />
+        </div>
+      );
+    }
     return (
       <div className="home">
         <h1>Bank Accounts</h1>
-        <BankAccountTable bankAccounts={this.state.bankAccounts} self={this} />
-        <br />
-        <AddBankAccountForm self={this} />
+        {childComponents}
         <br />
         <Link to="/main">Back to main page</Link>
       </div>
