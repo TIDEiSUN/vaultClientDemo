@@ -45,15 +45,12 @@ export default class UploadIDPhotosPage extends React.Component {
   handleSubmit(event) {
     event.preventDefault();
 
-    const config = {
-      headers: { 'content-type': 'multipart/form-data' },
-    };
     const formData = new FormData();
     formData.append('id_photo', this.state.id_photo);
     formData.append('selfie_photo', this.state.selfie_photo);
 
     const { loginInfo } = this.state;
-    return VaultClient.uploadPhotos(loginInfo, formData, config)
+    return VaultClient.uploadPhotos(loginInfo, formData)
       .then((result) => {
         console.log('update blob:', result);
         this.setState({ loginInfo: result.loginInfo });
