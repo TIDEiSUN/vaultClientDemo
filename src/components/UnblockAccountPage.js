@@ -134,14 +134,10 @@ export default class UnblockAccountPage extends React.Component {
         return VaultClient.changePassword(loginInfo.username, this.state.newPassword, loginInfo);
       }).then((result) => {
         console.log('change password', result);
-        CurrentLogin.loginToken = loginToken;
-        CurrentLogin.customKeys = result.loginInfo.customKeys;
         return Promise.resolve();
       }).catch((err) => {
-        CurrentLogin.loginToken = null;
-        CurrentLogin.customKeys = null;
-        console.error('Failed to unblock account:', err);
-        alert('Failed to unblock account: ' + err.message);
+        console.error('Failed to change password:', err);
+        alert('Failed to change password: ' + err.message);
         return Promise.reject(err);
       });
   }

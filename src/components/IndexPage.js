@@ -143,8 +143,7 @@ export default class IndexPage extends React.Component {
   }
 
   handleLogout(event) {
-    CurrentLogin.loginToken = null;
-    CurrentLogin.customKeys = null;
+    VaultClient.logoutAccount();
     browserHistory.push('/');
   }
 

@@ -47,7 +47,7 @@ export default class LoginForm extends React.Component {
     console.log('Login - token', loginToken);
     return VaultClient.handleLogin(blob, customKeys)
       .then((result) => {
-        return this.props.loginCallback(result, loginToken);
+        return this.props.loginCallback(result);
       })
       .catch((err) => {
         console.error('Failed to login:', err);

@@ -1,8 +1,28 @@
 // import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/build/tidepay-lib';
 import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/src/';
 import Config from './config';
+import { CurrentLogin } from '../components/Data';
 
-const VaultClient = new VaultClientClass(Config.isunpayrpcURL);
+const callbacks = {
+  readLoginToken() {
+    console.log('readLoginToken', CurrentLogin.loginToken);
+    return CurrentLogin.loginToken;
+  },
+  writeLoginToken(token) {
+    console.log('writeLoginToken', token);
+    CurrentLogin.loginToken = token;
+  },
+  readCustomKeys() {
+    console.log('readCustomKeys', CurrentLogin.customKeys);
+    return CurrentLogin.customKeys;
+  },
+  writeCustomKeys(customKeys) {
+    console.log('writeCustomKeys', customKeys);
+    CurrentLogin.customKeys = customKeys;
+  },
+};
+
+const VaultClient = new VaultClientClass(Config.isunpayrpcURL, callbacks);
 const TidePayAPI = new TidePayAPIClass(Config.isunpayrpcURL);
 
 Utils.makeCancelable = (promise) => {
