@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Config, Utils } from '../logics';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import LoginForm from './common/LoginForm';
 
@@ -96,8 +95,7 @@ export default class ChangeEmailPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           this.setState({ loginInfo, loggedIn: true });
         })

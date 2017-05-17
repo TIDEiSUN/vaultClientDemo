@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
-import { CurrentLogin } from './Data';
 import { VaultClient, Config, Utils } from '../logics';
 
 function EmailField(props) {
@@ -88,8 +87,7 @@ export default class IndexPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           const { blob } = loginInfo;
           this.setState({

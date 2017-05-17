@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Utils } from '../logics';
-import { CurrentLogin } from './Data';
 import ImageUpload from './common/ImageUpload';
 
 export default class UploadIDPhotosPage extends React.Component {
@@ -18,8 +17,7 @@ export default class UploadIDPhotosPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           this.setState({ loginInfo });
         })

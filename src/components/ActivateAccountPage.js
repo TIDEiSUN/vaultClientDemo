@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { VaultClient } from '../logics';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
 function ActivateButton(props) {

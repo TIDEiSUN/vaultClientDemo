@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import { VaultClient, TidePayAPI, Utils } from '../logics';
 import UnlockButton from './common/UnlockButton';
@@ -118,8 +117,7 @@ export default class ExchangePage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           const { blob } = loginInfo;
           const { account_id } = blob.data;

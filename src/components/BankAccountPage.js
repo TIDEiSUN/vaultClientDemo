@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 import { VaultClient, Utils } from '../logics';
 
@@ -101,8 +100,7 @@ export default class BankAccountPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           const { blob } = loginInfo;
           const bankAccounts = blob.data[this.blobDataKey] || [];

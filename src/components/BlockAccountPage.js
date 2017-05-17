@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Utils } from '../logics';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
 export default class BlockAccountPage extends React.Component {
@@ -15,8 +14,7 @@ export default class BlockAccountPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           this.setState({ loginInfo });
         })

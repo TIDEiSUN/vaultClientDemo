@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Utils } from '../logics';
-import { CurrentLogin } from './Data';
 import AsyncButton from './common/AsyncButton';
 
 export default class ChangePasswordPage extends React.Component {
@@ -17,8 +16,7 @@ export default class ChangePasswordPage extends React.Component {
 
   componentDidMount() {
     const getLoginInfo = () => {
-      const { loginToken, customKeys } = CurrentLogin;
-      return VaultClient.getLoginInfo(loginToken, customKeys)
+      return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           this.setState({ loginInfo });
         })
@@ -51,7 +49,6 @@ export default class ChangePasswordPage extends React.Component {
       })
       .then((result) => {
         console.log('change password', result);
-        CurrentLogin.customKeys = result.loginInfo.customKeys;
         this.setState({ loginInfo: result.loginInfo });
         alert('Success!');
         return Promise.resolve();
