@@ -1,7 +1,12 @@
 // import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/build/tidepay-lib';
+import ms from 'ms';
+import { browserHistory } from 'react-router';
 import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/src/';
 import Config from './config';
 import { CurrentLogin } from '../components/Data';
+
+let logoutTimer = null;
+const idleTimeLength = '10m';
 
 const callbacks = {
   readLoginToken() {
@@ -11,6 +16,16 @@ const callbacks = {
   writeLoginToken(token) {
     console.log('writeLoginToken', token);
     CurrentLogin.loginToken = token;
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
+    }
+    if (token) {
+      logoutTimer = setTimeout(() => {
+        alert('Time out!');
+        browserHistory.push('/');
+      }, ms(idleTimeLength));
+    }
   },
   readCustomKeys() {
     console.log('readCustomKeys', CurrentLogin.customKeys);
