@@ -141,8 +141,14 @@ export default class IndexPage extends React.Component {
   }
 
   handleLogout(event) {
-    VaultClient.logoutAccount();
-    browserHistory.push('/');
+    VaultClient.logoutAccount(this.state.loginInfo)
+      .then((result) => {
+        console.log('Logout account', result);
+        browserHistory.push('/');
+      })
+      .catch((err) => {
+        console.error('Failed to logout account', err.message);
+      });
   }
 
   render() {
