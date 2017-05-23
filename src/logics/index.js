@@ -11,7 +11,7 @@ const idleTimeLength = '10m';
 const callbacks = {
   readLoginToken() {
     console.log('readLoginToken', CurrentLogin.loginToken);
-    return CurrentLogin.loginToken;
+    return Promise.resolve(CurrentLogin.loginToken);
   },
   writeLoginToken(token) {
     console.log('writeLoginToken', token);
@@ -26,14 +26,16 @@ const callbacks = {
         browserHistory.push('/');
       }, ms(idleTimeLength));
     }
+    return Promise.resolve();
   },
   readCustomKeys() {
     console.log('readCustomKeys', CurrentLogin.customKeys);
-    return CurrentLogin.customKeys;
+    return Promise.resolve(CurrentLogin.customKeys);
   },
   writeCustomKeys(customKeys) {
     console.log('writeCustomKeys', customKeys);
     CurrentLogin.customKeys = customKeys;
+    return Promise.resolve();
   },
 };
 
