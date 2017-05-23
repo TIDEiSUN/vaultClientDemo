@@ -6,16 +6,20 @@ export default class DropdownMenu extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.firstItem = null;
     this.selectedItem = null;
-    this.componentWillReceiveProps(props);
   }
 
+  componentDidMount() {
+    this.componentWillReceiveProps(this.props);
+  }
+  
   componentWillReceiveProps(props) {
     const { items } = props;
-    if (items.length > 0) {
-      const item = items[0]
-      if (item !== this.firstItem) {
-        this.firstItem = item;
-        this.selectedItem = item;
+    if (items.length == 0) return;
+    const item = items[0];
+    if (item !== this.firstItem) {
+      this.firstItem = item;
+      this.selectedItem = item;
+      if (this.props.onChange) {
         this.props.onChange(item);
       }
     }
@@ -25,7 +29,9 @@ export default class DropdownMenu extends React.Component {
     const item = event.target.value;
     if (item !== this.selectedItem) {
       this.selectedItem = item;
-      this.props.onChange(item);
+      if (this.props.onChange) {
+        this.props.onChange(item);
+      }
     }
   }
 

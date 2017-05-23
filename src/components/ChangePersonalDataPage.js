@@ -48,7 +48,7 @@ export default class ChangePersonalDataPage extends React.Component {
         })
         .catch((err) => {
           console.error('getLoginInfo', err);
-          alert('Failed to get bank accounts');
+          alert('Failed to get login info');
         });
     };
     const promise = getLoginInfo();
