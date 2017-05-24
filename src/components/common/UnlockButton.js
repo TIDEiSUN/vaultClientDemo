@@ -10,10 +10,7 @@ export default class UnlockButton extends React.Component {
 
   handleUnlock() {
     console.log('Handle unlock');
-    return VaultClient.getLoginInfo()
-      .then((loginInfo) => {
-        return VaultClient.unlockAccount(loginInfo);
-      })
+    return VaultClient.unlockAccount()
       .then((secret) => {
         this.setState({
           secret: secret,
