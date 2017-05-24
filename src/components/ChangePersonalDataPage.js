@@ -10,11 +10,11 @@ function PersonalDataForm(props) {
       <div>
         <label>
           First Name: 
-          <input type="text" value={self.state.firstName} onChange={self.handleChange.bind(self, 'firstName')} />
+          <input type="text" value={self.state.firstname} onChange={self.handleChange.bind(self, 'firstname')} />
         </label>
         <label>
           Last Name: 
-          <input type="text" value={self.state.lastName} onChange={self.handleChange.bind(self, 'lastName')} />
+          <input type="text" value={self.state.lastname} onChange={self.handleChange.bind(self, 'lastname')} />
         </label>
       </div>
       <AsyncButton
@@ -33,8 +33,8 @@ export default class ChangePersonalDataPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      firstName: '',
-      lastName: '',
+      firstname: '',
+      lastname: '',
       loginInfo: null,
     };
     this.handleSubmitForm = this.handleSubmitForm.bind(this);
@@ -65,8 +65,8 @@ export default class ChangePersonalDataPage extends React.Component {
 
     // update blob
     const newBlob = VaultClient.cloneBlob(blob);
-    newBlob.data.firstName = this.state.firstName;
-    newBlob.data.lastName = this.state.lastName;
+    newBlob.data.firstname = this.state.firstname;
+    newBlob.data.lastname = this.state.lastname;
 
     return VaultClient.updateBlob(username, loginInfo, newBlob)
       .then((result) => {

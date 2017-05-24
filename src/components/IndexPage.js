@@ -168,8 +168,10 @@ export default class IndexPage extends React.Component {
         <EmailField blob={loginInfo.blob} self={this} />
         <br />
         <div>
-          First Name: {loginInfo.blob.data.firstName}<br />
-          Last Name: {loginInfo.blob.data.lastName}
+          First Name: {loginInfo.blob.data.firstname}<br />
+          Last Name: {loginInfo.blob.data.lastname}<br />
+          Date of Birth: {loginInfo.blob.data.birth}<br />
+          Country: {loginInfo.blob.data.country}
         </div>
         <br />
         <div>
