@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Utils } from '../logics';
+import { VaultClient, Utils, VaultClientStorage } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
 export default class ChangePasswordPage extends React.Component {
@@ -40,7 +40,8 @@ export default class ChangePasswordPage extends React.Component {
   handleSubmit() {
     console.log('Handle change password');
     const { loginInfo } = this.state;
-    return loginInfo.customKeys.isPasswordCorrect(this.state.oldPassword)
+    return VaultClientStorage.readCustomKeys()
+      .then(customKeys => customKeys.isPasswordCorrect(this.state.oldPassword))
       .then((result) => {
         if (!result.correct) {
           return Promise.reject(new Error('Incorrect old password'));

@@ -224,8 +224,7 @@ export default class WalletPage extends React.Component {
       });
   }
 
-  onUnlock(data) {
-    const { secret } = data;
+  onUnlock(secret) {
     this.setState({ secret });
   }
 

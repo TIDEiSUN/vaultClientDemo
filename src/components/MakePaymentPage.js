@@ -152,8 +152,7 @@ export default class MakePaymentPage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  onUnlock(data) {
-    const { secret } = data;
+  onUnlock(secret) {
     this.setState({ secret });
   }
 

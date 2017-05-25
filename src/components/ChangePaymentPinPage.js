@@ -131,14 +131,9 @@ export default class ChangePaymentPinPage extends React.Component {
   handleSubmitChangePin() {
     console.log('Handle change payment pin');
     const { loginInfo } = this.state;
+    // use CustomKeys.isPaymentPinCorrect if secret has been unlocked
     return VaultClient.unlockAccount(loginInfo.blob.data.unlock_secret, this.state.oldPaymentPin)
-    // return loginInfo.customKeys.isPaymentPinCorrect(this.state.oldPaymentPin)
-      .then((result) => {
-        // if (!result.correct) {
-        //   return Promise.reject(new Error('Incorrect old payment pin'));
-        // }
-        const { secret, customKeys } = result;
-        loginInfo.customKeys = customKeys;
+      .then((secret) => {
         return VaultClient.changePaymentPin(loginInfo.username, this.state.newPaymentPin, loginInfo, secret);
       })
       .then((result) => {
@@ -171,9 +166,7 @@ export default class ChangePaymentPinPage extends React.Component {
     const phone = { phoneNumber, countryCode };
     const { loginInfo, newPaymentPin } = this.state;
     return VaultClient.handleSecretRecovery(authSecret, loginInfo.blob.data.unlock_secret, phone)
-      .then((result) => {
-        const { secret, customKeys } = result;
-        loginInfo.customKeys = customKeys;
+      .then((secret) => {
         return VaultClient.changePaymentPin(loginInfo.username, newPaymentPin, loginInfo, secret);
       })
       .then((result) => {

@@ -65,11 +65,8 @@ export default class VerifyPhonePage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  onUnlock(data) {
-    const { secret, customKeys } = data;
-    const newLoginInfo = VaultClient.cloneLoginInfo(this.state.loginInfo);
-    newLoginInfo.customKeys = customKeys;
-    this.setState({ secret, loginInfo: newLoginInfo });
+  onUnlock(secret) {
+    this.setState({ secret });
   }
 
   handleChange(name, event) {

@@ -142,8 +142,7 @@ export default class ExchangePage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  onUnlock(data) {
-    const { secret } = data;
+  onUnlock(secret) {
     this.setState({ secret });
   }
 

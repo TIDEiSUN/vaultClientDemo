@@ -61,10 +61,13 @@ Utils.makeCancelable = (promise) => {
   };
 };
 
+const VaultClientStorage = callbacks;
+
 export {
   VaultClient,
   TidePayAPI,
   Config,
   Utils,
   Errors,
+  VaultClientStorage,
 };

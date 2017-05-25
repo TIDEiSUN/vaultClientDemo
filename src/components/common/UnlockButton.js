@@ -17,12 +17,11 @@ export default class UnlockButton extends React.Component {
     const { hasPaymentPin, unlockSecret } = this.props;
     const paymentPin = hasPaymentPin ? this.state.paymentPin : undefined;
     return VaultClient.unlockAccount(unlockSecret, paymentPin)
-      .then((result) => {
-        const { secret, customKeys } = result;
+      .then((secret) => {
         this.setState({
           secret: secret,
         });
-        this.props.onUnlock(result);
+        this.props.onUnlock(secret);
         alert('Success!');
         return Promise.resolve();
       }).catch((err) => {
