@@ -57,7 +57,7 @@ export default class ActivateAccountPage extends React.Component {
         return VaultClient.authActivateAccount(loginInfo, email, newAuthToken, createAccountToken);
       })
       .then((result) => {
-        console.log('Activate sucessfully', result);
+        console.log('Activate successfully', result);
         browserHistory.push('/main');
         return Promise.resolve();
       })

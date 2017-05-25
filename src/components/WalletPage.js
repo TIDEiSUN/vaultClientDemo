@@ -89,13 +89,15 @@ export default class WalletPage extends React.Component {
     this.state = {
       public: null,
       secret: null,
+      hasPaymentPin: null,
+      unlockSecret: null,
       pockets: [],
       newPocketCurrency: '',
       supportedCurrencies: [],
     };
     this.handleActivatePocket = this.handleActivatePocket.bind(this);
     this.handleFreezePocket = this.handleFreezePocket.bind(this);
-    this.onUpdate = this.onUpdate.bind(this);
+    this.onUnlock = this.onUnlock.bind(this);
     this.handleNewPocketCurrencyChange = this.handleNewPocketCurrencyChange.bind(this);
   }
 
@@ -105,7 +107,11 @@ export default class WalletPage extends React.Component {
         .then((loginInfo) => {
           const { blob } = loginInfo;
           const address = blob.data.account_id;
-          this.setState({ public: address });
+          this.setState({
+            public: address,
+            hasPaymentPin: blob.has_payment_pin,
+            unlockSecret: blob.data.unlock_secret,
+          });
           return address;
         })
         .catch((err) => {
@@ -218,8 +224,9 @@ export default class WalletPage extends React.Component {
       });
   }
 
-  onUpdate(data) {
-    this.setState(data);
+  onUnlock(data) {
+    const { secret } = data;
+    this.setState({ secret });
   }
 
   render() {
@@ -227,7 +234,7 @@ export default class WalletPage extends React.Component {
     if (this.state.public) {
       childComponents = (
         <div>
-          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <UnlockButton address={this.state.public} secret={this.state.secret} hasPaymentPin={this.state.hasPaymentPin} unlockSecret={this.state.unlockSecret} onUnlock={this.onUnlock} />
           <br />
           <WalletTable pockets={this.state.pockets} secret={this.state.secret} self={this} />
           <br />

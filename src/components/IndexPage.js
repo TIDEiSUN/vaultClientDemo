@@ -23,13 +23,25 @@ function EmailField(props) {
 }
 
 function LastBlobIDChangeDate(props) {
-  const { date } = props;
+  const { date, timestamp } = props;
   if (!date) {
     return null;
   }
   return (
     <div>
-      Blob ID: Last updated at {date}
+      Blob ID: Last updated at {date} ({timestamp})
+    </div>
+  );
+}
+
+function LastSecretIDChangeDate(props) {
+  const { time } = props;
+  if (!time) {
+    return null;
+  }
+  return (
+    <div>
+      Secret ID: Last updated at {time}
     </div>
   );
 }
@@ -80,6 +92,8 @@ export default class IndexPage extends React.Component {
     this.state = {
       resendEmail: null,
       lastBlobIDChangeDate: '',
+      lastBlobIDChangeTimestamp: '',
+      lastSecretIDChangeTime: '',
     };
     this.handleResendEmail = this.handleResendEmail.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
@@ -94,6 +108,8 @@ export default class IndexPage extends React.Component {
             loginInfo,
             resendEmail: blob.pendingEmail,
             lastBlobIDChangeDate: blob.last_id_change_date,
+            lastBlobIDChangeTimestamp: blob.last_id_change_timestamp,
+            lastSecretIDChangeTime: blob.last_secret_id_change_time,
           });
         })
         .catch((err) => {
@@ -160,7 +176,8 @@ export default class IndexPage extends React.Component {
     return (
       <div className="home">
         <div>Welcome {loginInfo.username}!</div>
-        <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} />
+        <LastBlobIDChangeDate date={this.state.lastBlobIDChangeDate} timestamp={this.state.lastBlobIDChangeTimestamp} />
+        <LastSecretIDChangeDate time={this.state.lastSecretIDChangeTime} />
         <div>
           Ripple address: {loginInfo.blob.data.account_id}
         </div>
@@ -181,6 +198,8 @@ export default class IndexPage extends React.Component {
         <br />
         <div>
           <Link to="/changepw">Change Password</Link>
+          <br />
+          <Link to="/changepaymentpin">Change Payment Pin</Link>
           <br />
           <Link to="/changepersonaldata">Change Personal Data</Link>
           <br />

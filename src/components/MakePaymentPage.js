@@ -100,6 +100,8 @@ export default class MakePaymentPage extends React.Component {
     this.state = {
       public: null,
       secret: null,
+      hasPaymentPin: null,
+      unlockSecret: null,
       balances: {},
       externalPayment: false,
       destination: '',
@@ -109,7 +111,7 @@ export default class MakePaymentPage extends React.Component {
     };
     this.handleCurrencyChange = this.handleCurrencyChange.bind(this);
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
-    this.onUpdate = this.onUpdate.bind(this);
+    this.onUnlock = this.onUnlock.bind(this);
     this.onGetAccountBalances = this.onGetAccountBalances.bind(this);
   }
 
@@ -118,7 +120,11 @@ export default class MakePaymentPage extends React.Component {
       return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           const { blob } = loginInfo;
-          this.setState({ public: blob.data.account_id });
+          this.setState({
+            public: blob.data.account_id,
+            hasPaymentPin: blob.has_payment_pin,
+            unlockSecret: blob.data.unlock_secret,
+          });
         })
         .catch((err) => {
           console.error('getLoginInfo', err);
@@ -146,8 +152,9 @@ export default class MakePaymentPage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  onUpdate(data) {
-    this.setState(data);
+  onUnlock(data) {
+    const { secret } = data;
+    this.setState({ secret });
   }
 
   onGetAccountBalances(balances) {
@@ -233,7 +240,7 @@ export default class MakePaymentPage extends React.Component {
       const currencies = Object.keys(this.state.balances);
       childComponents = (
         <div>
-          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <UnlockButton address={this.state.public} secret={this.state.secret} hasPaymentPin={this.state.hasPaymentPin} unlockSecret={this.state.unlockSecret} onUnlock={this.onUnlock} />
           <br />
           <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
           <br />

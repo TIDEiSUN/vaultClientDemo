@@ -19,6 +19,7 @@ import UploadIDPhotosPage from './components/UploadIDPhotosPage';
 import BankAccountPage from './components/BankAccountPage';
 import TwoFactorAuthPage from './components/TwoFactorAuthPage';
 import ExchangePage from './components/ExchangePage';
+import ChangePaymentPinPage from './components/ChangePaymentPinPage';
 
 const routes = (
   <Route path="/" component={Layout}>
@@ -39,6 +40,7 @@ const routes = (
     <Route path="/bankaccount" component={BankAccountPage} />
     <Route path="/2fa" component={TwoFactorAuthPage} />
     <Route path="/exchange" component={ExchangePage} />
+    <Route path="/changepaymentpin" component={ChangePaymentPinPage} />
     <Route path="*" component={NotFoundPage} />
   </Route>
 );

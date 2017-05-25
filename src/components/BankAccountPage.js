@@ -95,7 +95,6 @@ export default class BankAccountPage extends React.Component {
     };
     this.handleAddBankAccount = this.handleAddBankAccount.bind(this);
     this.handleDeleteBankAccount = this.handleDeleteBankAccount.bind(this);
-    this.onUpdate = this.onUpdate.bind(this);
   }
 
   componentDidMount() {
@@ -187,10 +186,6 @@ export default class BankAccountPage extends React.Component {
         alert('Failed to delete bank account: ' + err.message);
         return Promise.reject(err);
       });
-  }
-
-  onUpdate(data) {
-    this.setState(data);
   }
 
   render() {

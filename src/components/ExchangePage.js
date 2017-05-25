@@ -100,6 +100,8 @@ export default class ExchangePage extends React.Component {
     this.state = {
       public: null,
       secret: null,
+      hasPaymentPin: null,
+      unlockSecret: null,
       balances: {},
       baseCurrency: '',
       symbolCurrency: '',
@@ -111,7 +113,7 @@ export default class ExchangePage extends React.Component {
     this.handleCurrencyChange = this.handleCurrencyChange.bind(this);
     this.handleSubmitExchangeRateForm = this.handleSubmitExchangeRateForm.bind(this);
     this.handleSubmitExchangeForm = this.handleSubmitExchangeForm.bind(this);
-    this.onUpdate = this.onUpdate.bind(this);
+    this.onUnlock = this.onUnlock.bind(this);
     this.onGetAccountBalances = this.onGetAccountBalances.bind(this);
   }
 
@@ -121,7 +123,11 @@ export default class ExchangePage extends React.Component {
         .then((loginInfo) => {
           const { blob } = loginInfo;
           const { account_id } = blob.data;
-          this.setState({ public: account_id });
+          this.setState({
+            public: account_id,
+            hasPaymentPin: blob.has_payment_pin,
+            unlockSecret: blob.data.unlock_secret,
+          });
         })
         .catch((err) => {
           console.error('BankAccountPage - getLoginInfo', err);
@@ -136,8 +142,9 @@ export default class ExchangePage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  onUpdate(data) {
-    this.setState(data);
+  onUnlock(data) {
+    const { secret } = data;
+    this.setState({ secret });
   }
 
   onGetAccountBalances(balances) {
@@ -221,7 +228,7 @@ export default class ExchangePage extends React.Component {
       const currencies = Object.keys(this.state.balances);
       childComponents = (
         <div>
-          <UnlockButton address={this.state.public} secret={this.state.secret} onUpdate={this.onUpdate} />
+          <UnlockButton address={this.state.public} secret={this.state.secret} hasPaymentPin={this.state.hasPaymentPin} unlockSecret={this.state.unlockSecret} onUnlock={this.onUnlock} />
           <br />
           <AccountBalanceTable address={this.state.public} onGetAccountBalances={this.onGetAccountBalances} />
           <br />

@@ -19,9 +19,10 @@ export default class LoginForm extends React.Component {
       defaultParams.username = username;
     }
     this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
+    this.handleInitAuthenticationForm = this.handleInitAuthenticationForm.bind(this);
   }
 
-  componentDidMount() {
+  handleInitAuthenticationForm() {
     VaultClient.getAuthInfoByUsername('dummy')
       .then((authInfo) => {
         return VaultClient.authLoginAccount(authInfo);
@@ -131,7 +132,7 @@ export default class LoginForm extends React.Component {
 
   render() {
     return (
-      <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} defaultParams={defaultParams} errorMessage={this.state.errorMessage} />
+      <AuthenticationForm auth={this.state.auth} initForm={this.handleInitAuthenticationForm} submitForm={this.handleSubmitAuthenticationForm} defaultParams={defaultParams} errorMessage={this.state.errorMessage} />
     );
   }
 }

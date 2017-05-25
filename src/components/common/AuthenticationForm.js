@@ -129,6 +129,10 @@ export default class AuthenticationForm extends React.Component {
     }
   }
 
+  componentDidMount() {
+    this.props.initForm();
+  }
+
   componentWillReceiveProps(props) {
     const { auth, systemParams = {}, errorMessage } = props;
     const { step, params, resendParams } = auth;

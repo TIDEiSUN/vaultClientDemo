@@ -64,9 +64,10 @@ export default class UnblockAccountPage extends React.Component {
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleSubmitAuthenticationForm = this.handleSubmitAuthenticationForm.bind(this);
+    this.handleInitAuthenticationForm = this.handleInitAuthenticationForm.bind(this);
   }
 
-  componentDidMount() {
+  handleInitAuthenticationForm() {
     if (this.state.auth) {
       return;
     }
@@ -145,7 +146,7 @@ export default class UnblockAccountPage extends React.Component {
     return (
       <div className="home">
         <h1>Unblock Account</h1>
-        <AuthenticationForm auth={this.state.auth} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
+        <AuthenticationForm auth={this.state.auth} initForm={this.handleInitAuthenticationForm} submitForm={this.handleSubmitAuthenticationForm} systemParams={systemParams} />
         <ChangePasswordForm auth={this.state.auth} self={this} />
         <Link to="/">Back to login page</Link>
       </div>

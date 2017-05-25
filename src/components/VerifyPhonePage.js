@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Utils } from '../logics';
+import UnlockButton from './common/UnlockButton';
 
 function PhoneInfoDiv(props) {
   if (!props.oldPhoneInfo) {
@@ -27,9 +28,14 @@ export default class VerifyPhonePage extends React.Component {
       oldPhoneInfo: null,
       verified: false,
       authToken: null,
+      public: null,
+      secret: null,
+      hasPaymentPin: null,
+      unlockSecret: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
+    this.onUnlock = this.onUnlock.bind(this);
   }
 
   componentDidMount() {
@@ -41,6 +47,9 @@ export default class VerifyPhonePage extends React.Component {
             loginInfo,
             oldPhoneInfo: blob.data.phone,
             verified: Utils.checkPhoneVerified(blob.account_level),
+            public: blob.account_id,
+            hasPaymentPin: blob.has_payment_pin,
+            unlockSecret: blob.data.unlock_secret,
           });
         })
         .catch((err) => {
@@ -54,6 +63,13 @@ export default class VerifyPhonePage extends React.Component {
 
   componentWillUnmount() {
     this.cancelablePromise.cancel();
+  }
+
+  onUnlock(data) {
+    const { secret, customKeys } = data;
+    const newLoginInfo = VaultClient.cloneLoginInfo(this.state.loginInfo);
+    newLoginInfo.customKeys = customKeys;
+    this.setState({ secret, loginInfo: newLoginInfo });
   }
 
   handleChange(name, event) {
@@ -101,7 +117,7 @@ export default class VerifyPhonePage extends React.Component {
 
   handleSubmitVerify(event) {
     console.log('Handle verify phone');
-    const { countryCode, phoneNumber, token, authToken } = this.state;
+    const { countryCode, phoneNumber, token, authToken, hasPaymentPin } = this.state;
     const phone = {
       countryCode: this.state.countryCode,
       phoneNumber: this.state.phoneNumber,
@@ -110,7 +126,7 @@ export default class VerifyPhonePage extends React.Component {
     if (phone.phoneNumber && phone.countryCode) {
       const newBlob = VaultClient.cloneBlob(this.state.loginInfo.blob);
       newBlob.data.phone = phone;
-      VaultClient.authVerifyUpdatePhone(this.state.loginInfo, phone, token, authToken, newBlob)
+      VaultClient.authVerifyUpdatePhone(this.state.loginInfo, phone, token, authToken, newBlob, hasPaymentPin)
         .then((result) => {
           console.log('update phone:', result);
           const { blob } = result.loginInfo;
@@ -130,32 +146,44 @@ export default class VerifyPhonePage extends React.Component {
   }
 
   render() {
+    let updatePhoneForm;
+    if (!this.state.hasPaymentPin || this.state.secret) {
+      updatePhoneForm = (
+        <div>
+          <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} verified={this.state.verified} />
+          <form onSubmit={this.handleSubmitSend}>
+            <div>
+              <label>
+                Country code:
+                <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
+              </label>
+              <label>
+                Phone number:
+                <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
+              </label>
+              <input type="submit" value="Send" />
+            </div>
+          </form>
+          <form onSubmit={this.handleSubmitVerify}>
+            <div>
+              <label>
+                Received token:
+                <input type="text" value={this.state.token} onChange={this.handleChange.bind(this, 'token')} />
+              </label>
+              <input type="submit" value="Verify" />
+            </div>
+          </form>
+        </div>
+      );
+    } else {
+      updatePhoneForm = (
+        <UnlockButton address={this.state.public} secret={this.state.secret} hasPaymentPin={this.state.hasPaymentPin} unlockSecret={this.state.unlockSecret} onUnlock={this.onUnlock} />
+      );
+    }
     return (
       <div className="home">
         <h1>Send Verification Code</h1>
-        <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} verified={this.state.verified} />
-        <form onSubmit={this.handleSubmitSend}>
-          <div>
-            <label>
-              Country code:
-              <input type="text" value={this.state.countryCode} onChange={this.handleChange.bind(this, 'countryCode')} />
-            </label>
-            <label>
-              Phone number:
-              <input type="text" value={this.state.phoneNumber} onChange={this.handleChange.bind(this, 'phoneNumber')} />
-            </label>
-            <input type="submit" value="Send" />
-          </div>
-        </form>
-        <form onSubmit={this.handleSubmitVerify}>
-          <div>
-            <label>
-              Received token:
-              <input type="text" value={this.state.token} onChange={this.handleChange.bind(this, 'token')} />
-            </label>
-            <input type="submit" value="Verify" />
-          </div>
-        </form>
+        {updatePhoneForm}
         <Link to="/main">Back to main page</Link>
       </div>
     );
