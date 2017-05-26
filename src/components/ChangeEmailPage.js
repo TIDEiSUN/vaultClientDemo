@@ -2,65 +2,38 @@ import React from 'react';
 import { Link } from 'react-router';
 import { VaultClient, Config, Utils } from '../logics';
 import AsyncButton from './common/AsyncButton';
-import LoginForm from './common/LoginForm';
 
-function LoginDiv(props) {
-  const { loggedIn, queryString, self } = props;
-  const verify = Object.keys(queryString).length > 0;
-  if (!verify) {
-    return null;
-  }
+function VerifyEmailForm(props) {
+  const { queryString, self } = props;
+  const {
+    username,
+    email,
+    token,
+    authToken,
+  } = queryString;
 
-  const { username } = queryString;
-
-  if (loggedIn) {
-    return (
-      <div>
-        <li>Username: {username}</li>
-      </div>
-    );
-  }
+  const disabled = !username || !email || !token || !authToken;
 
   return (
-    <LoginForm username={username} loginCallback={self.handleLogin} />
+    <div>
+      <li>Username: {username}</li>
+      <li>Email: {email}</li>
+      <li>Token: {token}</li>
+      <AsyncButton
+        type="button"
+        onClick={self.handleVerifyToken}
+        pendingText="Verifying..."
+        fulFilledText="Verified"
+        rejectedText="Failed! Try Again"
+        text="Verify"
+        disabled={disabled}
+      />
+    </div>
   );
 }
 
 function UpdateEmailForm(props) {
-  const { loggedIn, queryString, self } = props;
-  const verify = Object.keys(queryString).length > 0;
-  if (verify) {
-    if (!loggedIn) {
-      return null;
-    }
-
-    const {
-      username,
-      email,
-      token,
-      authToken,
-    } = queryString;
-
-    const disabled = !username || !email || !token || !authToken;
-
-    return (
-      <div>
-        <li>Username: {username}</li>
-        <li>Email: {email}</li>
-        <li>Token: {token}</li>
-        <AsyncButton
-          type="button"
-          onClick={self.handleVerifyToken}
-          pendingText="Verifying..."
-          fulFilledText="Verified"
-          rejectedText="Failed! Try Again"
-          text="Verify"
-          disabled={disabled}
-        />
-      </div>
-    );
-  }
-
+  const { self } = props;
   return (
     <form>
       <div>
@@ -76,7 +49,7 @@ function UpdateEmailForm(props) {
         fulFilledText="Changed"
         rejectedText="Failed! Try Again"
         text="Change"
-        />
+      />
     </form>
   );
 }
@@ -94,6 +67,11 @@ export default class ChangeEmailPage extends React.Component {
   }
 
   componentDidMount() {
+    const queryString = this.props.location.query;
+    const verify = Object.keys(queryString).length > 0;
+    if (verify) {
+      return;
+    }
     const getLoginInfo = () => {
       return VaultClient.getLoginInfo()
         .then((loginInfo) => {
@@ -109,7 +87,9 @@ export default class ChangeEmailPage extends React.Component {
   }
 
   componentWillUnmount() {
-    this.cancelablePromise.cancel();
+    if (this.cancelablePromise) {
+      this.cancelablePromise.cancel();
+    }
   }
 
   handleChange(name, event) {
@@ -135,11 +115,9 @@ export default class ChangeEmailPage extends React.Component {
       authToken,
     } = this.props.location.query;
 
-    const { loginInfo } = this.state;
-    return VaultClient.authVerifyUpdateEmail(loginInfo, email, token, authToken)
+    return VaultClient.authVerifyAndUpdateEmail(username, email, token, authToken)
       .then((result) => {
         console.log('verify update email', result);
-        this.setState({ loginInfo: result.loginInfo });
         alert('OK!');
         return Promise.resolve();
       }).catch((err) => {
@@ -179,17 +157,24 @@ export default class ChangeEmailPage extends React.Component {
   }
 
   render() {
-    let link = '/';
-    let pageName = 'login';
-    if (this.state.loggedIn) {
-      link = '/main';
-      pageName = 'main';
+    const queryString = this.props.location.query;
+    const verify = Object.keys(queryString).length > 0;
+    let link = '/main';
+    let pageName = 'main';
+    let form = (
+      <UpdateEmailForm self={this} />
+    );
+    if (verify) {
+      link = '/';
+      pageName = 'login';
+      form = (
+        <VerifyEmailForm queryString={queryString} self={this} />
+      );
     }
     return (
       <div className="home">
         <h1>Change Email</h1>
-        <LoginDiv loggedIn={this.state.loggedIn} queryString={this.props.location.query} self={this} />
-        <UpdateEmailForm loggedIn={this.state.loggedIn} queryString={this.props.location.query} self={this} />
+        {form}
         <Link to={link}>Back to {pageName} page</Link>
       </div>
     );

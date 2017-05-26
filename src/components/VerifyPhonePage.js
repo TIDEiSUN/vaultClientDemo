@@ -28,14 +28,10 @@ export default class VerifyPhonePage extends React.Component {
       oldPhoneInfo: null,
       verified: false,
       authToken: null,
-      public: null,
-      secret: null,
       hasPaymentPin: null,
-      unlockSecret: null,
     };
     this.handleSubmitSend = this.handleSubmitSend.bind(this);
     this.handleSubmitVerify = this.handleSubmitVerify.bind(this);
-    this.onUnlock = this.onUnlock.bind(this);
   }
 
   componentDidMount() {
@@ -47,9 +43,7 @@ export default class VerifyPhonePage extends React.Component {
             loginInfo,
             oldPhoneInfo: blob.data.phone,
             verified: Utils.checkPhoneVerified(blob.account_level),
-            public: blob.account_id,
             hasPaymentPin: blob.has_payment_pin,
-            unlockSecret: blob.data.unlock_secret,
           });
         })
         .catch((err) => {
@@ -63,10 +57,6 @@ export default class VerifyPhonePage extends React.Component {
 
   componentWillUnmount() {
     this.cancelablePromise.cancel();
-  }
-
-  onUnlock(secret) {
-    this.setState({ secret });
   }
 
   handleChange(name, event) {
@@ -116,14 +106,14 @@ export default class VerifyPhonePage extends React.Component {
     console.log('Handle verify phone');
     const { countryCode, phoneNumber, token, authToken, hasPaymentPin } = this.state;
     const phone = {
-      countryCode: this.state.countryCode,
-      phoneNumber: this.state.phoneNumber,
+      countryCode,
+      phoneNumber,
     };
 
     if (phone.phoneNumber && phone.countryCode) {
       const newBlob = VaultClient.cloneBlob(this.state.loginInfo.blob);
       newBlob.data.phone = phone;
-      VaultClient.authVerifyUpdatePhone(this.state.loginInfo, phone, token, authToken, newBlob, hasPaymentPin)
+      VaultClient.authVerifyAndUpdatePhone(this.state.loginInfo, phone, token, authToken, newBlob, hasPaymentPin)
         .then((result) => {
           console.log('update phone:', result);
           const { blob } = result.loginInfo;
@@ -143,9 +133,9 @@ export default class VerifyPhonePage extends React.Component {
   }
 
   render() {
-    let updatePhoneForm;
-    if (!this.state.hasPaymentPin || this.state.secret) {
-      updatePhoneForm = (
+    return (
+      <div className="home">
+        <h1>Send Verification Code</h1>
         <div>
           <PhoneInfoDiv oldPhoneInfo={this.state.oldPhoneInfo} verified={this.state.verified} />
           <form onSubmit={this.handleSubmitSend}>
@@ -171,16 +161,6 @@ export default class VerifyPhonePage extends React.Component {
             </div>
           </form>
         </div>
-      );
-    } else {
-      updatePhoneForm = (
-        <UnlockButton address={this.state.public} secret={this.state.secret} hasPaymentPin={this.state.hasPaymentPin} unlockSecret={this.state.unlockSecret} onUnlock={this.onUnlock} />
-      );
-    }
-    return (
-      <div className="home">
-        <h1>Send Verification Code</h1>
-        {updatePhoneForm}
         <Link to="/main">Back to main page</Link>
       </div>
     );
