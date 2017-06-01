@@ -1,29 +1,124 @@
 import React from 'react';
 import { Link } from 'react-router';
 import AsyncButton from './common/AsyncButton';
+import ImageUpload from './common/ImageUpload';
+import DropdownMenu from './common/DropdownMenu';
 import { VaultClient, VCUtils as Utils } from '../logics';
+
+const timeRanges = [
+  { start: '06:00', end: '10:00' },
+  { start: '10:00', end: '14:00' },
+  { start: '14:00', end: '18:00' },
+  { start: '18:00', end: '22:00' },
+  { start: '22:00', end: '02:00' },
+  { start: '02:00', end: '06:00' },
+];
+
+function VerifyBankAccountForm(props) {
+  const { bankAccount, self } = props;
+  const { info } = bankAccount;
+  const timeRangeOptions = timeRanges.reduce((acc, curr, index) => {
+    const { start, end } = curr;
+    const opt = {
+      value: String(index),
+      label: `${start}~${end}`,
+    };
+    return [...acc, opt];
+  }, []);
+
+  const cancelForm = (event) => {
+    event.preventDefault();
+    self.setState({
+      verifyBankAccount: null,
+    });
+  };
+
+  return (
+    <form>
+      <div>Account Name: {info.bankName}</div>
+      <div>Account Account Number: {info.bankAccountNumber}</div>
+      <div>
+        Transaction Time:
+        <input type="text" name="txDate" value={self.state.txDate} onChange={self.onInputChange} />
+        <DropdownMenu items={timeRangeOptions} onChange={self.onTxTimeRangeIndexChange} />
+      </div>
+      <div>
+        Amount:
+        <input type="text" name="txValue" value={self.state.txValue} onChange={self.onInputChange} />
+      </div>
+      <div>
+        Currency:
+        <input type="text" name="txCurrency" value={self.state.txCurrency} onChange={self.onInputChange} />
+      </div>
+      <ImageUpload title="Receipt Photo" name="txReceiptPhoto" onImageChange={self.onImageChange} />
+      <AsyncButton
+        type="button"
+        onClick={self.handleVerifyBankAccount}
+        pendingText="Sending..."
+        fulFilledText="Sent"
+        rejectedText="Failed! Try Again"
+        text="Send"
+      />
+      <button onClick={cancelForm}>Cancel</button>
+    </form>
+  );
+}
 
 function BankAccountTable(props) {
   const { bankAccounts, self } = props;
 
+  const verifyField = (status, value) => {
+    switch (status) {
+      case 'BAC_ADDED': {
+        return (
+          <AsyncButton
+            type="button"
+            onClick={self.handleShowVerifyBankAccountForm}
+            pendingText="Sending..."
+            fulFilledText="Sent"
+            rejectedText="Failed! Try Again"
+            text="Verify"
+            eventValue={value}
+          />
+        );
+      }
+      case 'BAC_PENDING_VERIFY': {
+        return <span>Verifying</span>;
+      }
+      case 'BAC_ACCEPTED': {
+        return <span>Accepted</span>;
+      }
+      case 'BAC_REJECTED': {
+        return <span>Rejected</span>;
+      }
+      default: {
+        return null;
+      }
+    }
+  };
+
+  const deleteField = (value) => (
+    <AsyncButton
+      type="button"
+      onClick={self.handleDeleteBankAccount}
+      pendingText="Deleting..."
+      fulFilledText="Deleted"
+      rejectedText="Failed! Try Again"
+      text="Delete"
+      eventValue={value}
+    />
+  );
+
   const rows = [];
   let index = 0;
   bankAccounts.forEach((bankAccount) => {
+    const { info, status, identifier } = bankAccount;
     rows.push(
       <tr key={index}>
-        <td>{bankAccount.bankName}</td>
-        <td>{bankAccount.bankAccountNumber}</td>
-        <td>
-          <AsyncButton
-            type="button"
-            onClick={self.handleDeleteBankAccount}
-            pendingText="Deleting..."
-            fulFilledText="Deleted"
-            rejectedText="Failed! Try Again"
-            text="Delete"
-            eventValue={index}
-          />
-        </td>
+        <td>{info.bankName}</td>
+        <td>{info.bankAccountNumber}</td>
+        <td>{verifyField(status, identifier)}</td>
+        <td>{deleteField(identifier)}</td>
       </tr>
     );
     index += 1;
@@ -43,6 +138,7 @@ function BankAccountTable(props) {
         <tr>
           <td>Bank Name</td>
           <td>Bank Account Number</td>
+          <td>Verify</td>
           <td>Delete</td>
         </tr>
       </thead>
@@ -92,9 +188,20 @@ export default class BankAccountPage extends React.Component {
         bankName: '',
         bankAccountNumber: '',
       },
+      verifyBankAccount: null,
+      txDate: '',
+      txTimeRangeIndex: 0,
+      txValue: '',
+      txCurrency: '',
+      txReceiptPhoto: null,
     };
     this.handleAddBankAccount = this.handleAddBankAccount.bind(this);
     this.handleDeleteBankAccount = this.handleDeleteBankAccount.bind(this);
+    this.handleVerifyBankAccount = this.handleVerifyBankAccount.bind(this);
+    this.handleShowVerifyBankAccountForm = this.handleShowVerifyBankAccountForm.bind(this);
+    this.onImageChange = this.onImageChange.bind(this);
+    this.onInputChange = this.onInputChange.bind(this);
+    this.onTxTimeRangeIndexChange = this.onDropdownChange.bind(this, 'txTimeRangeIndex');
   }
 
   componentDidMount() {
@@ -102,7 +209,23 @@ export default class BankAccountPage extends React.Component {
       return VaultClient.getLoginInfo()
         .then((loginInfo) => {
           const { blob } = loginInfo;
-          const bankAccounts = blob.data[this.blobDataKey] || [];
+          const { data, bank_accounts } = blob;
+          const blobBankAccounts = data[this.blobDataKey] || [];
+          const bankAccounts = blobBankAccounts.reduce((acc, curr) => {
+            const hashed = Utils.createHashedBankAccount(curr);
+            const statusInfo = bank_accounts.find((info) => {
+              return info.identifier === hashed;
+            });
+            if (!statusInfo) {
+              return acc;
+            }
+            const bankAccount = {
+              info: curr,
+              status: statusInfo.status,
+              identifier: hashed,
+            };
+            return [...acc, bankAccount];
+          }, []);
           this.setState({
             loginInfo,
             bankAccounts,
@@ -119,6 +242,21 @@ export default class BankAccountPage extends React.Component {
 
   componentWillUnmount() {
     this.cancelablePromise.cancel();
+  }
+
+  onImageChange(name, file) {
+    this.setState({ [name]: file });
+  }
+
+  onInputChange(event) {
+    const { target } = event;
+    const { value, name } = target;
+    this.setState({ [name]: value });
+  }
+
+  onDropdownChange(name, value) {
+    console.log('onDropdownChange', name, value);
+    this.setState({ [name]: value });
   }
 
   handleNewBankAccountChange(name, event) {
@@ -142,9 +280,14 @@ export default class BankAccountPage extends React.Component {
     return VaultClient.addBankAccount(this.state.loginInfo, newBankAccount, updateBlobDataCallback)
       .then((result) => {
         console.log('add bank account', result);
-        const { loginInfo } = result;
+        const { loginInfo, status } = result;
         const { blob } = loginInfo;
-        const bankAccounts = blob.data[this.blobDataKey];
+        const bankAccount = {
+          info: newBankAccount,
+          status,
+          identifier: Utils.createHashedBankAccount(newBankAccount),
+        };
+        const bankAccounts = [...this.state.bankAccounts, bankAccount];
         this.setState({
           loginInfo,
           bankAccounts,
@@ -158,23 +301,72 @@ export default class BankAccountPage extends React.Component {
       });
   }
 
+  handleShowVerifyBankAccountForm(value) {
+    const rowIndex = this.state.bankAccounts.findIndex(bankAccount => bankAccount.identifier === value);
+    console.log('Handle show verify bank account', rowIndex);
+
+    const verifyBankAccount = this.state.bankAccounts[rowIndex];
+    this.setState({ verifyBankAccount });
+  }
+
+  handleVerifyBankAccount() {
+    const {
+      verifyBankAccount,
+      txDate,
+      txTimeRangeIndex,
+      txValue,
+      txCurrency,
+      txReceiptPhoto,
+    } = this.state;
+
+    const bankAccountInfo = verifyBankAccount.info;
+
+    const timeRange = timeRanges[parseInt(txTimeRangeIndex, 10)];
+    const timezoneOffsetHrs = -(new Date().getTimezoneOffset() / 60);
+    const timezoneStr = timezoneOffsetHrs < 0 ? String(timezoneOffsetHrs) : `+${timezoneOffsetHrs}`;
+    const txDateRange = {
+      start: new Date(`${txDate} ${timeRange.start} ${timezoneStr}`),
+      end: new Date(`${txDate} ${timeRange.end} ${timezoneStr}`),
+    };
+
+    return VaultClient.uploadBankAccountVerification(this.state.loginInfo, bankAccountInfo, txDateRange, txValue, txCurrency, txReceiptPhoto)
+      .then((result) => {
+        const { status } = result;
+        const rowIndex = this.state.bankAccounts.findIndex(bankAccount => bankAccount.identifier === verifyBankAccount.identifier);
+        const bankAccounts = [...this.state.bankAccounts];
+        bankAccounts[rowIndex] = { ...verifyBankAccount, status };
+        this.setState({
+          bankAccounts,
+          verifyBankAccount: null,
+        });
+        console.log('Upload bank account verification', result);
+        alert('Uploaded verification!');
+        return Promise.resolve();
+      }).catch((err) => {
+        console.error('Upload bank account verification:', err);
+        alert('Failed to upload bank account verification: ' + err.message);
+        return Promise.reject(err);
+      });
+  }
+
   handleDeleteBankAccount(value) {
-    const rowIndex = value;
+    const rowIndex = this.state.bankAccounts.findIndex(bankAccount => bankAccount.identifier === value);
     console.log('Handle delete bank account', rowIndex);
 
     const deleteBankAccount = this.state.bankAccounts[rowIndex];
+    const bankAccountInfo = deleteBankAccount.info;
 
     // update blob data
     const updateBlobDataCallback = (blobData) => {
       blobData[this.blobDataKey].splice(rowIndex, 1);
     };
 
-    return VaultClient.deleteBankAccount(this.state.loginInfo, deleteBankAccount, updateBlobDataCallback)
+    return VaultClient.deleteBankAccount(this.state.loginInfo, bankAccountInfo, updateBlobDataCallback)
       .then((result) => {
         console.log('delete bank account', result);
         const { loginInfo } = result;
-        const { blob } = loginInfo;
-        const bankAccounts = blob.data[this.blobDataKey];
+        const bankAccounts = [...this.state.bankAccounts];
+        bankAccounts.splice(rowIndex, 1);
         this.setState({
           loginInfo,
           bankAccounts,
@@ -191,13 +383,21 @@ export default class BankAccountPage extends React.Component {
   render() {
     let childComponents = null;
     if (this.state.loginInfo) {
-      childComponents = (
-        <div>
-          <BankAccountTable bankAccounts={this.state.bankAccounts} self={this} />
-          <br />
-          <AddBankAccountForm self={this} />
-        </div>
-      );
+      if (this.state.verifyBankAccount) {
+        childComponents = (
+          <div>
+            <VerifyBankAccountForm bankAccount={this.state.verifyBankAccount} self={this} />
+          </div>
+        );
+      } else {
+        childComponents = (
+          <div>
+            <BankAccountTable bankAccounts={this.state.bankAccounts} self={this} />
+            <br />
+            <AddBankAccountForm self={this} />
+          </div>
+        );
+      }
     }
     return (
       <div className="home">

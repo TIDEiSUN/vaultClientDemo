@@ -4,8 +4,8 @@ export default class DropdownMenu extends React.Component {
   constructor(props) {
     super(props);
     this.handleChange = this.handleChange.bind(this);
-    this.firstItem = null;
-    this.selectedItem = null;
+    this.firstItemValue = null;
+    this.selectedItemValue = null;
   }
 
   componentDidMount() {
@@ -16,29 +16,35 @@ export default class DropdownMenu extends React.Component {
     const { items } = props;
     if (items.length == 0) return;
     const item = items[0];
-    if (item !== this.firstItem) {
-      this.firstItem = item;
-      this.selectedItem = item;
+    const value = typeof item === 'string' ? item : item.value;
+    if (value !== this.firstItemValue) {
+      this.firstItemValue = value;
+      this.selectedItemValue = value;
       if (this.props.onChange) {
-        this.props.onChange(item);
+        this.props.onChange(value);
       }
     }
   }
 
   handleChange(event) {
-    const item = event.target.value;
-    if (item !== this.selectedItem) {
-      this.selectedItem = item;
+    const value = event.target.value;
+    if (value !== this.selectedItemValue) {
+      this.selectedItemValue = value;
       if (this.props.onChange) {
-        this.props.onChange(item);
+        this.props.onChange(value);
       }
     }
   }
 
   render() {
     const options = this.props.items.map((item) => {
+      if (typeof item === 'string') {
+        return (
+          <option value={item}>{item}</option>
+        );
+      }
       return (
-        <option key={item}>{item}</option>
+        <option value={item.value}>{item.label}</option>
       );
     });
     return (
