@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Utils, Errors } from '../logics';
+import { VaultClient, VCUtils as Utils, Errors } from '../logics';
 import AsyncButton from './common/AsyncButton';
 import AuthenticationForm from './common/AuthenticationForm';
 

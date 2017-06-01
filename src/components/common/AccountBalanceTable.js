@@ -1,5 +1,5 @@
 import React from 'react';
-import { TidePayAPI, Utils } from '../../logics';
+import { TidePayAPI, VCUtils as Utils } from '../../logics';
 
 export default class AccountBalanceTable extends React.Component {
   constructor(props) {

@@ -1,7 +1,7 @@
-// import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/build/tidepay-lib';
+// import { VaultClientClass, TidePayAPIClass, VCUtils, Errors } from '../../externals/tidepay-lib/build/tidepay-lib';
 import ms from 'ms';
 import { browserHistory } from 'react-router';
-import { VaultClientClass, TidePayAPIClass, Utils, Errors } from '../../externals/tidepay-lib/src/';
+import { VaultClientClass, TidePayAPIClass, VCUtils, Errors } from '../../externals/tidepay-lib/src/';
 import Config from './config';
 import { CurrentLogin } from '../components/Data';
 
@@ -42,7 +42,7 @@ const callbacks = {
 const VaultClient = new VaultClientClass(Config.isunpayrpcURL, callbacks);
 const TidePayAPI = new TidePayAPIClass(Config.isunpayrpcURL);
 
-Utils.makeCancelable = (promise) => {
+VCUtils.makeCancelable = (promise) => {
   let hasCancaled = false;
   const wrappedPromise = new Promise((resolve, reject) => {
     promise
@@ -67,7 +67,7 @@ export {
   VaultClient,
   TidePayAPI,
   Config,
-  Utils,
+  VCUtils,
   Errors,
   VaultClientStorage,
 };

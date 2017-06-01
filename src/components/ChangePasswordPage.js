@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Utils, VaultClientStorage } from '../logics';
+import { VaultClient, VCUtils as Utils, VaultClientStorage } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
 export default class ChangePasswordPage extends React.Component {

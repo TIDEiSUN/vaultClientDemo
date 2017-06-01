@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Config, Utils } from '../logics';
+import { VaultClient, Config, VCUtils as Utils } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
 function VerifyEmailForm(props) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import AsyncButton from './common/AsyncButton';
-import { VaultClient, Utils } from '../logics';
+import { VaultClient, VCUtils as Utils } from '../logics';
 
 function BankAccountTable(props) {
   const { bankAccounts, self } = props;

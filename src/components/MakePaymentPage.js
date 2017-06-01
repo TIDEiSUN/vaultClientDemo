@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import AsyncButton from './common/AsyncButton';
-import { VaultClient, TidePayAPI, Utils } from '../logics';
+import { VaultClient, TidePayAPI, VCUtils as Utils } from '../logics';
 import UnlockButton from './common/UnlockButton';
 import DropdownMenu from './common/DropdownMenu';
 import AccountBalanceTable from './common/AccountBalanceTable';

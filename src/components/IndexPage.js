@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
-import { VaultClient, Config, Utils } from '../logics';
+import { VaultClient, Config, VCUtils as Utils } from '../logics';
 
 function EmailField(props) {
   const { blob, self } = props;

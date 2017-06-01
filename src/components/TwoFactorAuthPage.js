@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { VaultClient, Utils } from '../logics';
+import { VaultClient, VCUtils as Utils } from '../logics';
 
 function PhoneInfoDiv(props) {
   if (!props.phone) {
