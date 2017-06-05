@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { RadioGroup, Radio } from 'react-radio-group';
+import QRCode from 'qrcode.react';
 import { VaultClient, VCUtils as Utils } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
@@ -69,7 +70,8 @@ function MethodOptionForm(props) {
 }
 
 function GAuthForm(props) {
-  const { totp, gKey, showSetup, handleInputChange, handleGAuth, handleBack } = props;
+  const { username, totp, gKey, showSetup, handleInputChange, handleGAuth, handleBack } = props;
+  const otpauthUrl = Utils.getOtpAuthUrl(username, gKey);
 
   let setup = null;
   if (showSetup) {
@@ -80,6 +82,9 @@ function GAuthForm(props) {
         </div>
         <div>
           Step 2: Scan QR code or enter key
+        </div>
+        <div>
+          <QRCode value={otpauthUrl} />
         </div>
         <div>
           {gKey}
@@ -460,8 +465,9 @@ export default class TwoFactorAuthPage extends React.Component {
       if (stage === Stage.REQUEST_CODE) {
         return null;
       }
-      const { gKey, totp } = this.state;
+      const { gKey, totp, loginInfo } = this.state;
       const childProps = {
+        username: loginInfo.username,
         gKey,
         totp,
         handleInputChange: this.handleInputChange,
