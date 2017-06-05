@@ -1,4 +1,5 @@
 import React from 'react';
+import { RadioGroup, Radio } from 'react-radio-group';
 import AsyncButton from './AsyncButton';
 
 const objHasOwnProp = Object.prototype.hasOwnProperty;
@@ -8,6 +9,18 @@ const specialParams = {
     username: 'text',
     password: 'password',
   },
+};
+
+const twoFactorAuthOptions = [
+  { label: 'Google Authenticator', value: 'google' },
+  { label: 'SMS', value: 'sms' },
+  { label: 'Authy', value: 'authy' },
+];
+
+const Stage = {
+  CHOOSE_METHOD: 0,
+  REQUEST_CODE: 1,
+  VERIFY_CODE: 2,
 };
 
 function getParamValue(cachedParamValues, key) {
@@ -103,6 +116,111 @@ function InputForm(props) {
   );
 }
 
+function MethodOptionForm(props) {
+  const { options, selected, handleOptionChange, handleSubmit, handleBack } = props;
+
+  const radios = options.map((option) => {
+    return (
+      <div>
+        <Radio value={option.value} />{option.label}
+      </div>
+    );
+  });
+  return (
+    <form>
+      <RadioGroup name="method" selectedValue={selected} onChange={handleOptionChange}>
+        {radios}
+      </RadioGroup>
+      <button onClick={handleSubmit}>Next</button>
+      <button onClick={handleBack}>Back</button>
+    </form>
+  );
+}
+
+function RequestForm(props) {
+  const { handleSubmit } = props;
+  return (
+    <div>
+      Request Token:
+      <AsyncButton
+        type="button"
+        onClick={handleSubmit}
+        pendingText="Requesting..."
+        fulFilledText="Requested"
+        rejectedText="Failed! Try Again"
+        text="Request"
+      />
+    </div>
+  );
+}
+
+function VerifyForm(props) {
+  const { token, handleTokenChange, handleSubmit } = props;
+  return (
+    <div>
+      <div>
+        Token:
+        <input type="text" name="token" value={token.value} onChange={handleTokenChange} />
+      </div>
+      <AsyncButton
+        type="button"
+        onClick={handleSubmit}
+        pendingText="Verifying..."
+        fulFilledText="Verified"
+        rejectedText="Failed! Try Again"
+        text="Verify"
+      />
+    </div>
+  );
+}
+
+function TwoFactorAuthForm(props) {
+  const { params, self } = props;
+  const { twofa_stage } = self.state;
+  if (twofa_stage === Stage.CHOOSE_METHOD) {
+    const submitCallback = (event) => {
+      event.preventDefault();
+      const via = self.state.params['2fa_via'].value;
+      const stage = via === 'google' ? Stage.VERIFY_CODE : Stage.REQUEST_CODE;
+      self.setState({ twofa_stage: stage });
+    };
+    const childProps = {
+      options: twoFactorAuthOptions,
+      selected: params['2fa_via'].value,
+      handleOptionChange: self.handleOptionChange.bind(self, 'params', '2fa_via'),
+      handleSubmit: submitCallback,
+    };
+    return <MethodOptionForm {...childProps} />;
+  }
+  if (twofa_stage === Stage.REQUEST_CODE) {
+    const submitCallback = () => {
+      return self.handleSubmit(params)
+        .then(() => {
+          self.setState({ twofa_stage: Stage.VERIFY_CODE });
+        });
+    };
+    const childProps = {
+      handleSubmit: submitCallback,
+    };
+    return <RequestForm {...childProps} />;
+  }
+  if (twofa_stage === Stage.VERIFY_CODE) {
+    const submitCallback = () => {
+      return self.handleSubmit(params)
+        .then(() => {
+          self.setState({ twofa_stage: Stage.CHOOSE_METHOD });
+        });
+    };
+    const childProps = {
+      token: params.token,
+      handleTokenChange: self.handleParamChange.bind(self, 'params', 'token'),
+      handleSubmit: submitCallback,
+    };
+    return <VerifyForm {...childProps} />;
+  }
+  return null;
+}
+
 export default class AuthenticationForm extends React.Component {
   constructor(props) {
     super(props);
@@ -117,6 +235,7 @@ export default class AuthenticationForm extends React.Component {
         resendParams: newResendParams,
         cachedParamValues: defaultParams,
         errorMessage: null,
+        twofa_stage: Stage.CHOOSE_METHOD,
       };
     } else {
       this.state = {
@@ -125,6 +244,7 @@ export default class AuthenticationForm extends React.Component {
         resendParams: null,
         cachedParamValues: defaultParams,
         errorMessage: null,
+        twofa_stage: Stage.CHOOSE_METHOD,
       };
     }
   }
@@ -179,9 +299,31 @@ export default class AuthenticationForm extends React.Component {
     this.setState({ [objName]: newParams });
   }
 
+  handleOptionChange(objName, name, value) {
+    const params = this.state[objName];
+    const param = params[name];
+    const updatedParam = { ...param };
+    updatedParam.value = value;
+    const newParams = { ...params, [name]: updatedParam };
+    this.setState({ [objName]: newParams });
+  }
+
+  handleSet2FAStage(stage, event) {
+    event.preventDefault();
+    this.setState({ twofa_stage: stage });
+  }
+
   render() {
     if (!this.state.step || this.state.step === 'done') {
       return null;
+    }
+    if (this.state.step === 'twoFactorAuth') {
+      return (
+        <div>
+          <h1>twoFactorAuth</h1>
+          <TwoFactorAuthForm params={this.state.params} self={this} />
+        </div>
+      );
     }
     return (
       <div>
