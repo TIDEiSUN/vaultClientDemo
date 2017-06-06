@@ -1,17 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import moment from 'moment';
 import AsyncButton from './common/AsyncButton';
 import ImageUpload from './common/ImageUpload';
 import DropdownMenu from './common/DropdownMenu';
 import { VaultClient, VCUtils as Utils } from '../logics';
 
 const timeRanges = [
-  { start: '06:00', end: '10:00' },
-  { start: '10:00', end: '14:00' },
-  { start: '14:00', end: '18:00' },
-  { start: '18:00', end: '22:00' },
-  { start: '22:00', end: '02:00' },
-  { start: '02:00', end: '06:00' },
+  { start:  6, end: 10 },
+  { start: 10, end: 14 },
+  { start: 14, end: 18 },
+  { start: 18, end: 22 },
+  { start: 22, end:  2 },
+  { start:  2, end:  6 },
 ];
 
 function VerifyBankAccountForm(props) {
@@ -19,9 +22,11 @@ function VerifyBankAccountForm(props) {
   const { info } = bankAccount;
   const timeRangeOptions = timeRanges.reduce((acc, curr, index) => {
     const { start, end } = curr;
+    const startTime = `0${start}:00`.slice(-5);
+    const endTime = `0${end}:00`.slice(-5);
     const opt = {
       value: String(index),
-      label: `${start}~${end}`,
+      label: `${startTime}~${endTime}`,
     };
     return [...acc, opt];
   }, []);
@@ -39,7 +44,7 @@ function VerifyBankAccountForm(props) {
       <div>Account Account Number: {info.bankAccountNumber}</div>
       <div>
         Transaction Time:
-        <input type="text" name="txDate" value={self.state.txDate} onChange={self.onInputChange} />
+        <DatePicker dateFormat="DD/MM/YYYY" selected={self.state.txDate} onChange={self.onDateChange} />
         <DropdownMenu items={timeRangeOptions} onChange={self.onTxTimeRangeIndexChange} />
       </div>
       <div>
@@ -186,7 +191,7 @@ export default class BankAccountPage extends React.Component {
         bankAccountNumber: '',
       },
       verifyBankAccount: null,
-      txDate: '',
+      txDate: moment(),
       txTimeRangeIndex: 0,
       txValue: '',
       txCurrency: '',
@@ -198,6 +203,7 @@ export default class BankAccountPage extends React.Component {
     this.handleShowVerifyBankAccountForm = this.handleShowVerifyBankAccountForm.bind(this);
     this.onImageChange = this.onImageChange.bind(this);
     this.onInputChange = this.onInputChange.bind(this);
+    this.onDateChange = this.onDateChange.bind(this);
     this.onTxTimeRangeIndexChange = this.onDropdownChange.bind(this, 'txTimeRangeIndex');
   }
 
@@ -248,6 +254,10 @@ export default class BankAccountPage extends React.Component {
     const { target } = event;
     const { value, name } = target;
     this.setState({ [name]: value });
+  }
+
+  onDateChange(date) {
+    this.setState({ txDate: date });
   }
 
   onDropdownChange(name, value) {
@@ -318,11 +328,14 @@ export default class BankAccountPage extends React.Component {
     const bankAccountInfo = verifyBankAccount.info;
 
     const timeRange = timeRanges[parseInt(txTimeRangeIndex, 10)];
-    const timezoneOffsetHrs = -(new Date().getTimezoneOffset() / 60);
-    const timezoneStr = timezoneOffsetHrs < 0 ? String(timezoneOffsetHrs) : `+${timezoneOffsetHrs}`;
+    const startMoment = moment(txDate).hour(timeRange.start).startOf('hour');
+    const endMoment = moment(txDate).hour(timeRange.end).startOf('hour');
+    if (timeRange.start > timeRange.end) {
+      endMoment.add(1, 'day');
+    }
     const txDateRange = {
-      start: new Date(`${txDate} ${timeRange.start} ${timezoneStr}`),
-      end: new Date(`${txDate} ${timeRange.end} ${timezoneStr}`),
+      start: startMoment.toDate(),
+      end: endMoment.toDate(),
     };
 
     return VaultClient.uploadBankAccountVerification(this.state.loginInfo, bankAccountInfo, txDateRange, txValue, txCurrency, txReceiptPhoto)
