@@ -44,7 +44,7 @@ function VerifyBankAccountForm(props) {
       <div>Account Account Number: {info.bankAccountNumber}</div>
       <div>
         Transaction Time:
-        <DatePicker dateFormat="DD/MM/YYYY" selected={self.state.txDate} onChange={self.onDateChange} />
+        <DatePicker dateFormat="DD/MM/YYYY" maxDate={moment()} selected={self.state.txDate} onChange={self.onDateChange} />
         <DropdownMenu items={timeRangeOptions} onChange={self.onTxTimeRangeIndexChange} />
       </div>
       <div>
