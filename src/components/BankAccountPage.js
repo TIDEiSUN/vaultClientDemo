@@ -109,19 +109,16 @@ function BankAccountTable(props) {
     />
   );
 
-  const rows = [];
-  let index = 0;
-  bankAccounts.forEach((bankAccount) => {
+  const rows = bankAccounts.map((bankAccount) => {
     const { info, status, identifier } = bankAccount;
-    rows.push(
-      <tr key={index}>
+    return (
+      <tr key={identifier}>
         <td>{info.bankName}</td>
         <td>{info.bankAccountNumber}</td>
         <td>{verifyField(status, identifier)}</td>
         <td>{deleteField(identifier)}</td>
       </tr>
     );
-    index += 1;
   });
 
   if (rows.length === 0) {
@@ -205,39 +202,38 @@ export default class BankAccountPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          const { data, bank_accounts } = blob;
-          const blobBankAccounts = data[this.blobDataKey] || [];
-          const bankAccounts = blobBankAccounts.reduce((acc, curr) => {
-            const hashed = Utils.createHashedBankAccount(curr);
-            const statusInfo = bank_accounts.find((info) => {
-              return info.identifier === hashed;
-            });
-            if (!statusInfo) {
-              return acc;
-            }
-            const bankAccount = {
-              info: curr,
-              status: statusInfo.status,
-              identifier: hashed,
-            };
-            return [...acc, bankAccount];
-          }, []);
-          this.setState({
-            loginInfo,
-            bankAccounts,
-          });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get bank accounts');
+    const setLoginInfo = (loginInfo) => {
+      const { blob } = loginInfo;
+      const { data, bank_accounts } = blob;
+      const blobBankAccounts = data[this.blobDataKey] || [];
+      const bankAccounts = blobBankAccounts.reduce((acc, curr) => {
+        const hashed = Utils.createHashedBankAccount(curr);
+        const statusInfo = bank_accounts.find((info) => {
+          return info.identifier === hashed;
         });
+        if (!statusInfo) {
+          return acc;
+        }
+        const bankAccount = {
+          info: curr,
+          status: statusInfo.status,
+          identifier: hashed,
+        };
+        return [...acc, bankAccount];
+      }, []);
+      this.setState({
+        loginInfo,
+        bankAccounts,
+      });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get bank accounts');
+      });
   }
 
   componentWillUnmount() {

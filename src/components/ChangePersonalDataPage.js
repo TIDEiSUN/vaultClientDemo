@@ -4,22 +4,24 @@ import { VaultClient, VCUtils as Utils } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
 function PersonalDataForm(props) {
-  const self = props.self;
+  const { firstname, lastname, onChange, onSubmit } = props;
   return (
     <form>
       <div>
-        <label>
-          First Name: 
-          <input type="text" value={self.state.firstname} onChange={self.handleChange.bind(self, 'firstname')} />
+        <label htmlFor="firstname">
+          First Name:
         </label>
-        <label>
-          Last Name: 
-          <input type="text" value={self.state.lastname} onChange={self.handleChange.bind(self, 'lastname')} />
+        <input type="text" id="firstname" name="firstname" value={firstname} onChange={onChange} />
+      </div>
+      <div>
+        <label htmlFor="lastname">
+          Last Name:
         </label>
+        <input type="text" id="lastname" name="lastname" value={lastname} onChange={onChange} />
       </div>
       <AsyncButton
         type="button"
-        onClick={self.handleSubmitForm}
+        onClick={onSubmit}
         pendingText="Updating..."
         fulFilledText="Updated"
         rejectedText="Failed! Try Again"
@@ -38,21 +40,21 @@ export default class ChangePersonalDataPage extends React.Component {
       loginInfo: null,
     };
     this.handleSubmitForm = this.handleSubmitForm.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          this.setState({ loginInfo });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get login info');
-        });
+    const setLoginInfo = (loginInfo) => {
+      this.setState({ loginInfo });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get login info');
+      });
   }
 
   componentWillUnmount() {
@@ -81,15 +83,18 @@ export default class ChangePersonalDataPage extends React.Component {
       });
   }
 
-  handleChange(name, event) {
-    this.setState({ [name]: event.target.value });
+  handleInputChange(event) {
+    const { target } = event;
+    const { name, value } = target;
+    this.setState({ [name]: value });
   }
 
   render() {
     let childComponents = null;
     if (this.state.loginInfo) {
+      const { firstname, lastname } = this.state;
       childComponents = (
-        <PersonalDataForm self={this} />
+        <PersonalDataForm firstname={firstname} lastname={lastname} onChange={this.handleInputChange} onSubmit={this.handleSubmitForm} />
       );
     }
     return (

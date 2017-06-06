@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { VaultClient, VCUtils as Utils } from '../logics';
 import AsyncButton from './common/AsyncButton';
 
@@ -13,18 +13,17 @@ export default class BlockAccountPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          this.setState({ loginInfo });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get bank accounts');
-        });
+    const setLoginInfo = (loginInfo) => {
+      this.setState({ loginInfo });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get bank accounts');
+      });
   }
 
   componentWillUnmount() {
@@ -39,6 +38,7 @@ export default class BlockAccountPage extends React.Component {
         this.setState({ loginInfo: null });
         console.log('block account', result);
         alert('Success!');
+        browserHistory.push('/');
         return Promise.resolve();
       }).catch((err) => {
         console.error('block account', err);
@@ -59,7 +59,6 @@ export default class BlockAccountPage extends React.Component {
             fulFilledText="Blocked"
             rejectedText="Failed! Try Again"
             text="Block"
-            fullFilledRedirect="/"
           />
         </div>
       );

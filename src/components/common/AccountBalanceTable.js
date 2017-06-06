@@ -11,21 +11,22 @@ export default class AccountBalanceTable extends React.Component {
 
   componentDidMount() {
     const { address } = this.props;
+    const setBalances = (balances) => {
+      const balanceObj = balances.lines.reduce((acc, curr) => {
+        return {
+          ...acc,
+          [curr.currency]: curr.balance,
+        };
+      }, {});
+      this.setState({
+        balances: balanceObj,
+      });
+      this.props.onGetAccountBalances(balanceObj);
+    };
     const promise = TidePayAPI.getAccountBalances(address);
     this.balanceCancelablePromise = Utils.makeCancelable(promise);
     this.balanceCancelablePromise.promise
-      .then((balances) => {
-        const balanceObj = balances.lines.reduce((acc, curr) => {
-          return {
-            ...acc,
-            [curr.currency]: curr.balance,
-          };
-        }, {});
-        this.setState({
-          balances: balanceObj,
-        });
-        this.props.onGetAccountBalances(balanceObj);
-      })
+      .then(setBalances)
       .catch((err) => {
         if (err instanceof Error) {
           alert('Failed to get account balances');
@@ -43,7 +44,7 @@ export default class AccountBalanceTable extends React.Component {
     const rows = [];
     Object.keys(balances).forEach((key) => {
       rows.push(
-        <tr>
+        <tr key={key}>
           <td>{key}</td>
           <td>{balances[key]}</td>
         </tr>

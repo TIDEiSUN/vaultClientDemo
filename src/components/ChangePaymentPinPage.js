@@ -91,23 +91,22 @@ export default class ChangePaymentPinPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          const recoverMode = !blob.has_payment_pin || blob.secret_locked;
-          this.setState({
-            loginInfo,
-            recoverMode,
-          });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get login info');
-        });
+    const setLoginInfo = (loginInfo) => {
+      const { blob } = loginInfo;
+      const recoverMode = !blob.has_payment_pin || blob.secret_locked;
+      this.setState({
+        loginInfo,
+        recoverMode,
+      });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get login info');
+      });
   }
 
   componentWillUnmount() {

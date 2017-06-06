@@ -40,11 +40,11 @@ export default class DropdownMenu extends React.Component {
     const options = this.props.items.map((item) => {
       if (typeof item === 'string') {
         return (
-          <option value={item}>{item}</option>
+          <option key={item} value={item}>{item}</option>
         );
       }
       return (
-        <option value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>{item.label}</option>
       );
     });
     return (

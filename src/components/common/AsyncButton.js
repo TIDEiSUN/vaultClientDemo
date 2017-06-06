@@ -1,5 +1,6 @@
 import React from 'react';
 import { browserHistory } from 'react-router';
+import { VCUtils as Utils } from '../../logics';
 
 export default class AsyncButton extends React.Component {
   constructor(props) {
@@ -9,6 +10,13 @@ export default class AsyncButton extends React.Component {
       isFulfilled: false,
       isRejected: false,
     };
+    this.cancelablePromise = null;
+  }
+
+  componentWillUnmount() {
+    if (this.cancelablePromise) {
+      this.cancelablePromise.cancel();
+    }
   }
 
   resetState() {
@@ -26,17 +34,19 @@ export default class AsyncButton extends React.Component {
 
     const promise = this.props.onClick(...arguments);
     if (promise && promise.then) {
-      promise.then(() => {
+      this.cancelablePromise = Utils.makeCancelable(promise);
+      this.cancelablePromise.promise
+      .then(() => {
         this.setState({
           isPending: false,
           isRejected: false,
           isFulfilled: true,
         });
-        if (this.props.hasOwnProperty('fullFilledRedirect')) {
-          // console.log('fullFilledRedirect', this.props.fullFilledRedirect);
-          browserHistory.push(this.props.fullFilledRedirect);
+      })
+      .catch((error) => {
+        if (!(error instanceof Error) && error.isCanceled) {
+          return;
         }
-      }).catch((error) => {
         this.setState({
           isPending: false,
           isRejected: true,
@@ -60,7 +70,6 @@ export default class AsyncButton extends React.Component {
       loadingClass,
       fulFilledClass,
       rejectedClass,
-      fullFilledRedirect,
       disabled,
       eventValue,
       ...restProps

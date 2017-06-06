@@ -118,24 +118,23 @@ export default class ExchangePage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          const { account_id } = blob.data;
-          this.setState({
-            public: account_id,
-            hasPaymentPin: blob.has_payment_pin,
-            unlockSecret: blob.data.unlock_secret,
-          });
-        })
-        .catch((err) => {
-          console.error('BankAccountPage - getLoginInfo', err);
-          alert('Failed to get bank accounts');
-        });
+    const setLoginInfo = (loginInfo) => {
+      const { blob } = loginInfo;
+      const { account_id } = blob.data;
+      this.setState({
+        public: account_id,
+        hasPaymentPin: blob.has_payment_pin,
+        unlockSecret: blob.data.unlock_secret,
+      });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('BankAccountPage - getLoginInfo', err);
+        alert('Failed to get bank accounts');
+      });
   }
 
   componentWillUnmount() {

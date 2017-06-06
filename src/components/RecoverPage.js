@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { VaultClient, Config } from '../logics';
 import AsyncButton from './common/AsyncButton';
 import AuthenticationForm from './common/AuthenticationForm';
@@ -28,7 +28,6 @@ function ChangePasswordForm(props) {
         fulFilledText="Recovered"
         rejectedText="Failed! Try Again"
         text="Recover"
-        fullFilledRedirect="/main"
       />
     </div>
   );
@@ -134,6 +133,7 @@ export default class RecoverPage extends React.Component {
         return VaultClient.changePassword(loginInfo.username, this.state.newPassword, loginInfo);
       }).then((result) => {
         console.log('change password', result);
+        browserHistory.push('/main');
         return Promise.resolve();
       }).catch((err) => {
         console.error('Failed to change password:', err);

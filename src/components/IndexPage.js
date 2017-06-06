@@ -100,25 +100,24 @@ export default class IndexPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          this.setState({
-            loginInfo,
-            resendEmail: blob.pendingEmail,
-            lastBlobIDChangeDate: blob.last_id_change_date,
-            lastBlobIDChangeTimestamp: blob.last_id_change_timestamp,
-            lastSecretIDChangeTime: blob.last_secret_id_change_time,
-          });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get login info');
-        });
+    const setLoginInfo = (loginInfo) => {
+      const { blob } = loginInfo;
+      this.setState({
+        loginInfo,
+        resendEmail: blob.pendingEmail,
+        lastBlobIDChangeDate: blob.last_id_change_date,
+        lastBlobIDChangeTimestamp: blob.last_id_change_timestamp,
+        lastSecretIDChangeTime: blob.last_secret_id_change_time,
+      });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get login info');
+      });
   }
 
   componentWillUnmount() {

@@ -72,18 +72,17 @@ export default class ChangeEmailPage extends React.Component {
     if (verify) {
       return;
     }
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          this.setState({ loginInfo, loggedIn: true });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get tidepay address');
-        });
+    const setLoginInfo = (loginInfo) => {
+      this.setState({ loginInfo, loggedIn: true });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get tidepay address');
+      });
   }
 
   componentWillUnmount() {

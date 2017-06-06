@@ -59,22 +59,24 @@ function setParams(cachedParamValues, systemParams, params) {
   return newParams;
 }
 
-function getParamInputs(objName, params, self) {
-  const paramInputs = Object.keys(params).map((key) => {
+function ParamInputs(props) {
+  const { objName, params, onParamChange } = props;
+  const inputs = Object.keys(params).map((key) => {
     const param = params[key];
     if (!param.type) {
       return (
-        <div>{key}:{param.value}</div>
+        <div key={key}>{key}:{param.value}</div>
       );
     }
+    const handleChange = onParamChange.bind(null, objName, key);
     return (
-      <div>
+      <div key={key}>
         {key}:
-        <input type={param.type} value={param.value} onChange={self.handleParamChange.bind(self, objName, key)} />
+        <input type={param.type} value={param.value} onChange={handleChange} />
       </div>
     );
   });
-  return paramInputs;
+  return (<div>{inputs}</div>);
 }
 
 function ErrorText(props) {
@@ -98,12 +100,12 @@ function InputForm(props) {
   if (!params) {
     return null;
   }
-  const paramInputs = getParamInputs(objName, params, self);
 
+  const handleParamChange = self.handleParamChange.bind(self);
   return (
     <div>
       <h1>{title}</h1>
-      {paramInputs}
+      <ParamInputs objName={objName} params={params} onParamChange={handleParamChange} />
       <AsyncButton
         type="button"
         onClick={self.handleSubmit.bind(self, params)}
@@ -121,7 +123,7 @@ function MethodOptionForm(props) {
 
   const radios = options.map((option) => {
     return (
-      <div>
+      <div key={option.value}>
         <Radio value={option.value} />{option.label}
       </div>
     );

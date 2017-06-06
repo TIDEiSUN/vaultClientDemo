@@ -102,51 +102,52 @@ export default class WalletPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          const address = blob.data.account_id;
-          this.setState({
-            public: address,
-            hasPaymentPin: blob.has_payment_pin,
-            unlockSecret: blob.data.unlock_secret,
-          });
-          return address;
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get tidepay address');
-        });
+    const setResults = ([loginInfo, pockets, supported]) => {
+      const { blob } = loginInfo;
+      const address = blob.data.account_id;
+      this.setState({
+        public: address,
+        hasPaymentPin: blob.has_payment_pin,
+        unlockSecret: blob.data.unlock_secret,
+        supportedCurrencies: supported.currencies,
+        pockets,
+      });
     };
-    const getAllSupportedCurrencies = () => {
-      return TidePayAPI.getCurrencies()
-        .then((value) => {
-          this.setState({ supportedCurrencies: value.currencies });
-        })
-        .catch((err) => {
-          console.error('Get supported currencies', err);
-          alert('Failed to get supported currencies');
-        });
-    };
-    const getAllPockets = (address) => {
+    const getPockets = (loginInfo) => {
+      const { blob } = loginInfo;
+      const address = blob.data.account_id;
       return TidePayAPI.getGatewayAddress()
-        .then((value) => {
-          return TidePayAPI.getAccountPockets(value.gateway, address);
-        })
-        .then((pockets) => {
-          console.log('get pockets', pockets);
-          this.setState({ pockets });
-        })
-        .catch((err) => {
-          console.error('Get pockets', err);
-          alert('Failed to get pockets');
-        });
+        .then(value => TidePayAPI.getAccountPockets(value.gateway, address));
     };
-    const promise = getLoginInfo()
-      .then(address => getAllPockets(address))
-      .then(() => getAllSupportedCurrencies());
+    const loginInfoPromise = VaultClient.getLoginInfo()
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        return Promise.reject(err);
+      });
+    const pocketsPromise = loginInfoPromise.then(getPockets)
+      .catch((err) => {
+        console.error('Get pockets', err);
+        return Promise.reject(err);
+      });
+    const supportedCurrenciesPromise = TidePayAPI.getCurrencies()
+      .catch((err) => {
+        console.error('Get supported currencies', err);
+        return Promise.reject(err);
+      });
+    const promise = Promise.all([
+      loginInfoPromise,
+      pocketsPromise,
+      supportedCurrenciesPromise,
+    ]);
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setResults)
+      .catch((err) => {
+        if (!(err instanceof Error) && err.isCanceled) {
+          return;
+        }
+        alert('Failed to get pockets / supported currencies');
+      });
   }
 
   componentWillUnmount() {

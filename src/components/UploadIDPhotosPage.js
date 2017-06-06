@@ -16,18 +16,17 @@ export default class UploadIDPhotosPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          this.setState({ loginInfo });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get login info');
-        });
+    const setLoginInfo = (loginInfo) => {
+      this.setState({ loginInfo });
     };
-    const promise = getLoginInfo();
+    const promise = VaultClient.getLoginInfo();
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setLoginInfo)
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        alert('Failed to get login info');
+      });
   }
 
   componentWillUnmount() {

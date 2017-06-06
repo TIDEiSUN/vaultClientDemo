@@ -21,7 +21,7 @@ function WithdrawalFeeTable(props) {
   Object.keys(withdrawalFeeMap).forEach((currency) => {
     if (currencies.includes(currency)) {
       rows.push(
-        <tr>
+        <tr key={currency}>
           <td>{currency}</td>
           <td>{withdrawalFeeMap[currency]}</td>
         </tr>
@@ -116,36 +116,39 @@ export default class MakePaymentPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          this.setState({
-            public: blob.data.account_id,
-            hasPaymentPin: blob.has_payment_pin,
-            unlockSecret: blob.data.unlock_secret,
-          });
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get tidepay address');
-        });
+    const setResults = ([loginInfo, withdrawalFeeMap]) => {
+      const { blob } = loginInfo;
+      this.setState({
+        public: blob.data.account_id,
+        hasPaymentPin: blob.has_payment_pin,
+        unlockSecret: blob.data.unlock_secret,
+        withdrawalFeeMap,
+      });
     };
-    const getWithdrawalFee = () => {
-      return TidePayAPI.getWithdrawalFee()
-        .then((map) => {
-          this.setState({
-            withdrawalFeeMap: map,
-          });
-        })
-        .catch((err) => {
-          alert('Failed to get account balances');
-          console.log('getTransactionFee', err);
-        });
-    };
-    const promise = getLoginInfo()
-      .then(() => getWithdrawalFee());
+    const loginInfoPromise = VaultClient.getLoginInfo()
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        return Promise.reject(err);
+      });
+    const withdrawalFeePromise = TidePayAPI.getWithdrawalFee()
+      .catch((err) => {
+        console.log('getTransactionFee', err);
+        return Promise.reject(err);
+      });
+    const promise = Promise.all([
+      loginInfoPromise,
+      withdrawalFeePromise,
+    ]);
+
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setResults)
+      .catch((err) => {
+        if (!(err instanceof Error) && err.isCanceled) {
+          return;
+        }
+        alert('Failed to get tidepay address / account balances');
+      });
   }
 
   componentWillUnmount() {

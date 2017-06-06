@@ -53,7 +53,7 @@ function MethodOptionForm(props) {
 
   const radios = options.map((option) => {
     return (
-      <div>
+      <div key={option.value}>
         <Radio value={option.value} />{option.label}
       </div>
     );
@@ -83,7 +83,7 @@ function GAuthForm(props) {
         <div>
           Step 2: Scan QR code or enter key
         </div>
-        <div>
+        <div className="qrcode">
           <QRCode value={otpauthUrl} />
         </div>
         <div>
@@ -207,39 +207,44 @@ export default class TwoFactorAuthPage extends React.Component {
   }
 
   componentDidMount() {
-    const getLoginInfo = () => {
-      return VaultClient.getLoginInfo()
-        .then((loginInfo) => {
-          const { blob } = loginInfo;
-          this.setState({
-            loginInfo,
-            phone: blob.data.phone,
-            verified: Utils.checkPhoneVerified(blob.account_level),
-          });
-          return loginInfo;
-        })
-        .catch((err) => {
-          console.error('getLoginInfo', err);
-          alert('Failed to get login info');
-        });
+    const setResults = ([loginInfo, twoFAInfo]) => {
+      const { blob } = loginInfo;
+      console.log('2FA info', twoFAInfo);
+      this.setState({
+        loginInfo,
+        phone: blob.data.phone,
+        verified: Utils.checkPhoneVerified(blob.account_level),
+        hasEnabled: twoFAInfo.enabled,
+        via: twoFAInfo.via,
+      });
     };
     const get2FAInfo = (loginInfo) => {
-      return VaultClient.get2FAInfo(loginInfo)
-        .then((info) => {
-          console.log('2FA info', info);
-          this.setState({
-            hasEnabled: info.enabled,
-            via: info.via,
-          });
-        })
-        .catch((err) => {
-          console.error('get2FAInfo', err);
-          alert('Failed to get 2FA info');
-        });
+      return VaultClient.get2FAInfo(loginInfo);
     };
-    const promise = getLoginInfo()
-      .then(loginInfo => get2FAInfo(loginInfo));
+    const loginInfoPromise = VaultClient.getLoginInfo()
+      .catch((err) => {
+        console.error('getLoginInfo', err);
+        return Promise.reject(err);
+      });
+    const twoFAInfoPromise = loginInfoPromise.then(get2FAInfo)
+      .catch((err) => {
+        console.error('get2FAInfo', err);
+        return Promise.reject(err);
+      });
+
+    const promise = Promise.all([
+      loginInfoPromise,
+      twoFAInfoPromise,
+    ]);
     this.cancelablePromise = Utils.makeCancelable(promise);
+    this.cancelablePromise.promise
+      .then(setResults)
+      .catch((err) => {
+        if (!(err instanceof Error) && err.isCanceled) {
+          return;
+        }
+        alert('Failed to get login info / 2FA info');
+      });
   }
 
   componentDidUpdate(prevProps, prevState) {
