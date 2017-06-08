@@ -182,9 +182,13 @@ function TwoFactorAuthForm(props) {
   if (twofa_stage === Stage.CHOOSE_METHOD) {
     const submitCallback = (event) => {
       event.preventDefault();
-      const via = self.state.params['2fa_via'].value;
-      const stage = via === 'google' ? Stage.VERIFY_CODE : Stage.REQUEST_CODE;
-      self.setState({ twofa_stage: stage });
+      self.setState((prevState) => {
+        const via = prevState.params['2fa_via'].value;
+        const stage = via === 'google' ? Stage.VERIFY_CODE : Stage.REQUEST_CODE;
+        return {
+          twofa_stage: stage,
+        };
+      });
     };
     const childProps = {
       options: twoFactorAuthOptions,

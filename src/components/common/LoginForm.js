@@ -102,11 +102,22 @@ export default class LoginForm extends React.Component {
       })
       .then((resp) => {
         alert('OK!');
-        const { step: newStep = null, params: newParams = {}, resendParams: newResendParams = {} } = resp;
+        const { step: newStep = null, params: newParams = {}, resendParams: newResendParams = {}, ...rest } = resp;
+        let additional = {};
+        if (newStep === 'twoFactorAuth') {
+          additional = {
+            token: '',
+          };
+        }
         this.setState({
-          auth: resp,
+          auth: {
+            step: newStep,
+            params: { ...newParams, ...additional },
+            resendParams: newResendParams,
+            ...rest,
+          },
           step: newStep,
-          params: { ...newParams, ...newResendParams },
+          params: { ...newParams, ...newResendParams, ...additional },
           errorMessage: null,
         });
         if (resp.step !== 'done') {
