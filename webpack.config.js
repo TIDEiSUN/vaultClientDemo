@@ -13,26 +13,25 @@ module.exports = {
   },
   module: {
     loaders: [
-    {
-      test: /https-proxy-agent|jayson/,
-      loader: 'null-loader'
-    }, {
-      test:  /\.js$/,
-      loader: 'babel-loader',
-      exclude: /node_modules/,
-      query: {
-        cacheDirectory: 'babel_cache',
-        presets: ['react', 'es2015']
+      {
+        test: /https-proxy-agent|jayson/,
+        loader: 'null-loader'
+      }, {
+        test:  /\.js$/,
+        loader: 'babel-loader',
+        exclude: /node_modules/,
+        query: {
+          cacheDirectory: 'babel_cache',
+          presets: ['react', 'es2015']
+        }
+      }, {
+        test: /\.json$/,
+        loader: 'json-loader'
+      },
+      {
+        test: /\.css$/,
+        loader: 'style-loader!css-loader'
       }
-    }, {
-      test: /\.json$/,
-      loader: 'json-loader'
-    },
-    {
-      test: /\.css$/,
-      use: ['style-loader', 'css-loader']
-    }
-    
     ]
   },
   plugins: [
