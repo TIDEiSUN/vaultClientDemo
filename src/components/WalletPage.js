@@ -116,8 +116,7 @@ export default class WalletPage extends React.Component {
     const getPockets = (loginInfo) => {
       const { blob } = loginInfo;
       const address = blob.data.account_id;
-      return TidePayAPI.getGatewayAddress()
-        .then(value => TidePayAPI.getAccountPockets(value.gateway, address));
+      return TidePayAPI.getAccountPockets(address);
     };
     const loginInfoPromise = VaultClient.getLoginInfo()
       .catch((err) => {
