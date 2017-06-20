@@ -27,6 +27,7 @@
   "dependencies": {
     "ejs": "^2.5.5",
     "express": "^4.14.0",
+    "immutability-helper": "^2.2.2",
     "moment": "^2.18.1",
     "ms": "^2.0.0",
     "qrcode.react": "^0.7.1",
