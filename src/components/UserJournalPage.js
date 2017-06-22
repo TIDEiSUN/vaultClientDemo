@@ -131,7 +131,7 @@ function JournalTable(props) {
     <div>
       {table}
       <br />
-      <p>{currOffset + 1} - {currOffset + currLimit} / {total}</p>
+      <p>{currOffset + 1} - {Math.min(currOffset + currLimit, total)} / {total}</p>
       {prev ? <LoadButton text="<" onLoad={onLoad} offset={prev.offset} limit={prev.limit} /> : null}
       {next ? <LoadButton text=">" onLoad={onLoad} offset={next.offset} limit={next.limit} /> : null}
     </div>
