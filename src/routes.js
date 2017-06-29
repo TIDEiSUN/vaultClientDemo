@@ -20,7 +20,7 @@ import BankAccountPage from './components/BankAccountPage';
 import TwoFactorAuthPage from './components/TwoFactorAuthPage';
 import ExchangePage from './components/ExchangePage';
 import ChangePaymentPinPage from './components/ChangePaymentPinPage';
-import UserJournalPage from './components/UserJournalpage';
+import UserJournalPage from './components/UserJournalPage';
 
 const routes = (
   <Route path="/" component={Layout}>
