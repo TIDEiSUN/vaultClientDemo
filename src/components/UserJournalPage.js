@@ -46,8 +46,8 @@ const messageTypeString = [
 ];
 
 function LoadButton(props) {
-  const { text, onLoad, offset, limit } = props;
-  const handleClick = onLoad.bind(undefined, offset, limit);
+  const { text, onLoad, options = [] } = props;
+  const handleClick = onLoad.bind(undefined, ...options);
   return (
     <AsyncButton
       type="button"
@@ -61,20 +61,16 @@ function LoadButton(props) {
 }
 
 function JournalTable(props) {
-  const { journals, total, curr, link, onLoad, onRead } = props;
+  const { journals, total, curr, link, onRead } = props;
 
   if (journals === null) {
-    return (
-      <div>
-        <LoadButton text="Load" onLoad={onLoad} offset="0" limit="10" />
-      </div>
-    );
+    return null;
   }
 
-  const rows = Object.keys(journals).map((key) => {
-    const journal = journals[key];
+  const rows = journals.map((journal, index) => {
     const { id, messageId, messageType, result, time, read } = journal;
     const addButton = () => {
+      const value = { index, id };
       return (
         <AsyncButton
           type="button"
@@ -83,7 +79,7 @@ function JournalTable(props) {
           fulFilledText="Processed"
           rejectedText="Failed! Try Again"
           text="X"
-          eventValue={id}
+          eventValue={value}
         />);
     };
     const style = {
@@ -123,6 +119,23 @@ function JournalTable(props) {
     </table>
   );
 
+  return table;
+}
+
+function JournalPagination(props) {
+  const { pagination, onLoad, onRead } = props;
+  const { journals, total, curr, link } = pagination;
+
+  if (journals === null) {
+    return (
+      <div>
+        <LoadButton text="Load" onLoad={onLoad} options={['0', '10']} />
+      </div>
+    );
+  }
+
+  const table = <JournalTable journals={journals} onRead={onRead} />;
+
   const { next, prev } = link;
   const currOffset = parseInt(curr.offset, 10);
   const currLimit = parseInt(curr.limit, 10);
@@ -132,8 +145,37 @@ function JournalTable(props) {
       {table}
       <br />
       <p>{currOffset + 1} - {Math.min(currOffset + currLimit, total)} / {total}</p>
-      {prev ? <LoadButton text="<" onLoad={onLoad} offset={prev.offset} limit={prev.limit} /> : null}
-      {next ? <LoadButton text=">" onLoad={onLoad} offset={next.offset} limit={next.limit} /> : null}
+      {prev ? <LoadButton text="<" onLoad={onLoad} options={[prev.offset, prev.limit]} /> : null}
+      {next ? <LoadButton text=">" onLoad={onLoad} options={[next.offset, next.limit]} /> : null}
+    </div>
+  );
+}
+
+function JournalScrolling(props) {
+  const { scrolling, onLoad, onRead } = props;
+  const { journals, link } = scrolling;
+
+  if (journals === null) {
+    return (
+      <div>
+        <LoadButton text="Load" onLoad={onLoad} options={['10']} />
+      </div>
+    );
+  }
+
+  const table = <JournalTable journals={journals} onRead={onRead} />;
+
+  const { more } = link;
+  const style = {
+    overflow: 'scroll',
+    width: '50em',
+    maxHeight: '26em',
+  };
+  return (
+    <div style={style}>
+      {table}
+      <br />
+      {more ? <LoadButton text="more" onLoad={onLoad} options={['10', more.marker]} /> : null}
     </div>
   );
 }
@@ -143,13 +185,21 @@ export default class UserJournalPage extends React.Component {
     super(props);
     this.state = {
       loginInfo: null,
-      journals: null,
-      curr: null,
-      link: null,
-      total: null,
+      pagination: {
+        journals: null,
+        curr: null,
+        link: null,
+        total: null,
+      },
+      scrolling: {
+        journals: null,
+        link: null,
+      },
     };
-    this.handleGetJournals = this.handleGetJournals.bind(this);
-    this.handleReadJournal = this.handleReadJournal.bind(this);
+    this.handleGetJournalsPagination = this.handleGetJournalsPagination.bind(this);
+    this.handleGetJournalsScrolling = this.handleGetJournalsScrolling.bind(this);
+    this.handleReadJournalPagination = this.getHandleReadJournal('pagination');
+    this.handleReadJournalScrolling = this.getHandleReadJournal('scrolling');
   }
 
   componentDidMount() {
@@ -178,61 +228,95 @@ export default class UserJournalPage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
-  handleGetJournals(offset, limit) {
-    console.log('Handle get journals');
+  handleGetJournalsPagination(offset, limit) {
+    console.log('Handle get journals pagination');
 
     const { loginInfo } = this.state;
     const { username } = loginInfo;
-    return VaultClient.getUserJournals(loginInfo, username, offset, limit)
+    return VaultClient.getUserJournalsPagination(loginInfo, username, offset, limit)
       .then((resp) => {
         const { journals, total, link } = resp;
-        const converted = journals.reduce((acc, curr) => {
-          const { id } = curr;
-          return { ...acc, [id]: curr };
-        }, {});
         this.setState({
-          journals: converted,
-          curr: { offset, limit },
-          total,
-          link,
+          pagination: {
+            journals,
+            curr: { offset, limit },
+            total,
+            link,
+          },
         });
       }).catch((err) => {
-        console.error('get journals:', err);
-        alert('Failed to get journals: ' + err.message);
+        console.error('get journals pagination:', err);
+        alert('Failed to get journals pagination: ' + err.message);
         return Promise.reject(err);
       });
   }
 
-  handleReadJournal(value) {
-    const journalId = value;
-    console.log('Handle read journal', journalId);
+  handleGetJournalsScrolling(limit, marker) {
+    console.log('Handle get journals scrolling');
 
     const { loginInfo } = this.state;
     const { username } = loginInfo;
-    return VaultClient.setUserJournalStatus(loginInfo, username, journalId)
-      .then(() => {
+    return VaultClient.getUserJournals(loginInfo, username, limit, marker)
+      .then((resp) => {
+        const { journals, link } = resp;
         const newState = update(this.state, {
-          journals: {
-            [journalId]: {
-              read: { $set: true },
+          scrolling: {
+            journals: {
+              $apply: j => update(j || [], { $push: journals }),
+            },
+            link: {
+              $set: link,
             },
           },
         });
         this.setState(newState);
-        return Promise.resolve();
       }).catch((err) => {
-        console.error('set journal as read:', err);
-        alert('Failed to set journal as read: ' + err.message);
+        console.error('get journals scrolling:', err);
+        alert('Failed to get journals scrolling: ' + err.message);
         return Promise.reject(err);
       });
+  }
+
+  getHandleReadJournal(viewType) {
+    return (value) => {
+      const { id: journalId, index: arrayIndex } = value;
+      console.log('Handle read journal', journalId, arrayIndex);
+
+      const { loginInfo } = this.state;
+      const { username } = loginInfo;
+      return VaultClient.setUserJournalStatus(loginInfo, username, journalId)
+        .then(() => {
+          const newState = update(this.state, {
+            [viewType]: {
+              journals: {
+                [arrayIndex]: {
+                  read: { $set: true },
+                },
+              },
+            },
+          });
+          this.setState(newState);
+          return Promise.resolve();
+        }).catch((err) => {
+          console.error('set journal as read:', err);
+          alert('Failed to set journal as read: ' + err.message);
+          return Promise.reject(err);
+        });
+    };
   }
 
   render() {
     let childComponents = null;
     if (this.state.loginInfo) {
-      const { journals, total, curr, link } = this.state;
+      const { pagination, scrolling } = this.state;
       childComponents = (
-        <JournalTable journals={journals} total={total} curr={curr} link={link} onLoad={this.handleGetJournals} onRead={this.handleReadJournal} />
+        <div>
+          <h2>Pagination</h2>
+          <JournalPagination pagination={pagination} onLoad={this.handleGetJournalsPagination} onRead={this.handleReadJournalPagination} />
+          <br />
+          <h2>Infinite Scrolling</h2>
+          <JournalScrolling scrolling={scrolling} onLoad={this.handleGetJournalsScrolling} onRead={this.handleReadJournalScrolling} />
+        </div>
       );
     }
     return (
