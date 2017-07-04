@@ -189,7 +189,7 @@ function JournalScrolling(props) {
     <div style={style}>
       {table}
       <br />
-      {more ? <LoadButton text="more" onLoad={onLoad} options={['10', more.marker]} /> : null}
+      {more ? <LoadButton text="more" onLoad={onLoad} options={[more.limit, more.marker]} /> : null}
     </div>
   );
 }
