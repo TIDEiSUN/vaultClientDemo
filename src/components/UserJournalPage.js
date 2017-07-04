@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import update from 'immutability-helper';
 import moment from 'moment';
+import { Checkbox, CheckboxGroup } from 'react-checkbox-group';
 import AsyncButton from './common/AsyncButton';
 import { VaultClient, VCUtils as Utils } from '../logics';
 
@@ -33,6 +34,8 @@ const messageIdString = [
   'Change payment pin',
   'Update change of email address',
   'Update change of phone number',
+  'Upload verification of bank account',
+  'Request token to set 2FA',
 ];
 
 const messageTypeString = [
@@ -44,6 +47,12 @@ const messageTypeString = [
   'Authentication',
   'Bank accounts',
 ];
+
+const filterOptions = messageIdString.slice(1).map((value, index) => {
+  return { label: value, value: index + 1 };
+});
+
+const defaultFilter = [16, 4, 5, 6, 7, 8, 25, 11, 26, 20, 27, 1, 24, 15];
 
 function LoadButton(props) {
   const { text, onLoad, options = [] } = props;
@@ -68,7 +77,7 @@ function JournalTable(props) {
   }
 
   const rows = journals.map((journal, index) => {
-    const { id, messageId, messageType, result, time, read } = journal;
+    const { id, messageId, messageType, result, time, read, info } = journal;
     const addButton = () => {
       const value = { index, id };
       return (
@@ -84,12 +93,17 @@ function JournalTable(props) {
     };
     const style = {
       color: read ? 'LightGrey' : 'Black',
+      lineHeight: '1.8em',
     };
+    let detail;
+    if (info) {
+      detail = <span title={JSON.stringify(info, null, 2)}>[Detail]</span>;
+    }
     return (
       <tr key={id} style={style}>
         <td>{moment(time).format('DD/MM/YYYY h:mm:ss A')}</td>
         <td>{messageTypeString[messageType]}</td>
-        <td>{messageIdString[messageId]}</td>
+        <td>{messageIdString[messageId]} {detail}</td>
         <td>{result}</td>
         <td>{read ? null : addButton()}</td>
       </tr>
@@ -110,9 +124,9 @@ function JournalTable(props) {
         <tr>
           <td width="200">Time</td>
           <td width="120">Message Type</td>
-          <td width="150">Message ID</td>
+          <td width="200">Message ID</td>
           <td width="60">Result</td>
-          <td width="10">X</td>
+          <td width="10">&nbsp;</td>
         </tr>
       </thead>
       <tbody>{rows}</tbody>
@@ -168,7 +182,7 @@ function JournalScrolling(props) {
   const { more } = link;
   const style = {
     overflow: 'scroll',
-    width: '50em',
+    width: '55em',
     maxHeight: '26em',
   };
   return (
@@ -180,11 +194,38 @@ function JournalScrolling(props) {
   );
 }
 
+function FilterCheckbox(props) {
+  const { options, values, onChange, onApply, onSelectAll, onDeselectAll } = props;
+  const checkboxes = options.map((option) => {
+    const { label, value } = option;
+    return <p key={value}><label><Checkbox value={value} />{label}</label></p>;
+  });
+  const style = {
+    overflow: 'scroll',
+    width: '30em',
+    maxHeight: '9.5em',
+  };
+  return (
+    <div>
+      <div style={style}>
+        <CheckboxGroup name="messageIdfilter" value={values} onChange={onChange}>
+          {checkboxes}
+        </CheckboxGroup>
+      </div>
+      <LoadButton text="Apply" onLoad={onApply} />
+      <button onClick={onSelectAll}>Select all</button>
+      <button onClick={onDeselectAll}>Deselect all</button>
+    </div>
+  );
+}
+
 export default class UserJournalPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       loginInfo: null,
+      unreadCount: null,
+      filter: defaultFilter,
       pagination: {
         journals: null,
         curr: null,
@@ -196,6 +237,10 @@ export default class UserJournalPage extends React.Component {
         link: null,
       },
     };
+    this.handleSelectAll = this.handleSelectAll.bind(this);
+    this.handleDeselectAll = this.handleDeselectAll.bind(this);
+    this.handleMessageIdFilterChange = this.handleMessageIdFilterChange.bind(this);
+    this.handleMessageIdFilterApply = this.handleMessageIdFilterApply.bind(this);
     this.handleGetJournalsPagination = this.handleGetJournalsPagination.bind(this);
     this.handleGetJournalsScrolling = this.handleGetJournalsScrolling.bind(this);
     this.handleReadJournalPagination = this.getHandleReadJournal('pagination');
@@ -203,24 +248,42 @@ export default class UserJournalPage extends React.Component {
   }
 
   componentDidMount() {
-    const setLoginInfo = (loginInfo) => {
+    const setResults = ([loginInfo, unreadCount]) => {
       this.setState({
         loginInfo,
+        unreadCount,
       });
     };
-    const promise = VaultClient.getLoginInfo()
+    const getUnreadCount = (loginInfo) => {
+      const { username } = loginInfo;
+      return VaultClient.getUserJournalsUnreadCount(loginInfo, username, defaultFilter);
+    };
+    const loginInfoPromise = VaultClient.getLoginInfo()
       .catch((err) => {
         console.error('getLoginInfo', err);
         return Promise.reject(err);
       });
+    const unreadCountPromise = loginInfoPromise.then(getUnreadCount)
+      .then((results) => {
+        const { unreadCount } = results;
+        return Promise.resolve(unreadCount);
+      })
+      .catch((err) => {
+        console.error('getUnreadCount', err);
+        return Promise.reject(err);
+      });
+    const promise = Promise.all([
+      loginInfoPromise,
+      unreadCountPromise,
+    ]);
     this.cancelablePromise = Utils.makeCancelable(promise);
     this.cancelablePromise.promise
-      .then(setLoginInfo)
+      .then(setResults)
       .catch((err) => {
         if (!(err instanceof Error) && err.isCanceled) {
           return;
         }
-        alert('Failed to get login info');
+        alert('Failed to get login info / unread count');
       });
   }
 
@@ -228,12 +291,46 @@ export default class UserJournalPage extends React.Component {
     this.cancelablePromise.cancel();
   }
 
+  handleMessageIdFilterChange(newValues) {
+    this.setState({
+      filter: newValues,
+    });
+  }
+
+  handleMessageIdFilterApply() {
+    const { loginInfo, filter } = this.state;
+    const { username } = loginInfo;
+    return VaultClient.getUserJournalsUnreadCount(loginInfo, username, filter)
+      .then((result) => {
+        const { unreadCount } = result;
+        this.setState({
+          unreadCount,
+          pagination: {
+            journals: null,
+            curr: null,
+            link: null,
+            total: null,
+          },
+          scrolling: {
+            journals: null,
+            link: null,
+          },
+        });
+        return Promise.resolve();
+      })
+      .catch((err) => {
+        console.error('get journals unread count:', err);
+        alert('Failed to apply filter: ' + err.message);
+        return Promise.reject(err);
+      });
+  }
+
   handleGetJournalsPagination(offset, limit) {
     console.log('Handle get journals pagination');
 
-    const { loginInfo } = this.state;
+    const { loginInfo, filter } = this.state;
     const { username } = loginInfo;
-    return VaultClient.getUserJournalsPagination(loginInfo, username, offset, limit)
+    return VaultClient.getUserJournalsPagination(loginInfo, username, offset, limit, filter)
       .then((resp) => {
         const { journals, total, link } = resp;
         this.setState({
@@ -254,9 +351,9 @@ export default class UserJournalPage extends React.Component {
   handleGetJournalsScrolling(limit, marker) {
     console.log('Handle get journals scrolling');
 
-    const { loginInfo } = this.state;
+    const { loginInfo, filter } = this.state;
     const { username } = loginInfo;
-    return VaultClient.getUserJournals(loginInfo, username, limit, marker)
+    return VaultClient.getUserJournals(loginInfo, username, limit, marker, filter)
       .then((resp) => {
         const { journals, link } = resp;
         const newState = update(this.state, {
@@ -305,12 +402,31 @@ export default class UserJournalPage extends React.Component {
     };
   }
 
+  handleSelectAll(event) {
+    event.preventDefault();
+    this.setState({
+      filter: messageIdString.slice(1).map((value, index) => index),
+    });
+  }
+
+  handleDeselectAll(event) {
+    event.preventDefault();
+    this.setState({
+      filter: [],
+    });
+  }
+
   render() {
     let childComponents = null;
     if (this.state.loginInfo) {
-      const { pagination, scrolling } = this.state;
+      const { filter, unreadCount, pagination, scrolling } = this.state;
       childComponents = (
         <div>
+          <h2>Message Filter</h2>
+          <FilterCheckbox options={filterOptions} values={filter} onChange={this.handleMessageIdFilterChange} onApply={this.handleMessageIdFilterApply} onSelectAll={this.handleSelectAll} onDeselectAll={this.handleDeselectAll} />
+          <br />
+          <p><b>Unread: {unreadCount}</b></p>
+          <br />
           <h2>Pagination</h2>
           <JournalPagination pagination={pagination} onLoad={this.handleGetJournalsPagination} onRead={this.handleReadJournalPagination} />
           <br />
