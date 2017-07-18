@@ -62,6 +62,7 @@ function ExchangeForm(props) {
     exchangeFromCurrency,
     exchangeFromValue,
     exchangeToCurrency,
+    note,
   } = self.state;
 
   const exchangeToValue = parseFloat(exchangeFromValue) * exchangeRate;
@@ -80,6 +81,10 @@ function ExchangeForm(props) {
         </div>
         <div>
           To: {exchangeToValue} {exchangeToCurrency}
+        </div>
+        <div>
+          Note:
+          <textarea value={note} onChange={self.handleChange.bind(self, 'note')} />
         </div>
         <AsyncButton
           type="button"
@@ -109,6 +114,7 @@ export default class ExchangePage extends React.Component {
       exchangeFromValue: '',
       exchangeToCurrency: '',
       exchangeRate: null,
+      note: '',
     };
     this.handleCurrencyChange = this.handleCurrencyChange.bind(this);
     this.handleSubmitExchangeRateForm = this.handleSubmitExchangeRateForm.bind(this);
@@ -197,8 +203,9 @@ export default class ExchangePage extends React.Component {
           exchangeFromValue: fromValue,
           exchangeToCurrency: toCurrency,
           exchangeRate,
+          note: clientMemo,
         } = this.state;
-        return TidePayAPI.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate);
+        return TidePayAPI.exchangeCurrency(gatewayAddress, account, fromCurrency, fromValue, toCurrency, exchangeRate, clientMemo);
       })
       .then((result) => {
         console.log('Exchange currency:', result);

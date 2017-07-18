@@ -82,6 +82,10 @@ function SendTransactionForm(props) {
       <div>
         Total: {total}
       </div>
+      <div>
+        Note:
+        <textarea value={self.state.note} onChange={self.handleChange.bind(self, 'note')} />
+      </div>
       <AsyncButton
         type="button"
         onClick={self.handleSubmitPaymentForm}
@@ -108,6 +112,7 @@ export default class MakePaymentPage extends React.Component {
       currency: '',
       value: '',
       withdrawalFeeMap: {},
+      note: '',
     };
     this.handleCurrencyChange = this.handleCurrencyChange.bind(this);
     this.handleSubmitPaymentForm = this.handleSubmitPaymentForm.bind(this);
@@ -180,12 +185,15 @@ export default class MakePaymentPage extends React.Component {
           return Promise.reject('Invalid currency or value');
         }
 
+        const clientMemo = this.state.note;
         let paymentPromise;
         if (external) {
-          let memo;
+          const fee = this.state.withdrawalFeeMap[currency];
+          const total = parseFloat(value) + fee;
+          let actionMemo;
           if (currency === 'RGP') {
             // TODO add UI to input these data
-            memo = {
+            actionMemo = {
               method: 'create_view',
               params: {
                 vid: 'sod1',
@@ -195,19 +203,18 @@ export default class MakePaymentPage extends React.Component {
               notifyURI: '',
             };
           } else {
-            memo = {
+            actionMemo = {
               method: 'send_crypto',
               params: {
                 address: destination,
+                fee,
               },
               notifyURI: '',
             };
           }
-          const fee = this.state.withdrawalFeeMap[currency];
-          const total = parseFloat(value) + fee;
-          paymentPromise = TidePayAPI.sendExternalPayment(gatewayAddress, sourceAccount, currency, total, memo);
+          paymentPromise = TidePayAPI.sendExternalPayment(gatewayAddress, sourceAccount, currency, total, actionMemo, clientMemo);
         } else {
-          paymentPromise = TidePayAPI.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value);
+          paymentPromise = TidePayAPI.sendInternalPayment(gatewayAddress, sourceAccount, destination, currency, value, clientMemo);
         }
 
         return paymentPromise;
