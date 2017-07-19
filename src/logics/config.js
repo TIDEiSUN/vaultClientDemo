@@ -3,6 +3,8 @@ let isunpayrpc_host = 'http://localhost:27184';
 
 if (process.env.NODE_ENV === 'staging') {
   isunpayrpc_host = 'https://rpc.tidepay.io';
+} else if (process.env.NODE_ENV === 'twstaging') {
+  isunpayrpc_host = 'https://stagtw.tidepay.io:2083';
 }
 
 exports.webhost = webhost;
